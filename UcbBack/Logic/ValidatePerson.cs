@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using UcbBack.Models;
 
@@ -9,49 +11,117 @@ namespace UcbBack.Logic
     public class ValidatePerson
     {
         private ApplicationDbContext _context;
+        private HanaValidator hanaValidator;
 
         public ValidatePerson(ApplicationDbContext context)
         {
             _context = context;
+            hanaValidator = new HanaValidator(_context);
         }
+
+        public People CleanName(People person)
+        {
+            person.FirstSurName = hanaValidator.CleanText(person.FirstSurName);
+            person.SecondSurName = hanaValidator.CleanText(person.SecondSurName);
+            person.Names = hanaValidator.CleanText(person.Names);
+            person.MariedSurName = hanaValidator.CleanText(person.MariedSurName);
+
+            return person;
+        }
+
+        
+
+        public string GetConfirmationToken(IEnumerable<People> people)
+        {
+            string token = "";
+
+            foreach (var p in people)
+            {
+                token += p.CUNI;
+            }
+
+            byte[] encodedstr = new UTF8Encoding().GetBytes(token);
+            byte[] hash = ((HashAlgorithm)CryptoConfig.CreateFromName("MD5")).ComputeHash(encodedstr);
+            token = Convert.ToBase64String(hash);
+
+            return token;
+        }
+
         public People UcbCode(People person)
         {
-            int haszeroday = person.BIRTHDATE.ToString()[1] == '/' ? 1 : 0;
-            int haszeromonth = person.BIRTHDATE.ToString()[4 - haszeroday] == '/' ? 1 : 0;
+            DateTime bd = person.BirthDate;
+            var daystr = person.BirthDate.ToString("dd");
+            var monthstr = person.BirthDate.ToString("MM");
+            var yearstr = person.BirthDate.ToString("yy");
+
             char[] letras =
             {
-                person.FIRSTSURNAME[0], 
-                person.SECONDSURNAME[0], 
-                person.NAMES[0], 
-                '-',
-                //day
-                haszeroday==1? '0': person.BIRTHDATE.ToString()[0], 
-                person.BIRTHDATE.ToString()[1-haszeroday],
-                //month
-                haszeromonth==1? '0': person.BIRTHDATE.ToString()[3-haszeroday], 
-                person.BIRTHDATE.ToString()[4-haszeroday-haszeromonth], 
+                person.FirstSurName[0], 
+                person.SecondSurName[0], 
+                person.Names[0], 
+                //#'-',
                 //year
-                person.BIRTHDATE.ToString()[8-haszeroday-haszeromonth], 
-                person.BIRTHDATE.ToString()[9-haszeroday-haszeromonth]
-                
-                
+                yearstr[0],
+                yearstr[1],
+                //month
+                monthstr[0],
+                monthstr[1],
+                //day
+                daystr[0],
+                daystr[1]
             };
 
-            person.COD_UCB = new string(letras);
+            person.CUNI = new string(letras);
             //colision!
-            if ((_context.Person.FirstOrDefault(p => p.COD_UCB == person.COD_UCB))!= null)
+            if ((_context.Person.FirstOrDefault(p => p.CUNI == person.CUNI)) != null)
             {
-                char[] month =
+                char[] monthi =
                 {
-                    person.COD_UCB[6], person.COD_UCB[7]
+                    person.CUNI[5], person.CUNI[6]
                 };
-                int newmonth = Int32.Parse(new string(month)) > 12 ? Int32.Parse(new string(month)) + 10 : Int32.Parse(new string(month)) + 20;
-                char[] oldCodArray = person.COD_UCB.ToCharArray();
-                oldCodArray[6] = newmonth.ToString()[0];
-                oldCodArray[7] = newmonth.ToString()[1];
-                person.COD_UCB = new string(oldCodArray);
+                int newmonth = Int32.Parse(new string(monthi)) > 12 ? Int32.Parse(new string(monthi)) + 10 : Int32.Parse(new string(monthi)) + 20;
+                char[] oldCodArray = person.CUNI.ToCharArray();
+                oldCodArray[5] = newmonth.ToString()[0];
+                oldCodArray[6] = newmonth.ToString()[1];
+                person.CUNI = new string(oldCodArray);
             }
             return person;
+        }
+
+        public IEnumerable<People> VerifyExisting(People person, float n)
+        {
+            var fullname = String.Concat(person.FirstSurName,
+                                String.Concat(" ", 
+                                    String.Concat(person.SecondSurName, 
+                                        String.Concat(" ", 
+                                            String.Concat(person.Names,
+                                                String.Concat(" ",person.Document)
+                                            )
+                                        )
+                                    )
+                                )
+                            );
+            //SQL command in Hana
+            string colToCompare = "concat(a.\"FirstSurName\"," +
+                                "concat(' ',"+
+                                    "concat(a.\"SecondSurName\","+
+                                        "concat(' ',"+
+                                            "concat(a.\"SecondSurName\", "+
+                                                "concat(' ',a.\"Document\")"+
+                                            ")"+
+                                        ")"+
+                                    ")"+
+                                ")"+
+                            ")";
+            string colId = "CUNI";
+            string table = "People";
+            
+            var similarities = hanaValidator.Similarities(fullname, colToCompare, table, colId, 0.9f);
+
+            var sim = _context.Person.Where(
+                i => similarities.Contains(i.CUNI)
+            ).ToList();
+            return sim;
         }
     }
 }

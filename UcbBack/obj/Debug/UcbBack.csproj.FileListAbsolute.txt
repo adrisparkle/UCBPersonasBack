@@ -58,8 +58,8 @@ C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\Microsoft.Owin.Security.Google.x
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\Microsoft.Owin.Security.Twitter.xml
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\Microsoft.Owin.Security.MicrosoftAccount.xml
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\System.Web.Http.Owin.xml
-C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.csprojResolveAssemblyReference.cache
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.dll
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.pdb
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.Migrations.FirstMigration.resources
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.csproj.GenerateResource.Cache
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.csprojResolveAssemblyReference.cache

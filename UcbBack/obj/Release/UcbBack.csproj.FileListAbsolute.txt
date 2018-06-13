@@ -61,3 +61,5 @@ C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\System.Web.Http.Owin.xml
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Release\UcbBack.csprojResolveAssemblyReference.cache
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Release\UcbBack.dll
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Release\UcbBack.pdb
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Release\UcbBack.Migrations.FirstMigration.resources
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Release\UcbBack.csproj.GenerateResource.Cache

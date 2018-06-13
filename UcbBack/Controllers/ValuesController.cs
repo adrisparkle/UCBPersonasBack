@@ -60,10 +60,10 @@ namespace UcbBack.Controllers
             if (personInDB == null)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
-            personInDB.NAMES = person.NAMES;
-            personInDB.FIRSTSURNAME = person.FIRSTSURNAME;
-            personInDB.SECONDSURNAME = person.SECONDSURNAME;
-            personInDB.BIRTHDATE = person.BIRTHDATE;
+           // personInDB.NAMES = person.NAMES;
+           // personInDB.FIRSTSURNAME = person.FIRSTSURNAME;
+           // personInDB.SECONDSURNAME = person.SECONDSURNAME;
+           // personInDB.BIRTHDATE = person.BIRTHDATE;
 
             _context.SaveChanges();
             return person;

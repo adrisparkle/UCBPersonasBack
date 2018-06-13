@@ -67,12 +67,15 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:36</publishTime>
     </File>
     <File Include="Areas/HelpPage/Views/Web.config">
-      <publishTime>05/30/2018 17:37:59</publishTime>
+      <publishTime>05/29/2018 19:13:36</publishTime>
     </File>
     <File Include="Areas/HelpPage/Views/_ViewStart.cshtml">
       <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="bin/Antlr3.Runtime.dll">
+      <publishTime>05/29/2018 19:13:37</publishTime>
+    </File>
+    <File Include="bin/Antlr3.Runtime.pdb">
       <publishTime>05/29/2018 19:13:37</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
@@ -160,7 +163,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:34</publishTime>
     </File>
     <File Include="bin/UcbBack.dll">
-      <publishTime>06/04/2018 10:54:29</publishTime>
+      <publishTime>06/11/2018 17:13:31</publishTime>
+    </File>
+    <File Include="bin/UcbBack.pdb">
+      <publishTime>06/11/2018 17:13:31</publishTime>
     </File>
     <File Include="bin/WebGrease.dll">
       <publishTime>05/29/2018 19:13:37</publishTime>
@@ -244,13 +250,13 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="Views/Web.config">
-      <publishTime>05/30/2018 17:37:59</publishTime>
+      <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="Views/_ViewStart.cshtml">
       <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>06/04/2018 10:54:29</publishTime>
+      <publishTime>06/11/2018 17:07:48</publishTime>
     </File>
   </ItemGroup>
 </Project>

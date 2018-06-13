@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
+using UcbBack.Models.Auth;
 
 namespace UcbBack.Models
 {
@@ -25,6 +26,18 @@ namespace UcbBack.Models
         public DbSet<Branches> Branch { get; set; }
         public DbSet<Positions> Position { get; set; }
         public DbSet<Pais> Paises { get; set; }
+        public DbSet<Level> Levels { get; set; }
+        public DbSet<OrganizationalUnit> OrganizationalUnits { get; set; }
+        public DbSet<Dependency> Dependencies { get; set; }
+        
+
+        //auth models
+        public DbSet<Access> Accesses { get; set; }
+        public DbSet<Rol> Rols { get; set; }
+        public DbSet<RolhasAccess> RolshaAccesses { get; set; }
+        public DbSet<CustomUser> CustomUsers { get; set; }
+
+        
         
 
         static ApplicationDbContext()

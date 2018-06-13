@@ -12,67 +12,80 @@ namespace UcbBack.Models
     {
         public int Id { get; set; }
 
-        [MaxLength(11)]
-        public string COD_UCB { get; set; }
+        [MaxLength(10)]
+        public string CUNI { get; set; }
 
-        [MaxLength(25)]
+        [MaxLength(15)]
         [Required]
-        public string TYPE_DOCUMENT { get; set; }
+        public string TypeDocument { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(15)]
         [Required]
-        public string DOCUMENTO { get; set; }
+        public string Document { get; set; }
 
-        [MaxLength(20)]
+        [MaxLength(5)]
         [Required]
-        public string ISSUED { get; set; }
+        public string Ext { get; set; }
+
+        [MaxLength(200)]
+        [Required]
+        public string Names { get; set; }
 
         [MaxLength(100)]
         [Required]
-        public string NAMES { get; set; }
+        public string FirstSurName { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(100)]
         [Required]
-        public string FIRSTSURNAME { get; set; }
+        public string SecondSurName { get; set; }
 
-        [MaxLength(50)]
-        [Required]
-        public string SECONDSURNAME { get; set; }
-
-        [MaxLength(50)]
-        public string MARIEDSURNAME { get; set; }
+        [MaxLength(100)]
+        public string MariedSurName { get; set; }
 
         [Column(TypeName = "date")]
+        //[DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd-MM-yyyy}")]
         [Required]
-        public DateTime? BIRTHDATE { get; set; }
+        public DateTime BirthDate { get; set; }
 
         [MaxLength(1)]
         [Required]
-        public string GENDER { get; set; }
+        public string Gender { get; set; }
 
         [MaxLength(20)]
         [Required]
-        public string NATIONALITY { get; set; }
+        public string Nationality { get; set; }
 
-        [MaxLength(100)]
-        public string PHOTO { get; set; }
+        [MaxLength(250)]
+        public string Photo { get; set; }
 
-        [MaxLength(25)]
-        public string PHONENUMBER { get; set; }
-
-        [MaxLength(50)]
-        public string PERSONALEMAIL { get; set; }
-
-        [MaxLength(50)]
-        public string UCBMAIL { get; set; }
-
-        [MaxLength(25)]
-        public string OFFICEPHONENUMBER { get; set; }
-
-        [MaxLength(200)]
-        public string HOMEADDRESS { get; set; }
+        [MaxLength(15)]
+        public string PhoneNumber { get; set; }
 
         [MaxLength(30)]
-        public string MARITALSTATUS { get; set; }
+        public string PersonalEmail { get; set; }
+
+        [MaxLength(30)]
+        public string UcbEmail { get; set; }
+
+        [MaxLength(15)]
+        public string OfficePhoneNumber { get; set; }
+
+        [MaxLength(15)]
+        public string OfficePhoneNumberExt { get; set; }
+
+        [MaxLength(200)]
+        public string HomeAddress { get; set; }
+
+        [MaxLength(20)]
+        public string AFP { get; set; }
+
+        [MaxLength(30)]
+        public string NUA { get; set; }
+
+        [MaxLength(50)]
+        public string Insurance { get; set; }
+
+        [MaxLength(20)]
+        public string InsuranceNumber { get; set; }
     }
 }

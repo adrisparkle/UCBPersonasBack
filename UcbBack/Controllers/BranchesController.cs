@@ -9,7 +9,6 @@ using UcbBack.Models;
 
 namespace UcbBack.Controllers
 {
-    //[EnableCors(origins: "http://systematixindia.com", headers: "*", methods: "*")]
     
     public class BranchesController : ApiController
     {
@@ -45,6 +44,8 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
+            branch.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Branches_sqs\".nextval FROM DUMMY;").ToList()[0];
+
             _context.Branch.Add(branch);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + branch.Id), branch);
@@ -61,8 +62,8 @@ namespace UcbBack.Controllers
             if (brachInDB == null)
                 return NotFound();
 
-            brachInDB.NAME = branch.NAME;
-            brachInDB.ABR = branch.ABR;
+            brachInDB.Name = branch.Name;
+            brachInDB.Abr = branch.Abr;
 
             _context.SaveChanges();
             return Ok(brachInDB);

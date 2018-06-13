@@ -197,15 +197,26 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Controllers\AccessController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
+    <Compile Include="Controllers\CustomUserController.cs" />
+    <Compile Include="Controllers\DependencyController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\LevelController.cs" />
+    <Compile Include="Controllers\OrganizationalUnitController.cs" />
     <Compile Include="Controllers\PeopleController.cs" />
+    <Compile Include="Controllers\PositionController.cs" />
+    <Compile Include="Controllers\RolController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Logic\HanaValidator.cs" />
+    <Compile Include="Logic\ValidateAuth.cs" />
     <Compile Include="Logic\ValidatePerson.cs" />
+    <Compile Include="Logic\ValidateToken.cs" />
     <Compile Include="Migrations\201806042119020_FirstMigration.cs" />
     <Compile Include="Migrations\201806042119020_FirstMigration.Designer.cs">
       <DependentUpon>201806042119020_FirstMigration.cs</DependentUpon>
@@ -213,9 +224,16 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Auth\Access.cs" />
+    <Compile Include="Models\Auth\PasswordHash.cs" />
+    <Compile Include="Models\Auth\Rol.cs" />
+    <Compile Include="Models\Auth\RolhasAccess.cs" />
+    <Compile Include="Models\Auth\User.cs" />
     <Compile Include="Models\Branches.cs" />
+    <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
+    <Compile Include="Models\OrganizationalUnit.cs" />
     <Compile Include="Models\Pais.cs" />
     <Compile Include="Models\people.cs" />
     <Compile Include="Models\Positions.cs" />

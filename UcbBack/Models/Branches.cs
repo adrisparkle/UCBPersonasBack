@@ -7,15 +7,17 @@ using System.Web;
 
 namespace UcbBack.Models
 {
-    [Table("ADMNALRRHH.BRANCHES")]
+    //[Table("ADMNALRRHH.BRANCHES")]
     public class Branches
     {
-        public int Id { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public int Id { set; get; }
         [MaxLength(20)]
         [Required]
-        public string NAME { get; set; }
+        public string Name { get; set; }
         [MaxLength(10)]
         [Required]
-        public string ABR { get; set; }
+        public string Abr { get; set; }
     }
 }
