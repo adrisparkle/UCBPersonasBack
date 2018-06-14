@@ -63,3 +63,7 @@ C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.pdb
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.Migrations.FirstMigration.resources
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.csproj.GenerateResource.Cache
 C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\obj\Debug\UcbBack.csprojResolveAssemblyReference.cache
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\ExcelDataReader.DataSet.dll
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\ExcelDataReader.dll
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\ExcelDataReader.xml
+C:\Users\Adrian\Desktop\dev\UcbBack\UcbBack\bin\ExcelDataReader.DataSet.xml

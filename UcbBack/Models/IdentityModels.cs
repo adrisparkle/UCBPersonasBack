@@ -29,6 +29,9 @@ namespace UcbBack.Models
         public DbSet<Level> Levels { get; set; }
         public DbSet<OrganizationalUnit> OrganizationalUnits { get; set; }
         public DbSet<Dependency> Dependencies { get; set; }
+        public DbSet<PerformanceArea> PerformanceAreas { get; set; }
+        public DbSet<Contract> Contracts  { get; set; }
+        public DbSet<ContractDetail> ContractDetails  { get; set; }
         
 
         //auth models
