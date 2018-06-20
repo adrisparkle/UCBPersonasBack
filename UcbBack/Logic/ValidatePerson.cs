@@ -88,32 +88,39 @@ namespace UcbBack.Logic
             return person;
         }
 
-        public IEnumerable<People> VerifyExisting(People person, float n)
+        public IEnumerable<People> VerifyExisting(People person, float n,string fn=null)
         {
-            var fullname = String.Concat(person.FirstSurName,
-                                String.Concat(" ", 
-                                    String.Concat(person.SecondSurName, 
-                                        String.Concat(" ", 
-                                            String.Concat(person.Names,
-                                                String.Concat(" ",person.Document)
-                                            )
-                                        )
-                                    )
+            string fullname;
+            if (fn == null)
+            {
+                fullname = String.Concat(person.FirstSurName,
+                    String.Concat(" ",
+                        String.Concat(person.SecondSurName,
+                            String.Concat(" ",
+                                String.Concat(person.Names,
+                                    String.Concat(" ", person.Document)
                                 )
-                            );
+                            )
+                        )
+                    )
+                );
+            }
+            else
+                fullname = fn;
+            
             //SQL command in Hana
             string colToCompare = "concat(a.\"FirstSurName\"," +
-                                "concat(' ',"+
+                                "concat('' '',"+
                                     "concat(a.\"SecondSurName\","+
-                                        "concat(' ',"+
-                                            "concat(a.\"SecondSurName\", "+
-                                                "concat(' ',a.\"Document\")"+
+                                        "concat('' '',"+
+                                            "concat(a.\"Names\", "+
+                                                "concat('' '',a.\"Document\")"+
                                             ")"+
                                         ")"+
                                     ")"+
                                 ")"+
                             ")";
-            string colId = "CUNI";
+            string colId = "a.\"CUNI\"";
             string table = "People";
             
             var similarities = hanaValidator.Similarities(fullname, colToCompare, table, colId, 0.9f);

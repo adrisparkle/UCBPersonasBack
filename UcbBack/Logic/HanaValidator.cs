@@ -10,9 +10,9 @@ namespace UcbBack.Logic
     {
         private ApplicationDbContext _context;
 
-        public HanaValidator(ApplicationDbContext context)
+        public HanaValidator(ApplicationDbContext context=null)
         {
-            _context = context;
+            _context = context ?? new ApplicationDbContext();
         }
         public string CleanText(string value)
         {
@@ -21,7 +21,7 @@ namespace UcbBack.Logic
 
         public float JaroWinklerSimilarity(string a, string b)
         {
-            return _context.Database.SqlQuery<float>("select jaro_winkler_similarity(clean_text('" + a + "','" + b + "')) from dummy;").ToList()[0];
+            return _context.Database.SqlQuery<float>("select jaro_winkler_similarity(clean_text('" + a + "'),clean_text('" + b + "')) from dummy;").ToList()[0];
         }
 
         //returns a list of strings containing the first 5 similarities

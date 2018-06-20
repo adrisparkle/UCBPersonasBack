@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -27,8 +28,9 @@ namespace UcbBack.Controllers
         [Route("api/user/")]
         public IHttpActionResult Get()
         {
-            //TODO NO DEVOLVER TOKENS
-            return Ok(_context.CustomUsers.ToList());
+            var userlist = _context.CustomUsers.Include(u => u.Rol).ToList().Select(x=> new{ x.Id ,x.UserName , Rol= x.Rol.Name });
+            return Ok(userlist);
+
         }
 
         // GET api/user/5
@@ -44,13 +46,14 @@ namespace UcbBack.Controllers
             dynamic respose = new JObject();
             respose.Id = userInDB.Id;
             respose.UserName = userInDB.UserName;
+            respose.Rol = userInDB.Rol;
 
             return Ok(respose);
         }
 
-        // POST: /api/user/Register/
+        // POST: /api/user/
         [HttpPost]
-        [Route("api/user/Register")]
+        [Route("api/user/")]
         public IHttpActionResult Register([FromBody]CustomUser user)
         {
             if (!ModelState.IsValid)

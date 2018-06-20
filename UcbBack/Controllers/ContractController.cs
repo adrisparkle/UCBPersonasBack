@@ -9,8 +9,7 @@ using System.Web;
 using System.Web.Http;
 using UcbBack.Models;
 using ExcelDataReader;
-using System.IO;
-using System.Data;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using UcbBack.Logic;
@@ -48,23 +47,39 @@ namespace UcbBack.Controllers
 
         [HttpPost]
         [Route("api/Contract/AltaExcel")]
-        public async Task<IHttpActionResult> AltasExcel()
+        public async Task<HttpResponseMessage> AltasExcel()
         {
-            var req = await Request.Content.ReadAsMultipartAsync();
-
-            // Scan the Multiple Parts 
-            foreach (HttpContent contentPart in req.Contents)
+            
+            var response = new HttpResponseMessage();
+            try
             {
-                Stream stream = await contentPart.ReadAsStreamAsync();
-                var contentDisposition = contentPart.Headers.ContentDisposition;
-                string fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
-                var mediaType = contentPart.Headers.ContentType == null ? "" : String.IsNullOrEmpty(contentPart.Headers.ContentType.MediaType) ? "" : contentPart.Headers.ContentType.MediaType;
-                ValidateContractsFile contractExcel = new ValidateContractsFile(stream,fileName);
+                var req = await Request.Content.ReadAsMultipartAsync();
+                foreach (HttpContent contentPart in req.Contents)
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    var contentDisposition = contentPart.Headers.ContentDisposition;
+                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName)
+                        ? ""
+                        : contentDisposition.FileName.Trim('"');
+                    var mediaType = contentPart.Headers.ContentType == null ? "" :
+                        String.IsNullOrEmpty(contentPart.Headers.ContentType.MediaType) ? "" :
+                        contentPart.Headers.ContentType.MediaType;
+                    ValidateContractsFile contractExcel = new ValidateContractsFile(stream, fileName,_context);
 
-                return Ok();
+                    return contractExcel.toResponse();
+                }
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
             }
-
-            return BadRequest();
+            catch (System.ArgumentException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
+            }
+            // Scan the Multiple Parts 
+            
         }
 
         //altas

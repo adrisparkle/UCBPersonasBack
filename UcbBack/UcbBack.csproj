@@ -13,13 +13,14 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UcbBack</RootNamespace>
     <AssemblyName>UcbBack</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,6 +40,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ClosedXML">
+      <HintPath>..\packages\ClosedXML.0.80.1\lib\net40-client\ClosedXML.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.5\lib\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
     <Reference Include="ExcelDataReader">
       <HintPath>..\packages\ExcelDataReader.3.4.0\lib\net45\ExcelDataReader.dll</HintPath>
     </Reference>
@@ -46,7 +53,9 @@
       <HintPath>..\packages\ExcelDataReader.DataSet.3.4.0\lib\net45\ExcelDataReader.DataSet.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="NuGet.Core, Version=1.6.30117.9648, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="Sap.Data.Hana.v4.5, Version=1.0.120.0, Culture=neutral, PublicKeyToken=0326b8ea63db4bc4, processorArchitecture=MSIL" />
+    <Reference Include="SAPBusinessOneSDK, Version=1.0.0.1, Culture=neutral, PublicKeyToken=c7c3cb60e45d119f, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -214,6 +223,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LevelController.cs" />
     <Compile Include="Controllers\OrganizationalUnitController.cs" />
+    <Compile Include="Controllers\PayrollController.cs" />
     <Compile Include="Controllers\PeopleController.cs" />
     <Compile Include="Controllers\PerformanceAreaController.cs" />
     <Compile Include="Controllers\PositionController.cs" />
@@ -222,9 +232,12 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Logic\ExcelFiles\AcademicExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\PayrollExcel.cs" />
     <Compile Include="Logic\HanaValidator.cs" />
     <Compile Include="Logic\ValidateAuth.cs" />
-    <Compile Include="Logic\ValidateExcelFile.cs" />
+    <Compile Include="Logic\ExcelFiles\ValidateContractsFile.cs" />
+    <Compile Include="Logic\ExcelFiles\ValidateExcelFile.cs" />
     <Compile Include="Logic\ValidatePerson.cs" />
     <Compile Include="Logic\ValidateToken.cs" />
     <Compile Include="Migrations\201806042119020_FirstMigration.cs" />
@@ -243,10 +256,12 @@
     <Compile Include="Models\Contract.cs" />
     <Compile Include="Models\ContractDetail.cs" />
     <Compile Include="Models\Dependency.cs" />
+    <Compile Include="Models\Dist_Academic.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
     <Compile Include="Models\Pais.cs" />
+    <Compile Include="Models\Payroll.cs" />
     <Compile Include="Models\people.cs" />
     <Compile Include="Models\PerformanceArea.cs" />
     <Compile Include="Models\Positions.cs" />
@@ -257,6 +272,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
+    <Content Include="bin\UcbBack.dll" />
+    <Content Include="bin\UcbBack.pdb" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="favicon.ico" />
