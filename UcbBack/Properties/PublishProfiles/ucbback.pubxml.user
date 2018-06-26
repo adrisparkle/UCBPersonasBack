@@ -175,10 +175,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:34</publishTime>
     </File>
     <File Include="bin/UcbBack.dll">
-      <publishTime>06/20/2018 17:59:43</publishTime>
+      <publishTime>06/25/2018 18:54:38</publishTime>
     </File>
     <File Include="bin/UcbBack.pdb">
-      <publishTime>06/20/2018 17:59:43</publishTime>
+      <publishTime>06/25/2018 18:54:38</publishTime>
     </File>
     <File Include="bin/WebGrease.dll">
       <publishTime>05/29/2018 19:13:37</publishTime>
@@ -209,6 +209,9 @@ by editing this MSBuild file. In order to learn more about this please visit htt
     </File>
     <File Include="Global.asax">
       <publishTime>05/29/2018 19:13:27</publishTime>
+    </File>
+    <File Include="Images/logo.png">
+      <publishTime>06/22/2018 12:03:09</publishTime>
     </File>
     <File Include="packages.config">
       <publishTime>06/15/2018 10:54:00</publishTime>
@@ -268,7 +271,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>06/20/2018 16:28:04</publishTime>
+      <publishTime>06/25/2018 11:54:16</publishTime>
     </File>
   </ItemGroup>
 </Project>

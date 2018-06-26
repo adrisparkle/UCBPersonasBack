@@ -216,6 +216,7 @@
     <Compile Include="Controllers\AccessController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
     <Compile Include="Controllers\CustomUserController.cs" />
@@ -232,8 +233,13 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Logic\B1\B1Connection.cs" />
     <Compile Include="Logic\ExcelFiles\AcademicExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\DiscountExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\ORExcel.cs" />
     <Compile Include="Logic\ExcelFiles\PayrollExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\PostgradoExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\PregradoExcel.cs" />
     <Compile Include="Logic\HanaValidator.cs" />
     <Compile Include="Logic\ValidateAuth.cs" />
     <Compile Include="Logic\ExcelFiles\ValidateContractsFile.cs" />
@@ -257,6 +263,10 @@
     <Compile Include="Models\ContractDetail.cs" />
     <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\Dist_Academic.cs" />
+    <Compile Include="Models\Dist_Discounts.cs" />
+    <Compile Include="Models\Dist_OR.cs" />
+    <Compile Include="Models\Dist_Posgrado.cs" />
+    <Compile Include="Models\Dist_Pregrado.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
@@ -279,6 +289,7 @@
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
+    <Content Include="Images\logo.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Areas\HelpPage\Views\Web.config" />

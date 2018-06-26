@@ -39,14 +39,14 @@ namespace UcbBack.Controllers
         {
             CustomUser userInDB = null;
 
-            userInDB = _context.CustomUsers.FirstOrDefault(d => d.Id == id);
+            userInDB = _context.CustomUsers.Include(u => u.Rol).FirstOrDefault(d => d.Id == id);
 
             if (userInDB == null)
                 return NotFound();
             dynamic respose = new JObject();
             respose.Id = userInDB.Id;
             respose.UserName = userInDB.UserName;
-            respose.Rol = userInDB.Rol;
+            respose.RolId = userInDB.RolId;
 
             return Ok(respose);
         }
@@ -94,11 +94,13 @@ namespace UcbBack.Controllers
             if (userInDB == null)
                 return NotFound();
             userInDB.UserName = user.UserName;
+            userInDB.RolId = user.RolId;
             _context.SaveChanges();
 
             dynamic respose = new JObject();
             respose.Id = userInDB.Id;
             respose.UserName = userInDB.UserName;
+
             return Ok(respose);
         }
 

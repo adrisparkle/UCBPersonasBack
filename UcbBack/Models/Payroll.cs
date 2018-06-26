@@ -8,7 +8,7 @@ using System.Web;
 namespace UcbBack.Models
 {
     [Table("ADMNALRRHH.Dist_Payroll")]
-    public class Payroll
+    public class Dist_Payroll
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -41,7 +41,7 @@ namespace UcbBack.Models
         public decimal ProvPrimas { get; set; }
         public decimal ProvIndeminizacion { get; set; }
         public string SAPOrganizationalUnit { get; set; }
-        public bool Matched { get; set; }
+        public int Matched { get; set; }
         public string ProcedureTypeEmployee { get; set; }
 
 

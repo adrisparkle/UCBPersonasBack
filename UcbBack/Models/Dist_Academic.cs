@@ -28,7 +28,7 @@ namespace UcbBack.Models
         public string CUNI { get; set; }
         public string SAPParaleloUnit { get; set; }
         public decimal Porcentaje { get; set; }
-        public bool Matched { get; set; }
+        public int Matched { get; set; }
         public string ProcedureTypeEmployee { get; set; }
     }
 }

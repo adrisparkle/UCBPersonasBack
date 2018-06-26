@@ -32,6 +32,12 @@ namespace UcbBack.Models
         public DbSet<PerformanceArea> PerformanceAreas { get; set; }
         public DbSet<Contract> Contracts  { get; set; }
         public DbSet<ContractDetail> ContractDetails  { get; set; }
+        public DbSet<Dist_Academic> DistAcademics  { get; set; }
+        public DbSet<Dist_Payroll> DistPayrolls  { get; set; }
+        public DbSet<Dist_Discounts> DistDiscountses  { get; set; }
+        public DbSet<Dist_Pregrado> DistPregrados  { get; set; }
+        public DbSet<Dist_Posgrado> DistPosgrados  { get; set; }
+        public DbSet<Dist_OR> DistOrs  { get; set; }
         
 
         //auth models

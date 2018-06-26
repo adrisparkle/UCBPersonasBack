@@ -92,5 +92,155 @@ namespace UcbBack.Controllers
                 return response;
             }
         }
+
+        [HttpPost]
+        [Route("api/payroll/UploadDiscountExcel")]
+        public async Task<HttpResponseMessage> UploadDiscountExcel()
+        {
+            var response = new HttpResponseMessage();
+            try
+            {
+                var req = await Request.Content.ReadAsMultipartAsync();
+                foreach (HttpContent contentPart in req.Contents)
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    var contentDisposition = contentPart.Headers.ContentDisposition;
+                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
+                    DiscountExcel disExcel = new DiscountExcel(stream, _context, fileName, headerin: 3, sheets: 1);
+
+                    if (disExcel.ValidateFile())
+                    {
+                        disExcel.toDataBase();
+                        response.StatusCode = HttpStatusCode.OK;
+                        response.Content = new StringContent("Se subio el archivo correctamente.");
+                        return response;
+                    }
+                    return disExcel.toResponse();
+                }
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
+            }
+            catch (System.ArgumentException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+        }
+
+        [HttpPost]
+        [Route("api/payroll/UploadPostgradoExcel")]
+        public async Task<HttpResponseMessage> UploadPostgradoExcel()
+        {
+            var response = new HttpResponseMessage();
+            try
+            {
+                var req = await Request.Content.ReadAsMultipartAsync();
+                foreach (HttpContent contentPart in req.Contents)
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    var contentDisposition = contentPart.Headers.ContentDisposition;
+                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
+                    PostgradoExcel disExcel = new PostgradoExcel(stream, _context, fileName, headerin: 3, sheets: 1);
+
+                    if (disExcel.ValidateFile())
+                    {
+                        disExcel.toDataBase();
+                        response.StatusCode = HttpStatusCode.OK;
+                        response.Content = new StringContent("Se subio el archivo correctamente.");
+                        return response;
+                    }
+                    return disExcel.toResponse();
+                }
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
+            }
+            catch (System.ArgumentException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+        }
+
+
+        [HttpPost]
+        [Route("api/payroll/UploadPregradoExcel")]
+        public async Task<HttpResponseMessage> UploadPregradoExcel()
+        {
+            var response = new HttpResponseMessage();
+            try
+            {
+                var req = await Request.Content.ReadAsMultipartAsync();
+                foreach (HttpContent contentPart in req.Contents)
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    var contentDisposition = contentPart.Headers.ContentDisposition;
+                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
+                    PregradoExcel disExcel = new PregradoExcel(stream, _context, fileName, headerin: 3, sheets: 1);
+
+                    if (disExcel.ValidateFile())
+                    {
+                        disExcel.toDataBase();
+                        response.StatusCode = HttpStatusCode.OK;
+                        response.Content = new StringContent("Se subio el archivo correctamente.");
+                        return response;
+                    }
+                    return disExcel.toResponse();
+                }
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
+            }
+            catch (System.ArgumentException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+        }
+
+        [HttpPost]
+        [Route("api/payroll/UploadORExcel")]
+        public async Task<HttpResponseMessage> UploadORExcel()
+        {
+            var response = new HttpResponseMessage();
+            try
+            {
+                var req = await Request.Content.ReadAsMultipartAsync();
+                foreach (HttpContent contentPart in req.Contents)
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    var contentDisposition = contentPart.Headers.ContentDisposition;
+                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
+                    ORExcel disExcel = new ORExcel(stream, _context, fileName, headerin: 3, sheets: 1);
+
+                    if (disExcel.ValidateFile())
+                    {
+                        disExcel.toDataBase();
+                        response.StatusCode = HttpStatusCode.OK;
+                        response.Headers.Add("UploadErrors", "{}");
+                        response.Content = new StringContent("Se subio el archivo correctamente.");
+                        return response;
+                    }
+                    return disExcel.toResponse();
+                }
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                return response;
+            }
+            catch (System.ArgumentException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+        }
+
     }
+
+
+
 }
