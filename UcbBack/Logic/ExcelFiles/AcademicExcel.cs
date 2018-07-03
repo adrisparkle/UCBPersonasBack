@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using ClosedXML.Excel;
+using UcbBack.Logic.B1;
 using UcbBack.Models;
 
 namespace UcbBack.Logic.ExcelFiles
@@ -15,33 +16,41 @@ namespace UcbBack.Logic.ExcelFiles
             new Excelcol("Carnet Identidad", typeof(string)), 
             new Excelcol("Nombre Completo", typeof(string)),
             new Excelcol("Tipo empleado", typeof(string)),
-            new Excelcol("periodo academico", typeof(string)),
+            new Excelcol("Periodo académico", typeof(string)),
             new Excelcol("Sigla Asignatura", typeof(string)),
             new Excelcol("Paralelo", typeof(string)),
-            new Excelcol("Horas Academicas por semana", typeof(double)),
-            new Excelcol("Horas Academicas por mes", typeof(double)),
+            new Excelcol("Horas Académicas por semana", typeof(double)),
+            new Excelcol("Horas Académicas por mes", typeof(double)),
             new Excelcol("Identificador de Pago", typeof(string)),
-            new Excelcol("Categoria docente", typeof(string)),
+            new Excelcol("Categoría de docente", typeof(string)),
             new Excelcol("Costo hora", typeof(double)),
             new Excelcol("Costo mes", typeof(double)),
-            new Excelcol("Codigo nacional RRHH", typeof(string)),
+            new Excelcol("CUNI", typeof(string)),
+            new Excelcol("Identificador de dependencia", typeof(string)),
+            new Excelcol("PEI-PO", typeof(string)),
             new Excelcol("Codigo Paralelo SAP", typeof(string)),
-            new Excelcol("Porcentaje", typeof(double)),
         };
         private ApplicationDbContext _context;
+        private string mes, gestion, segmentoOrigen;
 
-        public AcademicExcel(Stream data, ApplicationDbContext context, string fileName, int headerin = 3, int sheets = 1, string resultfileName = "Result")
+        public AcademicExcel(Stream data, ApplicationDbContext context, string fileName,string mes, string gestion, string segmentoOrigen,int headerin = 3, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName)
         {
+            this.segmentoOrigen = segmentoOrigen;
+            this.gestion = gestion;
+            this.mes = mes;
             _context = context;
             isFormatValid();
         }
+        public AcademicExcel(string fileName, int headerin = 1)
+            : base(cols, fileName, headerin)
+        { }
 
         public override void toDataBase()
         {
             IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
 
-            for (int i = 1 + headerin; i <= UsedRange.RowCount() + headerin; i++)
+            for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 _context.DistAcademics.Add(ToDistAcademic(i));
             }
@@ -51,8 +60,17 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            bool v2 = VerifyPerson(1, 13, 2);
-            return isValid() && v2;
+            var connB1 = B1Connection.Instance;
+            bool v1 = VerifyPerson(1, 13, 2);
+            bool v2 = VerifyColumnValueIn(3, new List<string> { "TC", "MT", "TH", "AA", "OD", "DA", "OR", "VLIR", "RP" });
+            bool v3 = VerifyParalel(cod:16,periodo: 4, sigla:5);
+            bool v4 = VerifyColumnValueIn(9, new List<string> { "PA", "PI", "TH" });
+            bool v5 = VerifyColumnValueIn(14, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
+            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
+            pei.Add("0");
+            bool v6 = VerifyColumnValueIn(15, pei, comment: "Este PEI no existe en SAP.");
+
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6;
         }
 
         public Dist_Academic ToDistAcademic(int row,int sheet = 1)
@@ -65,18 +83,22 @@ namespace UcbBack.Logic.ExcelFiles
             acad.Periodo = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             acad.Sigla = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
             acad.Paralelo = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
-            acad.AcademicHoursWeek = wb.Worksheet(sheet).Cell(row, 7).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 7).Value.ToString());
-            acad.AcademicHoursMonth = wb.Worksheet(sheet).Cell(row, 8).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 8).Value.ToString());
+            acad.AcademicHoursWeek = strToDecimal(row,7);
+            acad.AcademicHoursMonth = strToDecimal(row, 8);
             acad.IdentificadorPago = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-            acad.CategoriaDocuente = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
-            acad.CostoHora = wb.Worksheet(sheet).Cell(row, 11).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
-            acad.CostoMes = wb.Worksheet(sheet).Cell(row, 12).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 12).Value.ToString());
+            acad.CategoriaDocente = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
+            acad.CostoHora = strToDecimal(row, 11);
+            acad.CostoMes = strToDecimal(row, 12);
             acad.CUNI = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
-            acad.SAPParaleloUnit = wb.Worksheet(sheet).Cell(row, 14).Value.ToString();
-            acad.Porcentaje = wb.Worksheet(sheet).Cell(row, 15).Value.ToString()==""? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 15).Value.ToString());
+            acad.Dependency = wb.Worksheet(sheet).Cell(row, 14).Value.ToString();
+            acad.PEI = wb.Worksheet(sheet).Cell(row, 15).Value.ToString();
+            acad.SAPParaleloUnit = wb.Worksheet(sheet).Cell(row, 16).Value.ToString();
+            
             acad.Matched = 0;
-            acad.ProcedureTypeEmployee = "";
-
+            acad.Porcentaje = 0.0m;
+            acad.mes = this.mes;
+            acad.gestion = this.gestion;
+            acad.segmentoOrigen = this.segmentoOrigen;
             return acad;
         }
     }

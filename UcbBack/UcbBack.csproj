@@ -219,6 +219,7 @@
     <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
+    <Compile Include="Controllers\CostCentersController.cs" />
     <Compile Include="Controllers\CustomUserController.cs" />
     <Compile Include="Controllers\DependencyController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -279,6 +280,7 @@
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="ViewModels\DependencyViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />

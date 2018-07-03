@@ -19,14 +19,20 @@ namespace UcbBack.Logic.ExcelFiles
             new Excelcol("Importe", typeof(string)),
         };
         private ApplicationDbContext _context;
+        private string mes, gestion, segmentoOrigen;
 
-        public DiscountExcel(Stream data, ApplicationDbContext context, string fileName, int headerin = 3, int sheets = 1, string resultfileName = "Result")
+        public DiscountExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen, int headerin = 3, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName)
         {
+            this.segmentoOrigen = segmentoOrigen;
+            this.gestion = gestion;
+            this.mes = mes;
             _context = context;
             isFormatValid();
         }
-
+        public DiscountExcel(string fileName, int headerin = 1)
+            : base(cols, fileName, headerin)
+        { }
         public override void toDataBase()
         {
             IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
@@ -42,10 +48,10 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
-            bool v3 = VerifyColumnValueIn(1, connB1.getBusinessPartners().ToList(), comment: "Este Codigo de Socio de Negocio no existe en SAP.");
-            bool v4 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
-
-            return isValid()&&v3&&v4;
+            bool v1 = VerifyColumnValueIn(1, connB1.getBusinessPartners().ToList(), comment: "Este Codigo de Socio de Negocio no existe en SAP.");
+            bool v2 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
+            bool v3 = VerifyColumnValueIn(3, new List<string> { "D_ANTI", "D_REND", "D_OTR", "D_PCOB" }, comment: "Tipo de deducción no valido");
+            return isValid() && v1 && v2 && v3;
         }
 
         public Dist_Discounts ToDistDiscounts(int row, int sheet = 1)
@@ -55,8 +61,11 @@ namespace UcbBack.Logic.ExcelFiles
             dis.BussinesPartner = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             dis.Name = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.Type = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
-            dis.Total = wb.Worksheet(sheet).Cell(row, 4).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, 4).Value.ToString());
+            dis.Total = strToDecimal(row, 4);
 
+            dis.mes = this.mes;
+            dis.gestion = this.gestion;
+            dis.segmentoOrigen = this.segmentoOrigen;
             return dis;
         }
     }

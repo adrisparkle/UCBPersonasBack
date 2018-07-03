@@ -7,6 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Dist_Pregrado")]
     public class Dist_Pregrado
     {
         [Key]
@@ -15,10 +16,15 @@ namespace UcbBack.Models
 
         public string Document { get; set; }
         public string FullName { get; set; }
-        public string Carrera { get; set; }
-        public Decimal TotalBruto { get; set; }
-        public Decimal Porcentaje { get; set; }
         public Decimal TotalNeto { get; set; }
+        public string Carrera { get; set; }
+        public string CUNI { get; set; }
+        public string Dependency { get; set; }
+
+        public decimal Porcentaje { get; set; }
+        public string segmentoOrigen { get; set; }
+        public string mes { get; set; }
+        public string gestion { get; set; }
 
     }
 }

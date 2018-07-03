@@ -13,6 +13,7 @@ using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Office2013.Word;
 using ExcelDataReader;
 using Newtonsoft.Json.Linq;
+using UcbBack.Logic.B1;
 using UcbBack.Models;
 
 namespace UcbBack.Logic
@@ -40,7 +41,14 @@ namespace UcbBack.Logic
         private HanaValidator hanaValidator;
         //Image logo = Image.FromFile(HttpContext.Current.Server.MapPath("~/Images/logo.png"));
         private dynamic errors = new JObject();
+        private ValidatePerson personValidator;
 
+        public ValidateExcelFile(Excelcol[] columns, string fileName, int headerin = 1)
+        {
+            this.columns = columns;
+            this.fileName = fileName;
+            this.headerin = headerin;
+        }
 
         public ValidateExcelFile(Excelcol[] columns, Stream data, string fileName, int headerin =1, int sheets = 1, string resultfileName = "Result")
         {
@@ -49,9 +57,9 @@ namespace UcbBack.Logic
             this.resultfileName = resultfileName;
             this.sheets = sheets;
             this.headerin = headerin;
-            //data = setExcelFile(d); 
             this.wb = setExcelFile(data);
             hanaValidator = new HanaValidator();
+            personValidator = new ValidatePerson();
         }
 
         public abstract void toDataBase();
@@ -65,11 +73,11 @@ namespace UcbBack.Logic
         public HttpResponseMessage getTemplate()
         {
             var template = new XLWorkbook();
-            IXLWorksheet ws =template.AddWorksheet(resultfileName);
+            IXLWorksheet ws =template.AddWorksheet(fileName);
 
-            for (int i = 1; i <= columns.Length; i++)
+            for (int i = 0; i < columns.Length; i++)
             {
-                template.Worksheet(1).Cell(3, i).Value = columns[i].headers;
+                template.Worksheet(1).Cell(headerin, i+1).Value = columns[i].headers;
             }
             return toResponse(template);
         }
@@ -83,7 +91,6 @@ namespace UcbBack.Logic
                 res = false;
             }
 
-            //foreach (IXLWorksheet sheet in wb.Worksheets && k--)
             for(int l = 1 ;l<=sheets;l++)
             {
                 var sheet = wb.Worksheet(l);
@@ -165,15 +172,14 @@ namespace UcbBack.Logic
             return res;
         }
 
-        //todo Verify if person is active
-        public bool VerifyPerson(int ci=-1, int CUNI=-1, int fullname=-1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true,string comment ="No se encontro este valor en la Base de Datos Nacional.",bool personActive = true)
+        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd")
         {
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var c = new ApplicationDbContext();
             var ppllist = c.Person.ToList();
 
-            for (int i = headerin + 1; i < UsedRange.RowCount(); i++)
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 var strci = ci != -1 ? wb.Worksheet(sheet).Cell(i, ci).Value.ToString() : null;
                 var strcuni = CUNI != -1 ? wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString() : null;
@@ -182,7 +188,17 @@ namespace UcbBack.Logic
                                     && x.CUNI == strcuni
                                     && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) == strname))
                 {
-                    
+                    var p = ppllist.FirstOrDefault(x => x.Document == strci);
+                    if (personActive && !personValidator.IsActive(p,date,format))
+                    {
+                        res = false;
+                        if(fullname!=-1)
+                            paintXY(fullname, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                        if (ci != -1)
+                            paintXY(ci, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                        if (CUNI != -1)
+                            paintXY(CUNI, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                    }
                     if (strci!= null && ppllist.Any(x => x.Document == strci))
                     {
                         if (strname!=null && !ppllist.Any(x => x.Document == strci
@@ -207,7 +223,8 @@ namespace UcbBack.Logic
                                 string aux = "";
                                 var similarities = ppllist.Where(x => x.Document ==strci).Select(y => y.CUNI).ToList();
                                 aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(CUNI, i, XLColor.Red, comment + aux);
+                                wb.Worksheet(sheet).Cell(i, CUNI).Value = similarities;
+                                //paintXY(CUNI, i, XLColor.Red, comment + aux);
                             }
                         }
                     }
@@ -296,6 +313,76 @@ namespace UcbBack.Logic
             valid = valid && res;
             return res;
 
+        }
+
+        public bool VerifyParalel(int cod,int periodo, int sigla,int sheet =1)
+        {
+            var B1conn = B1Connection.Instance;
+            bool res = true;
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var c = new ApplicationDbContext();
+            List<dynamic> list = B1conn.getParalels();
+
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                var strcod = cod != -1 ? wb.Worksheet(sheet).Cell(i, cod).Value.ToString() : null;
+                var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
+                var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
+                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla))
+                {
+                    res = false;
+                    if (list.Any(x => x.cod==strcod))
+                    {
+                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo))
+                        {
+                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta." );
+                        }
+                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla))
+                        {
+                            paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                        }
+                        else
+                        {
+                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
+                            paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                        }
+                    }
+                    else if (list.Any(x => x.periodo==strperiodo))
+                    {
+                        if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
+                        {
+                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                        }
+                        else
+                        {
+                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            paintXY(sigla, i, XLColor.Red, "Este Periodo no es correcto.");
+                        }
+                    }
+                    else if (list.Any(x => x.sigla==strsigla))
+                    {
+                        paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                        paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                    }
+                    else
+                    {
+                        paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                        paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                        paintXY(sigla, i, XLColor.Red, "Este Periodo no es correcto.");
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        public Decimal strToDecimal(int row, int col, int sheet=1)
+        {
+            return wb.Worksheet(sheet).Cell(row, col).Value.ToString() == "" ? 0.0m : Decimal.Parse(wb.Worksheet(sheet).Cell(row, col).Value.ToString());
+        }
+        public Double strToDouble(int row, int col, int sheet=1)
+        {
+           return wb.Worksheet(sheet).Cell(row, col).Value.ToString() == "" ? 0.0 : Double.Parse(wb.Worksheet(sheet).Cell(row, col).Value.ToString());            
         }
 
         public void paintXY(int x, int y,XLColor color,string comment = null)

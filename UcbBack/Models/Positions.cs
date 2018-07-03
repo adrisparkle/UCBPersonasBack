@@ -8,6 +8,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Position")]
     public class Positions
     {
         [Key]

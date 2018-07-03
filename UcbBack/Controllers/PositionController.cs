@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using UcbBack.Models;
+using System.Data.Entity;
 
 namespace UcbBack.Controllers
 {
@@ -20,7 +21,8 @@ namespace UcbBack.Controllers
         // GET api/Positions
         public IHttpActionResult Get()
         {
-            return Ok(_context.Position.ToList()); 
+            var poslist = _context.Position.Include(p=>p.Level).Include(i=>i.Branches).ToList().Select(x=>new{x.Id,x.Name,x.Level.Cod,x.Level.Category,Branch = x.Branches.Name});
+            return Ok(poslist); 
         }
 
         // GET api/Positions/5

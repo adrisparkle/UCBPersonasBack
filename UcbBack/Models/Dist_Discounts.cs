@@ -7,6 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Dist_Discounts")]
     public class Dist_Discounts
     {
         [Key]
@@ -16,5 +17,8 @@ namespace UcbBack.Models
         public string Name { get; set; }
         public string Type { get; set; }
         public decimal Total { get; set; }
+        public string segmentoOrigen { get; set; }
+        public string mes { get; set; }
+        public string gestion { get; set; }
     }
 }

@@ -28,5 +28,13 @@ namespace UcbBack.Controllers
             B1con.CargaMoneda(out a,out b);
             return Ok("-"+B1con.getLastError());
         }
+
+        [HttpGet]
+        [Route("api/B1/BusinessPartners")]
+        public IHttpActionResult BusinessPartners()
+        {
+            var B1con = B1Connection.Instance;
+            return Ok(B1con.getBusinessPartners("*"));
+        }
     }
 }

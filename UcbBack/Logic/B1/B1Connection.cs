@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Web;
+using Newtonsoft.Json.Linq;
 using Sap.Data.Hana;
 using SAPbobsCOM;
 using UcbBack.Models;
@@ -236,7 +237,8 @@ namespace UcbBack.Logic.B1
 
         public List<string> getBusinessPartners(string col = "CardCode")
         {
-            string query = "Select \"" + col + "\" from " + DatabaseName + ".OCRD";
+            string cl = col == "*"?col:"\"" + col + "\"";
+            string query = "Select "+cl+" from " + DatabaseName + ".OCRD";
             HanaCommand command = new HanaCommand(query, HanaConn);
             HanaDataReader dataReader = command.ExecuteReader();
             List<string> res = new List<string>();
@@ -268,22 +270,72 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<string> getCostCenter(Dimension dimesion,string col = "PrcCode")
+        public List<dynamic> getCostCenter(Dimension dimesion, string col = "PrcCode")
         {
+            string[][] dim1cols = new string[][]
+            {
+                new [] {"*"},
+                new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_TipoUnidadO\""}, 
+                new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_GestionCC\"", "\"U_AmbitoPEI\"", "\"U_DirectrizPEI\"", "\"U_Indicador\""},
+                new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_NUM_INT_CAR\"", "\"U_Nivel\""},
+                new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_PeriodoPARALELO\"", "\"U_Sigla\"", "\"U_Materia\"", "\"U_Paralelo\"", "\"U_ModalidadPARALELO\"", "\"U_EstadoParalelo\"", "\"U_NivelParalelo\"", "\"U_TipoParalelo\""},
+                new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_GestionPeriodo\"", "\"U_TipoPeriodo\""},
+            };
+
+            string strcol = "";
+            bool first = true;
+
+            foreach (var column in dim1cols[(int)dimesion])
+            {
+                strcol +=  (first? "":",")+column ;
+                first = false;
+            }
+
             string where = (int)dimesion==0?"":" where \"DimCode\"="+(int)dimesion;
-            string query = "Select \""+col+"\" from " + DatabaseName + ".OPRC"+where;
+            string query = "Select "+strcol+" from " + DatabaseName + ".OPRC"+where;
             HanaCommand command = new HanaCommand(query, HanaConn);
             HanaDataReader dataReader = command.ExecuteReader();
-            List<string> res = new List<string>();
+            List<dynamic> res = new List<dynamic>();
             if (dataReader.HasRows)
             {
                 while (dataReader.Read())
                 {
+                    if (col == "*")
+                    {
+                        dynamic x = new JObject();
+                        foreach (var column in dim1cols[(int)dimesion])
+                        {
+                            x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                        }
+                        res.Add(x);
+                    }
+                    else
                     res.Add(dataReader[col].ToString());
                 }
             }
 
             return res;
+        }
+
+        public List<object> getParalels()
+        {
+            string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\" from " + DatabaseName + ".OPRC ";
+            HanaCommand command = new HanaCommand(query, HanaConn);
+            HanaDataReader dataReader = command.ExecuteReader();
+            List<object> list = new List<object>();
+            if (dataReader.HasRows)
+            {
+                while (dataReader.Read())
+                {
+                    dynamic o = new JObject();
+                    o.cod = dataReader["PrcCode"].ToString();
+                    o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
+                    o.sigla = dataReader["U_Sigla"].ToString();
+                    list.Add(o);
+                }
+            }
+
+            return list;
         }
 
         public string getLastError()

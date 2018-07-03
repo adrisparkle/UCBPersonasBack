@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using UcbBack.Models;
+using System.Data.Entity;
 
 namespace UcbBack.Controllers
 {
@@ -20,7 +21,8 @@ namespace UcbBack.Controllers
         // GET api/Level
         public IHttpActionResult Get()
         {
-            return Ok(_context.Dependencies.ToList());
+            var deplist = _context.Dependencies.Include(p => p.OrganizationalUnit).Include(i => i.Parent).ToList().Select(x => new { x.Id, x.Cod, x.Name, OrganizationalUnit = x.OrganizationalUnit.Name, Parent = x.Parent.Name }).OrderBy(x => x.Cod);
+            return Ok(deplist);
         }
 
         // GET api/Level/5
@@ -41,7 +43,7 @@ namespace UcbBack.Controllers
         public IHttpActionResult Post([FromBody]Dependency dependency)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             dependency.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dependency_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.Dependencies.Add(dependency);
@@ -62,7 +64,7 @@ namespace UcbBack.Controllers
 
             depInDB.Cod = dependency.Cod;
             depInDB.Name = dependency.Name;
-            depInDB.Parent = dependency.Parent;
+            depInDB.ParentId = dependency.ParentId;
             depInDB.OrganizationalUnitId = dependency.OrganizationalUnitId;
 
             _context.SaveChanges();

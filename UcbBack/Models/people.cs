@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.People")]
     public class People
     {
         public int Id { get; set; }

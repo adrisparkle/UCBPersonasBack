@@ -13,10 +13,23 @@ namespace UcbBack.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
+
+        [Required(ErrorMessage = "Te olvidaste de {0}")]
         public string Cod { get; set; }
+
+        [Required(ErrorMessage = "Te olvidaste de {0}")]
         public string Name { get; set; }
-        public int Parent { get; set; }
+
+        public Dependency Parent { get; set; }
+
+        [Required(ErrorMessage = "Te olvidaste de {0}")]
+        [ForeignKey("Parent")]
+        [Column("Parent")]
+        public int? ParentId { get; set; }
+
+        [Required(ErrorMessage = "Te olvidaste de {0}")]
         public int OrganizationalUnitId { get; set; }
+
         public OrganizationalUnit OrganizationalUnit { get; set; }
     }
 }

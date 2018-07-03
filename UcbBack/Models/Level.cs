@@ -7,6 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Level")]
     public class Level
     {
         [Key]

@@ -13,9 +13,10 @@ namespace UcbBack.Logic
         private ApplicationDbContext _context;
         private HanaValidator hanaValidator;
 
-        public ValidatePerson(ApplicationDbContext context)
+        public ValidatePerson(ApplicationDbContext context=null)
         {
-            _context = context;
+
+            _context = context?? new ApplicationDbContext();
             hanaValidator = new HanaValidator(_context);
         }
 
@@ -27,6 +28,24 @@ namespace UcbBack.Logic
             person.MariedSurName = hanaValidator.CleanText(person.MariedSurName);
 
             return person;
+        }
+
+        public bool IsActive(People person,string date = null,string format ="yyyy-MM-dd")
+        {
+            try
+            {
+                DateTime toDate = date == null
+                    ? DateTime.Now
+                    : DateTime.ParseExact(date, format, System.Globalization.CultureInfo.InvariantCulture);
+                var xw = _context.Contracts.ToList().Any(x =>
+                    (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate)));
+                return xw;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            
         }
 
         

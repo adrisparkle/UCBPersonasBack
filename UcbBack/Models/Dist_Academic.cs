@@ -22,13 +22,18 @@ namespace UcbBack.Models
         public decimal AcademicHoursWeek { get; set; }
         public decimal AcademicHoursMonth { get; set; }
         public string IdentificadorPago { get; set; }
-        public string CategoriaDocuente { get; set; }
+        public string CategoriaDocente { get; set; }
         public decimal CostoHora { get; set; }
         public decimal CostoMes { get; set; }
         public string CUNI { get; set; }
+        public string Dependency { get; set; }
+        public string PEI { get; set; }
         public string SAPParaleloUnit { get; set; }
+
         public decimal Porcentaje { get; set; }
         public int Matched { get; set; }
-        public string ProcedureTypeEmployee { get; set; }
+        public string segmentoOrigen { get; set; }
+        public string mes { get; set; }
+        public string gestion { get; set; }
     }
 }

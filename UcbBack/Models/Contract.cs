@@ -7,6 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Contract")]
     public class Contract
     {
         [Key]
@@ -20,6 +21,6 @@ namespace UcbBack.Models
         [Column(TypeName = "date")]
         public DateTime StartDate { get; set; }
         [Column(TypeName = "date")]
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 }

@@ -7,7 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
-    //[Table("ADMNALRRHH.BRANCHES")]
+    [Table("ADMNALRRHH.Branches")]
     public class Branches
     {
         [Key]

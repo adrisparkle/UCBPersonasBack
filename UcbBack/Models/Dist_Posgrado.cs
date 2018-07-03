@@ -7,6 +7,7 @@ using System.Web;
 
 namespace UcbBack.Models
 {
+    [Table("ADMNALRRHH.Dist_Posgrado")]
     public class Dist_Posgrado
     {
         [Key]
@@ -17,12 +18,17 @@ namespace UcbBack.Models
         public string ProjectName { set; get; }
         public int Vesion { set; get; }
         public decimal TotalPagado { set; get; }
+        public string Dependency { set; get; }
+        public string CUNI { set; get; }
         public string ProjectType { set; get; }
-        public string ProjectSubType { set; get; }
         public string TipoTarea { set; get; }
         public string PEI { set; get; }
         public string Periodo { set; get; }
         public string ProjectCode { set; get; }
+        public decimal Porcentaje { get; set; }
 
+        public string segmentoOrigen { get; set; }
+        public string mes { get; set; }
+        public string gestion { get; set; }
     }
 }
