@@ -313,7 +313,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/Distribute")]
         public IHttpActionResult Distribute()
         {
-            ORExcel contractExcel = new ORExcel(fileName: "OtrasRegionales.xlsx", headerin: 3);
+            var sql = _context.Database.ExecuteSqlCommand("");
             return Ok("Se Distribuyó las planillas con éxito");
         }
 

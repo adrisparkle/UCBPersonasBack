@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -73,11 +74,35 @@ namespace UcbBack.Logic
         public HttpResponseMessage getTemplate()
         {
             var template = new XLWorkbook();
-            IXLWorksheet ws =template.AddWorksheet(fileName);
-
+            IXLWorksheet ws =template.AddWorksheet(fileName.Replace(".xlsx",""));
+            var tittle = ws.Range(1, 1, 2, columns.Length);
+            tittle.Cell(1, 1).Value = fileName.Replace(".xlsx", "").ToUpper();//"Base de Datos Nacional de Capital Humano";
+            tittle.Cell(1, 1).Style.Font.Bold = true;
+            tittle.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromTheme(XLThemeColor.Accent1);
+            tittle.Cell(1, 1).Style.Font.FontName = "Bahnschrift SemiLight";
+            tittle.Cell(1, 1).Style.Font.FontSize = 20;
+            tittle.Cell(1, 1).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+            tittle.Merge();
             for (int i = 0; i < columns.Length; i++)
             {
-                template.Worksheet(1).Cell(headerin, i+1).Value = columns[i].headers;
+                ws.Column(i + 1).Width=10;
+                ws.Cell(headerin, i + 1).Value = columns[i].headers;
+                if(columns[i].typeofcol==typeof(double))
+                    for (int j = headerin + 1; j < 1000; j++)
+                    {
+                        ws.Cell(j, i + 1).Style.NumberFormat.Format = "#,##0.00";
+                        var validation = ws.Cell(j, i + 1).DataValidation;
+                        validation.Decimal.Between(0, 9999999);
+                        validation.InputTitle = "Columna Numerica";
+                        validation.InputMessage = "Por favor ingresar solo numeros.";
+                        validation.ErrorStyle = XLErrorStyle.Warning;
+                        validation.ErrorTitle = "Error de tipo de valor";
+                        validation.ErrorMessage = "Esta celda debe ser tipo numerica.";
+                    }
+
+                ws.Cell(headerin, i + 1).Style.Alignment.WrapText = true;
+                ws.Cell(headerin, i + 1).Style.Font.Bold = true;
+                ws.Cell(headerin, i + 1).Style.Fill.BackgroundColor = XLColor.FromTheme(XLThemeColor.Accent1);
             }
             return toResponse(template);
         }
@@ -102,8 +127,10 @@ namespace UcbBack.Logic
                 }
                 for (int i = 1; i <= columns.Length; i++)
                 {
-                    if (!String.Equals(Regex.Replace(sheet.Cell(headerin, i).Value.ToString().Trim(), @"\t|\n|\r", " "),
-                        columns[i - 1].headers.Trim()))
+                    var comp = String.Compare(
+                        Regex.Replace(sheet.Cell(headerin, i).Value.ToString().Trim().ToUpper(), @"\t|\n|\r", " "),
+                        columns[i - 1].headers.Trim().ToUpper(), CultureInfo.CurrentCulture, CompareOptions.IgnoreNonSpace);
+                    if (comp!=0)
                     {
                         res = false;
                         addError("Nombre de columna", "La columna " + i + "deberia llamarse: " + columns[i - 1].headers,false);

@@ -65,6 +65,7 @@ namespace UcbBack.Controllers
             //user.Password = Encoding.ASCII.GetString(hashBytes);
             user.Password = Convert.ToBase64String(hashBytes);
             user.Token = validator.getToken(user);
+            user.active = true;
             user.TokenCreatedAt = DateTime.Now;
             user.RefreshToken = validator.getRefreshToken(user);
             user.RefreshTokenCreatedAt = DateTime.Now;
@@ -76,6 +77,7 @@ namespace UcbBack.Controllers
             respose.UserName = user.UserName;
             respose.Token = user.Token;
             respose.RefreshToken = user.RefreshToken;
+            respose.active = user.active;
 
             return Created(new Uri(Request.RequestUri + "/" + respose.Id), respose);
         }

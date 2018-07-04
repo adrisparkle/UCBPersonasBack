@@ -56,8 +56,6 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            //todo validate if BussinesParner Exist
-            //bool v2 = VerifyPerson(1, 13, 2);
             var connB1 = B1Connection.Instance;
 
             bool v1 = VerifyColumnValueIn(3, connB1.getProjects(col: "PrjName").ToList(), comment: "Este Proyecto no existe en SAP.");
