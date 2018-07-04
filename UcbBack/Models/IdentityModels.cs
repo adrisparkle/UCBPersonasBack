@@ -38,6 +38,8 @@ namespace UcbBack.Models
         public DbSet<Dist_Pregrado> DistPregrados  { get; set; }
         public DbSet<Dist_Posgrado> DistPosgrados  { get; set; }
         public DbSet<Dist_OR> DistOrs  { get; set; }
+        public DbSet<CuentaContable> CuentaContables  { get; set; }
+        public DbSet<GrupoContable> GrupoContables  { get; set; }
         
 
         //auth models

@@ -220,8 +220,10 @@
     <Compile Include="Controllers\BranchesController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
     <Compile Include="Controllers\CostCentersController.cs" />
+    <Compile Include="Controllers\CuentasContablesController.cs" />
     <Compile Include="Controllers\CustomUserController.cs" />
     <Compile Include="Controllers\DependencyController.cs" />
+    <Compile Include="Controllers\GrupoContableController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LevelController.cs" />
     <Compile Include="Controllers\OrganizationalUnitController.cs" />
@@ -262,12 +264,14 @@
     <Compile Include="Models\Branches.cs" />
     <Compile Include="Models\Contract.cs" />
     <Compile Include="Models\ContractDetail.cs" />
+    <Compile Include="Models\CuentaContable.cs" />
     <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\Dist_Academic.cs" />
     <Compile Include="Models\Dist_Discounts.cs" />
     <Compile Include="Models\Dist_OR.cs" />
     <Compile Include="Models\Dist_Posgrado.cs" />
     <Compile Include="Models\Dist_Pregrado.cs" />
+    <Compile Include="Models\GrupoContable.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
@@ -280,7 +284,6 @@
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
     <Compile Include="Startup.cs" />
-    <Compile Include="ViewModels\DependencyViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />

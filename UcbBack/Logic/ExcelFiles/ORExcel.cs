@@ -58,11 +58,21 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance;
             bool v1 = VerifyColumnValueIn(6,_context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
             bool v2 = VerifyPerson(ci:1, CUNI:5, fullname:2);
-            bool v3 = VerifyColumnValueIn(7, connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
-            bool v4 = VerifyColumnValueIn(8, connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList(), comment: "Este plan de estudios no existe en SAP.");
-            bool v5 = VerifyColumnValueIn(9, connB1.getCostCenter(B1Connection.Dimension.Paralelo).Cast<string>().ToList(), comment: "Este paralelo no existe en SAP.");
-            bool v6 = VerifyColumnValueIn(10, connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
-            bool v7 = VerifyColumnValueIn(11, connB1.getProjects().ToList(), comment: "Este proyecto no existe en SAP.");
+            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
+            pei.Add("");
+            bool v3 = VerifyColumnValueIn(7, pei, comment: "Este PEI no existe en SAP.");
+            var planacad = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList();
+            planacad.Add("");
+            bool v4 = VerifyColumnValueIn(8, planacad, comment: "Este plan de estudios no existe en SAP.");
+            var paralelo = connB1.getCostCenter(B1Connection.Dimension.Paralelo).Cast<string>().ToList();
+            paralelo.Add("");
+            bool v5 = VerifyColumnValueIn(9, paralelo, comment: "Este paralelo no existe en SAP.");
+            var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
+            periodo.Add("");
+            bool v6 = VerifyColumnValueIn(10, periodo, comment: "Este periodo no existe en SAP.");
+            var projects = connB1.getProjects().ToList();
+            projects.Add("");
+            bool v7 = VerifyColumnValueIn(11, projects, comment: "Este proyecto no existe en SAP.");
 
             return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7;
         }

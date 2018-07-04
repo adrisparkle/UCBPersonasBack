@@ -123,17 +123,5 @@ namespace UcbBack.Controllers
             _context.SaveChanges();
             return Ok(personInDB);
         }
-
-        // DELETE api/People/5
-        [System.Web.Http.HttpDelete]
-        public IHttpActionResult Delete(int id)
-        {
-            var personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
-            if (personInDB == null)
-                return NotFound();
-            _context.Person.Remove(personInDB);
-            _context.SaveChanges();
-            return Ok();
-        }
     }
 }
