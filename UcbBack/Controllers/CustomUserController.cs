@@ -95,6 +95,7 @@ namespace UcbBack.Controllers
                 return NotFound();
             userInDB.UserName = user.UserName;
             userInDB.RolId = user.RolId;
+            userInDB.active = user.active;
             _context.SaveChanges();
 
             dynamic respose = new JObject();
@@ -158,13 +159,14 @@ namespace UcbBack.Controllers
         }
 
         // DELETE api/user/5
-        [HttpDelete]
-        [Route("api/user/")]
-        public IHttpActionResult Delete(int id)
+        [HttpPost]
+        [Route("api/user/ChangeStatus")]
+        public IHttpActionResult ChangeStatus(int id)
         {
             var userInDB = _context.CustomUsers.FirstOrDefault(d => d.Id == id);
             if (userInDB == null)
                 return NotFound();
+
             _context.CustomUsers.Remove(userInDB);
             _context.SaveChanges();
             return Ok();

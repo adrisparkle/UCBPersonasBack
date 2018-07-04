@@ -42,7 +42,9 @@ namespace UcbBack.Models
         public string ProcedureTypeEmployee { get; set; }
         public decimal Porcentaje { get; set; }
         public string segmentoOrigen { get; set; }
+        [StringLength(2)]
         public string mes { get; set; }
+        [StringLength(4)]
         public string gestion { get; set; }
 
     }

@@ -23,5 +23,6 @@ namespace UcbBack.Models.Auth
         public string RefreshToken { get; set; }
         public DateTime? TokenCreatedAt { get; set; }
         public DateTime? RefreshTokenCreatedAt { get; set; }
+        public Boolean active { get; set; }
     }
 }

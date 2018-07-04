@@ -27,7 +27,9 @@ namespace UcbBack.Models
 
         public decimal Porcentaje { get; set; }
         public string segmentoOrigen { get; set; }
+        [StringLength(2)]
         public string mes { get; set; }
+        [StringLength(4)]
         public string gestion { get; set; }
 
     }

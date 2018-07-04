@@ -309,6 +309,14 @@ namespace UcbBack.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("api/payroll/Distribute")]
+        public IHttpActionResult Distribute()
+        {
+            ORExcel contractExcel = new ORExcel(fileName: "OtrasRegionales.xlsx", headerin: 3);
+            return Ok("Se Distribuyó las planillas con éxito");
+        }
+
     }
 
 
