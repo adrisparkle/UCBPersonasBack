@@ -15,7 +15,6 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
 
-        public string EmployeeType { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
     }

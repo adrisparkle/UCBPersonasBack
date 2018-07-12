@@ -21,7 +21,7 @@ namespace UcbBack.Controllers
         // GET api/CuentasContables
         public IHttpActionResult Get()
         {
-            var deplist = _context.CuentaContables.Include(p => p.GrupoContable).ToList().Select(x => new { x.Id, x.Name, x.Concept, x.Segment, x.Indicator, GrupoContable = x.GrupoContable.Name }).OrderBy(x => x.Id);
+            var deplist = _context.CuentaContables.Include(p => p.GrupoContable).Include(p => p.Branches).ToList().Select(x => new { x.Id, x.Name, x.Concept, Branches=x.Branches.Abr, x.Indicator, GrupoContable = x.GrupoContable.Name }).OrderBy(x => x.Id);
             return Ok(deplist);
         }
 
@@ -65,7 +65,7 @@ namespace UcbBack.Controllers
             cucoInDB.GrupoContableId = cuentaContable.GrupoContableId;
             cucoInDB.Name = cuentaContable.Name;
             cucoInDB.Concept = cuentaContable.Concept;
-            cucoInDB.Segment = cuentaContable.Segment;
+            cucoInDB.BranchesId = cuentaContable.BranchesId;
             cucoInDB.Indicator = cuentaContable.Indicator;
 
             _context.SaveChanges();

@@ -70,10 +70,14 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes") 
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion") 
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");
+                    response.Content = new StringContent("Debe enviar mes, gestion, segmentoOrigen y un archivo excel llamado uploadfile");
                     return response;
                 }
 
@@ -113,7 +117,11 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");
@@ -156,7 +164,11 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");
@@ -198,7 +210,11 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");
@@ -241,7 +257,11 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");
@@ -284,7 +304,11 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (o.mes == null || o.gestion == null || o.segmentoOrigen == null)
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar mes, gestion y segmentoOrigen");

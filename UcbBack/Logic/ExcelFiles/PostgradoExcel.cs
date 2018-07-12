@@ -62,8 +62,8 @@ namespace UcbBack.Logic.ExcelFiles
             bool v2 = VerifyColumnValueIn(6, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
             bool v3 = VerifyColumnValueIn(8, new List<string>{"POST","EC","INV"}, comment: "No existe este tipo de proyecto.");
             bool v4 = VerifyColumnValueIn(9, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "OTR" }, comment: "No existe este tipo de tarea asignada.");
-            bool v5 = VerifyColumnValueIn(10, connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
-            bool v6 = VerifyColumnValueIn(11, connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
+            bool v5 = VerifyColumnValueIn(10, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
+            bool v6 = VerifyColumnValueIn(11, connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
             bool v7 = VerifyColumnValueIn(12, connB1.getProjects(), comment: "Este proyecto no existe en SAP.");
             bool v8 = VerifyPerson(ci:1,fullname: 2,CUNI:7,date:gestion+"-"+mes+"-01");
             return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8;

@@ -7,18 +7,16 @@ using System.Web;
 
 namespace UcbBack.Models
 {
-    [Table("ADMNALRRHH.Contract")]
-    public class Contract
+    [Table("ADMNALRRHH.Gestion")]
+    public class Gestion
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
-        public string CUNI { get; set; }
-        public int PeopleId { get; set; }
-        public People People { get; set; }
-        [Column(TypeName = "date")]
+
+        public string Type { get; set; }
+        public string Name { get; set; }
         public DateTime StartDate { get; set; }
-        [Column(TypeName = "date")]
-        public DateTime? EndDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 }

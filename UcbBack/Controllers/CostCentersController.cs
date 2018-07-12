@@ -24,7 +24,7 @@ namespace UcbBack.Controllers
         [Route("api/CostCenters/OrganizationalUnits")]
         public IHttpActionResult OrganizationalUnits()
         {
-            var y = B1conn.getCostCenter(B1Connection.Dimension.PlanAcademico,col:"*").Cast<JObject>();
+            var y = B1conn.getCostCenter(B1Connection.Dimension.OrganizationalUnit,col:"*").Cast<JObject>();
             return Ok(y);
         }
         [HttpGet]
@@ -53,6 +53,13 @@ namespace UcbBack.Controllers
         public IHttpActionResult Periodo()
         {
             var y = B1conn.getCostCenter(B1Connection.Dimension.Periodo, col: "*").Cast<JObject>();
+            return Ok(y);
+        }
+        [HttpGet]
+        [Route("api/CostCenters/Proyectos")]
+        public IHttpActionResult Proyectos()
+        {
+            var y = B1conn.getProjects();
             return Ok(y);
         }
     }

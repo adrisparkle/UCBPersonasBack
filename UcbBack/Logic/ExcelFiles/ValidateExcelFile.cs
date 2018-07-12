@@ -85,9 +85,9 @@ namespace UcbBack.Logic
             tittle.Merge();
             for (int i = 0; i < columns.Length; i++)
             {
-                ws.Column(i + 1).Width=10;
+                ws.Column(i + 1).Width=13;
                 ws.Cell(headerin, i + 1).Value = columns[i].headers;
-                if(columns[i].typeofcol==typeof(double))
+                /*if(columns[i].typeofcol==typeof(double))
                     for (int j = headerin + 1; j < 1000; j++)
                     {
                         ws.Cell(j, i + 1).Style.NumberFormat.Format = "#,##0.00";
@@ -98,7 +98,7 @@ namespace UcbBack.Logic
                         validation.ErrorStyle = XLErrorStyle.Warning;
                         validation.ErrorTitle = "Error de tipo de valor";
                         validation.ErrorMessage = "Esta celda debe ser tipo numerica.";
-                    }
+                    }*/
 
                 ws.Cell(headerin, i + 1).Style.Alignment.WrapText = true;
                 ws.Cell(headerin, i + 1).Style.Font.Bold = true;
@@ -170,14 +170,15 @@ namespace UcbBack.Logic
             bool jaro=false,
             string colToCompare=null, 
             string table=null, 
-            string colId=null)
+            string colId=null,
+            bool notin=false)
         {
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var l = UsedRange.LastRow().RowNumber();
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                if (!list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                if (list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase))==notin)
                 {
                     res = false;
                     if (paintcol)
@@ -199,6 +200,7 @@ namespace UcbBack.Logic
             return res;
         }
 
+        //todo verificar que este en el segmento
         public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd")
         {
             bool res = true;
@@ -250,8 +252,8 @@ namespace UcbBack.Logic
                                 string aux = "";
                                 var similarities = ppllist.Where(x => x.Document ==strci).Select(y => y.CUNI).ToList();
                                 aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                wb.Worksheet(sheet).Cell(i, CUNI).Value = similarities;
-                                //paintXY(CUNI, i, XLColor.Red, comment + aux);
+                                //wb.Worksheet(sheet).Cell(i, CUNI).Value = similarities;
+                                paintXY(CUNI, i, XLColor.Red, comment + aux);
                             }
                         }
                     }

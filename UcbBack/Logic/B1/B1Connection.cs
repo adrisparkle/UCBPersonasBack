@@ -86,8 +86,8 @@ namespace UcbBack.Logic.B1
             company.Server = "SAPHANA01:30015";
             company.CompanyDB = "UCATOLICA";
             company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
-            company.DbUserName = "admnalrrhh";
-            company.DbPassword = "Rrhh12345";
+            company.DbUserName = "RRHH_SDK";
+            company.DbPassword = "Rrhh1234";
             company.UserName = "managerrrhh";
             company.Password = "Rrhh1234";
             company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
@@ -270,7 +270,7 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<dynamic> getCostCenter(Dimension dimesion, string col = "PrcCode")
+        public List<dynamic> getCostCenter(Dimension dimesion,string mes=null,string gestion=null, string col = "PrcCode")
         {
             string[][] dim1cols = new string[][]
             {
@@ -291,7 +291,16 @@ namespace UcbBack.Logic.B1
                 first = false;
             }
 
-            string where = (int)dimesion==0?"":" where \"DimCode\"="+(int)dimesion;
+            string where = (int) dimesion == 0
+                ? ((mes!=gestion)?" where ('2018-02-01 01:00:00' " +
+                  "between \"ValidFrom\" and \"ValidTo\")" +
+                  "or ('"+gestion+"-"+mes+"-01 01:00:00' > \"ValidFrom\" " +
+                  "and \"ValidTo\" is null)":"")
+                : ((mes!=gestion)?" where \"DimCode\"=" + (int) dimesion +
+                  " and (('"+gestion+"-"+mes+"-01 01:00:00' " +
+                  "between \"ValidFrom\" and \"ValidTo\")" +
+                  "or ('2018-02-01 01:00:00' > \"ValidFrom\" " +
+                  "and \"ValidTo\" is null))" : " where \"DimCode\"=" + (int)dimesion);
             string query = "Select "+strcol+" from " + DatabaseName + ".OPRC"+where;
             HanaCommand command = new HanaCommand(query, HanaConn);
             HanaDataReader dataReader = command.ExecuteReader();

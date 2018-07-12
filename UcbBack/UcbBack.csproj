@@ -223,6 +223,7 @@
     <Compile Include="Controllers\CuentasContablesController.cs" />
     <Compile Include="Controllers\CustomUserController.cs" />
     <Compile Include="Controllers\DependencyController.cs" />
+    <Compile Include="Controllers\GestionController.cs" />
     <Compile Include="Controllers\GrupoContableController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LevelController.cs" />
@@ -232,12 +233,14 @@
     <Compile Include="Controllers\PerformanceAreaController.cs" />
     <Compile Include="Controllers\PositionController.cs" />
     <Compile Include="Controllers\RolController.cs" />
+    <Compile Include="Controllers\TipoEmpleadoDistController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Logic\B1\B1Connection.cs" />
     <Compile Include="Logic\ExcelFiles\AcademicExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\ContractExcel.cs" />
     <Compile Include="Logic\ExcelFiles\DiscountExcel.cs" />
     <Compile Include="Logic\ExcelFiles\ORExcel.cs" />
     <Compile Include="Logic\ExcelFiles\PayrollExcel.cs" />
@@ -271,6 +274,7 @@
     <Compile Include="Models\Dist_OR.cs" />
     <Compile Include="Models\Dist_Posgrado.cs" />
     <Compile Include="Models\Dist_Pregrado.cs" />
+    <Compile Include="Models\Gestion.cs" />
     <Compile Include="Models\GrupoContable.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
@@ -280,6 +284,7 @@
     <Compile Include="Models\people.cs" />
     <Compile Include="Models\PerformanceArea.cs" />
     <Compile Include="Models\Positions.cs" />
+    <Compile Include="Models\TipoEmpleadoDist.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />

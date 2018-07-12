@@ -61,7 +61,6 @@ namespace UcbBack.Controllers
             if (grcoInDB == null)
                 return NotFound();
 
-            grcoInDB.EmployeeType = grupoContable.EmployeeType;
             grcoInDB.Name = grupoContable.Name;
             grcoInDB.Description = grupoContable.Description;
 

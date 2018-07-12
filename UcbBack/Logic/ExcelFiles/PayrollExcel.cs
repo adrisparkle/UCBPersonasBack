@@ -71,13 +71,71 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
+            //todo cabiar a socio de negocio
             bool v1 = VerifyColumnValueIn(10,new List<string>{"FUT","PRE"});
-            bool v2 = VerifyColumnValueIn(17, new List<string> { "TC", "MT", "TH", "AA", "OD", "DA", "OR", "VLIR", "RP" });
-            bool v3 = VerifyColumnValueIn(18, connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
+            bool v2 = VerifyColumnValueIn(17, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
+            bool v3 = VerifyColumnValueIn(18, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
             bool v4 = VerifyColumnValueIn(20, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.");
             bool v5 = VerifyPerson(ci:1, CUNI:16, fullname:2);
-            bool v6 = VerifyColumnValueIn(22, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado cono un Bussines Partner en SAP");
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6;
+            bool v6 = VerifyColumnValueIn(22, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado como un Bussines Partner en SAP");
+            bool v7 = ValidateLiquidoPagable();
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7;
+        }
+
+        public bool ValidateLiquidoPagable(int sheet=1)
+        {
+            int i1 = 3, i2 = 4, i3 = 5, i4 = 6, i5 = 7, i6 =8;
+            int d1 = 11, d2 = 12, d3 = 13;
+
+            bool res = true;
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                decimal in1 = 0, in2 = 0, in3 = 0, in4 = 0, in5 = 0, in6 = 0,ti=0,lp=0;
+                decimal de1 = 0, de2 = 0, de3 = 0, td=0;
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i1).Value.ToString(), out in1);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i2).Value.ToString(), out in2);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i3).Value.ToString(), out in3);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i4).Value.ToString(), out in4);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i5).Value.ToString(), out in5);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, i6).Value.ToString(), out in6);
+
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, d1).Value.ToString(), out de1);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, d2).Value.ToString(), out de2);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, d3).Value.ToString(), out de3);
+
+                var ingresos = in1 + in2 + in3 + in4 + in5 + in6;
+                var descuentos = de1 + de2 + de3;
+
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 9).Value.ToString(), out ti);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 14).Value.ToString(), out td);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 15).Value.ToString(), out lp);
+
+
+                if (ingresos != ti)
+                {
+                    res = false;
+                    paintXY(9, i, XLColor.Red, "No cuadran Ingresos. la suma sale: "+ingresos);
+                }
+
+                if (descuentos != td)
+                {
+                    res = false;
+                    paintXY(14, i, XLColor.Red, "No cuadran Descuentos. la suma sale: " + descuentos);
+                }
+
+                var dif = ingresos - descuentos;
+
+                if ( dif!= lp)
+                {
+                    res = false;
+                    paintXY(15, i, XLColor.Red, "No cuadran Liquido Pagable. la suma sale: " + (ingresos-descuentos));
+                }
+
+            }
+
+            return res;
         }
 
         public Dist_Payroll ToDistPayroll(int row, int sheet = 1)

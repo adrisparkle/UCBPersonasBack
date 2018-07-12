@@ -13,8 +13,6 @@ namespace UcbBack.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
-        public int ContractId { get; set; }
-        public Contract Contract { get; set; }
         
         public string CUNI { get; set; }
 
@@ -34,8 +32,6 @@ namespace UcbBack.Models
         public int BranchesId { get; set; }
         public Branches Branches { get; set; }
 
-        public int MonthI { get; set; }
-        public int MonthF { get; set; }
         [Column(TypeName = "date")]
         public DateTime StartDate { get; set; }
         [Column(TypeName = "date")]

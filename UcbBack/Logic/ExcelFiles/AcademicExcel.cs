@@ -62,13 +62,15 @@ namespace UcbBack.Logic.ExcelFiles
         {
             var connB1 = B1Connection.Instance;
             bool v1 = VerifyPerson(1, 13, 2);
-            bool v2 = VerifyColumnValueIn(3, new List<string> { "TC", "MT", "TH", "AA", "OD", "DA", "OR", "VLIR", "RP" });
+            bool v2 = VerifyColumnValueIn(3, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
             bool v3 = VerifyParalel(cod:16,periodo: 4, sigla:5);
             bool v4 = VerifyColumnValueIn(9, new List<string> { "PA", "PI", "TH" });
             bool v5 = VerifyColumnValueIn(14, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
-            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
+            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             pei.Add("0");
             bool v6 = VerifyColumnValueIn(15, pei, comment: "Este PEI no existe en SAP.");
+            bool v7 = VerifyColumnValueIn(8, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
+            bool v8 = VerifyColumnValueIn(12, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
 
             return isValid() && v1 && v2 && v3 && v4 && v5 && v6;
         }

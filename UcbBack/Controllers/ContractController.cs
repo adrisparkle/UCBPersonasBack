@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Entity;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UcbBack.Logic;
 using UcbBack.Logic.ExcelFiles;
+
 
 namespace UcbBack.Controllers
 {
@@ -29,15 +31,29 @@ namespace UcbBack.Controllers
         // GET api/Contract
         public IHttpActionResult Get()
         {
-            return Ok(_context.Contracts.ToList());
+            var contplist = _context.ContractDetails.Include(p => p.Branches).Include(p => p.Dependency).Include(p => p.Positions).Include(p => p.People).ToList().Select(x => new { x.Id, x.People.CUNI, x.People.Document, x.People.FirstSurName, x.People.SecondSurName, x.People.Names, Dependency = x.Dependency.Name, Branches = x.Branches.Abr, Positions=x.Positions.Name, x.Dedication,x.Linkage,x.StartDate,x.EndDate }).OrderBy(x => x.Id);
+            return Ok(contplist);
         }
 
         // GET api/Contract/5
         public IHttpActionResult Get(int id)
         {
-            Contract contractInDB = null;
+            ContractDetail contractInDB = null;
 
-            contractInDB = _context.Contracts.FirstOrDefault(d => d.Id == id);
+            contractInDB = _context.ContractDetails.FirstOrDefault(d => d.Id == id);
+
+            if (contractInDB == null)
+                return NotFound();
+
+            return Ok(contractInDB);
+        }
+        [HttpGet]
+        [Route("api/Contract/GetPersonContract")]
+        public IHttpActionResult GetPersonContract(int id)
+        {
+            List<ContractDetail> contractInDB = null;
+
+            contractInDB = _context.ContractDetails.Where(d => d.People.Id == id).ToList();
 
             if (contractInDB == null)
                 return NotFound();
@@ -45,94 +61,113 @@ namespace UcbBack.Controllers
             return Ok(contractInDB);
         }
 
+        [NonAction]
+        public async Task<System.Dynamic.ExpandoObject> HttpContentToVariables(MultipartMemoryStreamProvider req)
+        {
+            dynamic res = new System.Dynamic.ExpandoObject();
+            foreach (HttpContent contentPart in req.Contents)
+            {
+                var contentDisposition = contentPart.Headers.ContentDisposition;
+                string varname = contentDisposition.Name;
+                if (varname == "\"segmentoOrigen\"")
+                {
+                    res.segmentoOrigen = contentPart.ReadAsStringAsync().Result;
+                }
+                else if (varname == "\"uploadfile\"")
+                {
+                    Stream stream = await contentPart.ReadAsStreamAsync();
+                    res.fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
+                    res.excelStream = stream;
+                }
+            }
+            return res;
+        }
         [HttpPost]
         [Route("api/Contract/AltaExcel")]
-        public async Task<HttpResponseMessage> AltasExcel()
+        public async Task<HttpResponseMessage> UploadORExcel()
         {
-            
             var response = new HttpResponseMessage();
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
-                foreach (HttpContent contentPart in req.Contents)
-                {
-                    Stream stream = await contentPart.ReadAsStreamAsync();
-                    var contentDisposition = contentPart.Headers.ContentDisposition;
-                    string fileName = String.IsNullOrEmpty(contentDisposition.FileName)
-                        ? ""
-                        : contentDisposition.FileName.Trim('"');
-                    var mediaType = contentPart.Headers.ContentType == null ? "" :
-                        String.IsNullOrEmpty(contentPart.Headers.ContentType.MediaType) ? "" :
-                        contentPart.Headers.ContentType.MediaType;
-                    ValidateContractsFile contractExcel = new ValidateContractsFile(stream, fileName,_context);
+                dynamic o = HttpContentToVariables(req).Result;
 
-                    return contractExcel.toResponse();
+                if (o.segmentoOrigen == null)
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Content = new StringContent("Debe enviar segmentoOrigen");
+                    return response;
                 }
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
-                return response;
+
+                string name = o.segmentoOrigen.ToString();
+                var segId = _context.Branch.FirstOrDefault(b => b.Name == "");
+                if (segId == null)
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Content = new StringContent("Debe enviar segmentoOrigen valido");
+                    return response;
+                }
+                ContractExcel contractExcel = new ContractExcel(o.excelStream, _context, o.fileName, segId.Id, headerin: 3, sheets: 1);
+                if (contractExcel.ValidateFile())
+                {
+                    contractExcel.toDataBase();
+                    response.StatusCode = HttpStatusCode.OK;
+                    response.Content = new StringContent("Se subio el archivo correctamente.");
+                    return response;
+                }
+                return contractExcel.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
                 return response;
             }
-            // Scan the Multiple Parts 
-            
         }
 
         //altas
         // POST api/Contract
         [HttpPost]
         [Route("api/Contract/Alta")]
-        public IHttpActionResult Post([FromBody]Contract contract)
+        public IHttpActionResult Post([FromBody]ContractDetail contract)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            contract.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Contract_sqs\".nextval FROM DUMMY;").ToList()[0];
-            _context.Contracts.Add(contract);
+            contract.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+            _context.ContractDetails.Add(contract);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);
         }
 
         [HttpPost]
         [Route("api/Contract/Baja/{id}")]
-        public IHttpActionResult Baja(int id,[FromBody]Contract contract)
+        public IHttpActionResult Baja(int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            contract.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Contract_sqs\".nextval FROM DUMMY;").ToList()[0];
-            _context.Contracts.Add(contract);
+            ContractDetail contractInDB = _context.ContractDetails.FirstOrDefault(d => d.Id == id);
+            contractInDB.EndDate=DateTime.Now;
             _context.SaveChanges();
-            return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);
-        }
-
-        [HttpPost]
-        [Route("api/Contract/Modificaciones/{id}")]
-        public IHttpActionResult Modificaciones(int id,[FromBody]Contract contract)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            contract.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Contract_sqs\".nextval FROM DUMMY;").ToList()[0];
-            _context.Contracts.Add(contract);
-            _context.SaveChanges();
-            return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);
+            return Ok(contractInDB);
         }
 
         // PUT api/Contract/5
         [HttpPut]
-        public IHttpActionResult Put(int id, [FromBody]Contract contract)
+        public IHttpActionResult Put(int id, [FromBody]ContractDetail contract)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            Contract contractInDB = _context.Contracts.FirstOrDefault(d => d.Id == id);
+            ContractDetail contractInDB = _context.ContractDetails.FirstOrDefault(d => d.Id == id);
             if (contractInDB == null)
                 return NotFound();
 
-           // contractInDB.Cod = contract.Cod;
-           // contractInDB.Category = contract.Category;
+            contractInDB.StartDate = contract.StartDate;
+            contractInDB.Dedication = contract.Dedication;
+            contractInDB.BranchesId = contract.BranchesId;
+            contractInDB.DependencyId = contract.DependencyId;
+            contractInDB.PositionsId = contract.PositionsId;
+            contractInDB.PositionDescription = contract.PositionDescription;
+            contractInDB.Linkage = contract.Linkage;
+            contractInDB.AI = contract.AI;
 
             _context.SaveChanges();
             return Ok(contractInDB);

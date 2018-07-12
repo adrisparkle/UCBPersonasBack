@@ -40,6 +40,8 @@ namespace UcbBack.Models
         public DbSet<Dist_OR> DistOrs  { get; set; }
         public DbSet<CuentaContable> CuentaContables  { get; set; }
         public DbSet<GrupoContable> GrupoContables  { get; set; }
+        public DbSet<Gestion> Gestions  { get; set; }
+        public DbSet<TipoEmpleadoDist> TipoEmpleadoDists  { get; set; }
         
 
         //auth models
