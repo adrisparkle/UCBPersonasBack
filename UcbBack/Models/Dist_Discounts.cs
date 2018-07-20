@@ -22,5 +22,8 @@ namespace UcbBack.Models
         public string mes { get; set; }
         [StringLength(4)]
         public string gestion { get; set; }
+
+        public Dist_File DistFile { get; set; }
+        public int DistFileId { get; set; }
     }
 }

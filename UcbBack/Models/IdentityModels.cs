@@ -42,6 +42,10 @@ namespace UcbBack.Models
         public DbSet<GrupoContable> GrupoContables  { get; set; }
         public DbSet<Gestion> Gestions  { get; set; }
         public DbSet<TipoEmpleadoDist> TipoEmpleadoDists  { get; set; }
+        public DbSet<Dist_File> FileDbs  { get; set; }
+        public DbSet<Dist_LogErrores> DistLogErroreses  { get; set; }
+        public DbSet<Dist_Process> DistProcesses  { get; set; }
+        public DbSet<Dist_FileType> DistFileTypes  { get; set; }
         
 
         //auth models

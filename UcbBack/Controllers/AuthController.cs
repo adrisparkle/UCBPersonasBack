@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using System.Data.Entity;
 
 namespace UcbBack.Controllers
 {
@@ -23,9 +24,18 @@ namespace UcbBack.Controllers
             validator = new ValidateToken();
         }
 
+        [HttpGet]
+        [Route("api/auth/GetAccess")]
+        public IHttpActionResult GetAccess()
+        {
+            int userid = Int32.Parse(Request.Headers.GetValues("id").First());
+            var user = _context.CustomUsers.FirstOrDefault(cu => cu.Id == userid);
+            var access = _context.RolshaAccesses.Include(a=>a.Access).Where(a => a.Rolid == user.RolId).Select(x=>new{x.Access.Method,x.Access.Path,x.Access.Description});
+            return Ok(access);
+        }
+
         // POST: /api/auth/gettoken/
         [HttpPost]
-        //[ActionName("GetToken")]
         [Route("api/auth/GetToken")]
         public IHttpActionResult GetToken([FromBody]JObject credentials)
         {

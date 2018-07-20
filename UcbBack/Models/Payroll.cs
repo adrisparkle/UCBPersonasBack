@@ -14,7 +14,10 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
         public string Document { get; set; }
-        public string FullName { get; set; }
+        public string FirstName { get; set; }
+        public string FirstSurName { get; set; }
+        public string SecondSurName { get; set; }
+        public string MariedSurName { get; set; }
         public decimal BasicSalary { get; set; }
         public decimal AntiquityBonus { get; set; }
         public decimal OtherIncome { get; set; }
@@ -47,5 +50,7 @@ namespace UcbBack.Models
         [StringLength(4)]
         public string gestion { get; set; }
 
+        public Dist_File DistFile { get; set; }
+        public int DistFileId { get; set; }
     }
 }

@@ -20,13 +20,14 @@ namespace UcbBack.Logic.ExcelFiles
         };
         private ApplicationDbContext _context;
         private string mes, gestion, segmentoOrigen;
-
-        public DiscountExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen, int headerin = 3, int sheets = 1, string resultfileName = "Result")
+        private Dist_File file;
+        public DiscountExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen, Dist_File file,int headerin = 3, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName)
         {
             this.segmentoOrigen = segmentoOrigen;
             this.gestion = gestion;
             this.mes = mes;
+            this.file = file;
             _context = context;
             isFormatValid();
         }
@@ -48,10 +49,10 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
-            bool v1 = VerifyColumnValueIn(1, connB1.getBusinessPartners().ToList(), comment: "Este Codigo de Socio de Negocio no existe en SAP.");
-            bool v2 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
+            //bool v1 = VerifyColumnValueIn(1, connB1.getBusinessPartners().ToList(), comment: "Este Codigo de Socio de Negocio no existe en SAP.");
+            //bool v2 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
             bool v3 = VerifyColumnValueIn(3, new List<string> { "D_ANTI", "D_REND", "D_OTR", "D_PCOB" }, comment: "Tipo de deducción no valido");
-            return isValid() && v1 && v2 && v3;
+            return isValid() && v3;
         }
 
         public Dist_Discounts ToDistDiscounts(int row, int sheet = 1)
@@ -66,6 +67,8 @@ namespace UcbBack.Logic.ExcelFiles
             dis.mes = this.mes;
             dis.gestion = this.gestion;
             dis.segmentoOrigen = this.segmentoOrigen;
+
+            dis.DistFileId = file.Id;
             return dis;
         }
     }

@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -269,11 +270,16 @@
     <Compile Include="Models\ContractDetail.cs" />
     <Compile Include="Models\CuentaContable.cs" />
     <Compile Include="Models\Dependency.cs" />
+    <Compile Include="Models\DistErrores.cs" />
     <Compile Include="Models\Dist_Academic.cs" />
     <Compile Include="Models\Dist_Discounts.cs" />
+    <Compile Include="Models\Dist_FileType.cs" />
+    <Compile Include="Models\Dist_LogErrores.cs" />
     <Compile Include="Models\Dist_OR.cs" />
     <Compile Include="Models\Dist_Posgrado.cs" />
     <Compile Include="Models\Dist_Pregrado.cs" />
+    <Compile Include="Models\Dist_Process.cs" />
+    <Compile Include="Models\File.cs" />
     <Compile Include="Models\Gestion.cs" />
     <Compile Include="Models\GrupoContable.cs" />
     <Compile Include="Models\IdentityModels.cs" />

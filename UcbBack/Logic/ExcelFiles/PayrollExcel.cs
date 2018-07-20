@@ -15,7 +15,10 @@ namespace UcbBack.Logic.ExcelFiles
         private static Excelcol[] cols = new[]
         {
             new Excelcol("Carnet Identidad", typeof(string)), 
-            new Excelcol("Nombre Completo", typeof(string)),
+            new Excelcol("Primer Apellido", typeof(string)),
+            new Excelcol("Segundo Apellido", typeof(string)),
+            new Excelcol("Nombres", typeof(string)),
+            new Excelcol("Apellido Casada", typeof(string)),
             new Excelcol("Haber Básico", typeof(double)),
             new Excelcol("Bono de Antigüedad", typeof(double)),
             new Excelcol("Otros Ingresos", typeof(double)),
@@ -44,12 +47,14 @@ namespace UcbBack.Logic.ExcelFiles
 
         private string mes, gestion, segmentoOrigen;
         private ApplicationDbContext _context;
-        public PayrollExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen, int headerin = 1, int sheets = 1, string resultfileName = "PayrollResult")
+        private Dist_File file;
+        public PayrollExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen,Dist_File file, int headerin = 1, int sheets = 1, string resultfileName = "PayrollResult")
             : base(cols, data, fileName, headerin: headerin, resultfileName: resultfileName,sheets:sheets)
         {
             this.segmentoOrigen = segmentoOrigen;
             this.gestion = gestion;
             this.mes = mes;
+            this.file = file;
             _context = context;
             isFormatValid();
         }
@@ -72,20 +77,21 @@ namespace UcbBack.Logic.ExcelFiles
         {
             var connB1 = B1Connection.Instance;
             //todo cabiar a socio de negocio
-            bool v1 = VerifyColumnValueIn(10,new List<string>{"FUT","PRE"});
-            bool v2 = VerifyColumnValueIn(17, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
-            bool v3 = VerifyColumnValueIn(18, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
-            bool v4 = VerifyColumnValueIn(20, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.");
-            bool v5 = VerifyPerson(ci:1, CUNI:16, fullname:2);
-            bool v6 = VerifyColumnValueIn(22, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado como un Bussines Partner en SAP");
+            bool v1 = VerifyColumnValueIn(13,new List<string>{"FUT","PRE"});
+            bool v2 = VerifyColumnValueIn(20, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
+            bool v3 = VerifyColumnValueIn(21, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
+            bool v4 = VerifyColumnValueIn(23, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.");
+            bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: false);
+            //bool v6 = VerifyColumnValueIn(25, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado como un Bussines Partner en SAP");
             bool v7 = ValidateLiquidoPagable();
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7;
+            return isValid() && v1 && v2 && v4 && v5  && v7 && v3;
         }
 
         public bool ValidateLiquidoPagable(int sheet=1)
         {
-            int i1 = 3, i2 = 4, i3 = 5, i4 = 6, i5 = 7, i6 =8;
-            int d1 = 11, d2 = 12, d3 = 13;
+            int i1 = 6, i2 = 7, i3 = 8, i4 = 9, i5 = 10, i6 =11;
+            int d1 = 14, d2 = 15, d3 = 16;
+            int errortg = 12, errortd = 17, errorlp = 18;
 
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
@@ -105,24 +111,26 @@ namespace UcbBack.Logic.ExcelFiles
                 Decimal.TryParse(wb.Worksheet(sheet).Cell(i, d2).Value.ToString(), out de2);
                 Decimal.TryParse(wb.Worksheet(sheet).Cell(i, d3).Value.ToString(), out de3);
 
-                var ingresos = in1 + in2 + in3 + in4 + in5 + in6;
-                var descuentos = de1 + de2 + de3;
+                var ingresos = Math.Round(in1, 2) + Math.Round(in2, 2) + Math.Round(in3, 2) + Math.Round(in4, 2) + Math.Round(in5, 2) + Math.Round(in6, 2);
+                var descuentos = Math.Round(de1, 2) + Math.Round(de2, 2) + Math.Round(de3, 2);
 
-                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 9).Value.ToString(), out ti);
-                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 14).Value.ToString(), out td);
-                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 15).Value.ToString(), out lp);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 12).Value.ToString(), out ti);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 17).Value.ToString(), out td);
+                Decimal.TryParse(wb.Worksheet(sheet).Cell(i, 18).Value.ToString(), out lp);
 
 
                 if (ingresos != ti)
                 {
                     res = false;
-                    paintXY(9, i, XLColor.Red, "No cuadran Ingresos. la suma sale: "+ingresos);
+                    paintXY(errortg, i, XLColor.Red, "No cuadran Ingresos. la suma sale: "+ingresos);
+                    addError("No cuadran Ingresos", "La suma se calculó: " +ingresos + " se encontró " + ti);
                 }
 
                 if (descuentos != td)
                 {
                     res = false;
-                    paintXY(14, i, XLColor.Red, "No cuadran Descuentos. la suma sale: " + descuentos);
+                    paintXY(errortd, i, XLColor.Red, "No cuadran Descuentos. la suma sale: " + descuentos);
+                    addError("No cuadran Descuentos", "La suma se calculó: " + descuentos + " se encontró " + td);
                 }
 
                 var dif = ingresos - descuentos;
@@ -130,11 +138,13 @@ namespace UcbBack.Logic.ExcelFiles
                 if ( dif!= lp)
                 {
                     res = false;
-                    paintXY(15, i, XLColor.Red, "No cuadran Liquido Pagable. la suma sale: " + (ingresos-descuentos));
+                    paintXY(errorlp, i, XLColor.Red, "No cuadran Liquido Pagable. la suma sale: " + (ingresos-descuentos));
+                    addError("No cuadran Liquido Pagable", "La suma se calculó: " + dif + " se encontró " + lp);
                 }
 
             }
 
+            valid = res;
             return res;
         }
 
@@ -143,37 +153,41 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_Payroll payroll = new Dist_Payroll();
             payroll.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_Payroll_sqs\".nextval FROM DUMMY;").ToList()[0];
             payroll.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            payroll.FullName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
-            payroll.BasicSalary = strToDecimal(row, 3);
-            payroll.AntiquityBonus = strToDecimal(row, 4);
-            payroll.OtherIncome = strToDecimal(row, 5);
-            payroll.TeachingIncome = strToDecimal(row, 6);
-            payroll.OtherAcademicIncomes = strToDecimal(row, 7);
-            payroll.Reintegro = strToDecimal(row, 8);
-            payroll.TotalAmountEarned = strToDecimal(row, 9);
-            payroll.AFP = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
-            payroll.AFPLaboral = strToDecimal(row, 11);
-            payroll.RcIva = strToDecimal(row, 12);
-            payroll.Discounts = strToDecimal(row, 13);
-            payroll.TotalAmountDiscounts = strToDecimal(row, 14);
-            payroll.TotalAfterDiscounts = strToDecimal(row, 15);
-            payroll.CUNI = wb.Worksheet(sheet).Cell(row, 16).Value.ToString();
-            payroll.EmployeeType = wb.Worksheet(sheet).Cell(row, 17).Value.ToString();
-            payroll.PEI = wb.Worksheet(sheet).Cell(row, 18).Value.ToString();
-            payroll.WorkedHours = strToDouble(row, 19);
-            payroll.Dependency = wb.Worksheet(sheet).Cell(row, 20).Value.ToString();
-            payroll.AFPPatronal = strToDecimal(row, 21);
-            payroll.IdentificadorSSU = wb.Worksheet(sheet).Cell(row, 22).Value.ToString();
-            payroll.SeguridadCortoPlazoPatronal = strToDecimal(row, 23);
-            payroll.ProvAguinaldo = strToDecimal(row, 24);
-            payroll.ProvPrimas = strToDecimal(row, 25);
-            payroll.ProvIndeminizacion = strToDecimal(row, 26);
-            payroll.ProcedureTypeEmployee = "";
+            payroll.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            payroll.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
+            payroll.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
+            payroll.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
+            payroll.BasicSalary = strToDecimal(row, 6);
+            payroll.AntiquityBonus = strToDecimal(row, 7);
+            payroll.OtherIncome = strToDecimal(row, 8);
+            payroll.TeachingIncome = strToDecimal(row, 9);
+            payroll.OtherAcademicIncomes = strToDecimal(row, 10);
+            payroll.Reintegro = strToDecimal(row, 11);
+            payroll.TotalAmountEarned = strToDecimal(row, 12);
+            payroll.AFP = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
+            payroll.AFPLaboral = strToDecimal(row, 14);
+            payroll.RcIva = strToDecimal(row, 15);
+            payroll.Discounts = strToDecimal(row, 16);
+            payroll.TotalAmountDiscounts = strToDecimal(row, 17);
+            payroll.TotalAfterDiscounts = strToDecimal(row, 18);
+            payroll.CUNI = wb.Worksheet(sheet).Cell(row, 19).Value.ToString();
+            payroll.EmployeeType = wb.Worksheet(sheet).Cell(row, 20).Value.ToString();
+            payroll.PEI = wb.Worksheet(sheet).Cell(row, 21).Value.ToString();
+            payroll.WorkedHours = strToDouble(row, 22);
+            payroll.Dependency = wb.Worksheet(sheet).Cell(row, 23).Value.ToString();
+            payroll.AFPPatronal = strToDecimal(row, 24);
+            payroll.IdentificadorSSU = wb.Worksheet(sheet).Cell(row, 25).Value.ToString();
+            payroll.SeguridadCortoPlazoPatronal = strToDecimal(row, 26);
+            payroll.ProvAguinaldo = strToDecimal(row, 27);
+            payroll.ProvPrimas = strToDecimal(row, 28);
+            payroll.ProvIndeminizacion = strToDecimal(row, 29);
+            payroll.ProcedureTypeEmployee = payroll.EmployeeType;
 
             payroll.Porcentaje = 0m;
             payroll.mes = this.mes;
             payroll.gestion = this.gestion;
             payroll.segmentoOrigen = this.segmentoOrigen;
+            payroll.DistFileId = file.Id;
             return payroll;
         }
     }

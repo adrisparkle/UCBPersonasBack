@@ -22,6 +22,7 @@ namespace UcbBack.Logic.B1
         private int errorCode = 0;
         private string errorMessage = "";
         private string DatabaseName;
+
         public enum Dimension
         {
             All,
@@ -30,12 +31,7 @@ namespace UcbBack.Logic.B1
             PlanAcademico,
             Paralelo,
             Periodo
-        }
-        public static readonly int OrganizationalUnit = 1;
-        public static readonly int PEI = 2;
-        public static readonly int PlanAcademico = 3;
-        public static readonly int Paralelo = 4;
-        public static readonly int Periodo = 5;
+        };
 
 
         private B1Connection(string db)

@@ -14,7 +14,10 @@ namespace UcbBack.Logic.ExcelFiles
         private static Excelcol[] cols = new[]
         {
             new Excelcol("Carnet Identidad", typeof(string)), 
-            new Excelcol("Nombre Completo", typeof(string)),
+            new Excelcol("Primer Apellido", typeof(string)),
+            new Excelcol("Segundo Apellido", typeof(string)),
+            new Excelcol("Nombres", typeof(string)),
+            new Excelcol("Apellido Casada", typeof(string)),
             new Excelcol("Tipo empleado", typeof(string)),
             new Excelcol("Periodo académico", typeof(string)),
             new Excelcol("Sigla Asignatura", typeof(string)),
@@ -32,13 +35,15 @@ namespace UcbBack.Logic.ExcelFiles
         };
         private ApplicationDbContext _context;
         private string mes, gestion, segmentoOrigen;
+        private Dist_File file;
 
-        public AcademicExcel(Stream data, ApplicationDbContext context, string fileName,string mes, string gestion, string segmentoOrigen,int headerin = 3, int sheets = 1, string resultfileName = "Result")
+        public AcademicExcel(Stream data, ApplicationDbContext context, string fileName,string mes, string gestion, string segmentoOrigen,Dist_File file,int headerin = 3, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName)
         {
             this.segmentoOrigen = segmentoOrigen;
             this.gestion = gestion;
             this.mes = mes;
+            this.file = file;
             _context = context;
             isFormatValid();
         }
@@ -61,18 +66,18 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
-            bool v1 = VerifyPerson(1, 13, 2);
-            bool v2 = VerifyColumnValueIn(3, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
-            bool v3 = VerifyParalel(cod:16,periodo: 4, sigla:5);
-            bool v4 = VerifyColumnValueIn(9, new List<string> { "PA", "PI", "TH" });
-            bool v5 = VerifyColumnValueIn(14, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
+            bool v1 = VerifyPerson(ci:1, CUNI:16, fullname:2,personActive:false);
+            bool v2 = VerifyColumnValueIn(6, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
+            bool v3 = VerifyParalel(cod:19,periodo: 7, sigla:8);
+            bool v4 = VerifyColumnValueIn(12, new List<string> { "PA", "PI", "TH" });
+            bool v5 = VerifyColumnValueIn(17, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
             var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             pei.Add("0");
-            bool v6 = VerifyColumnValueIn(15, pei, comment: "Este PEI no existe en SAP.");
-            bool v7 = VerifyColumnValueIn(8, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
-            bool v8 = VerifyColumnValueIn(12, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
+            bool v6 = VerifyColumnValueIn(18, pei, comment: "Este PEI no existe en SAP.");
+            bool v7 = VerifyColumnValueIn(11, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
+            bool v8 = VerifyColumnValueIn(15, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
 
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6;
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v7 && v8 && v6;
         }
 
         public Dist_Academic ToDistAcademic(int row,int sheet = 1)
@@ -80,27 +85,32 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_Academic acad = new Dist_Academic();
             acad.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_Academic_sqs\".nextval FROM DUMMY;").ToList()[0];
             acad.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            acad.FullName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
-            acad.EmployeeType = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
-            acad.Periodo = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
-            acad.Sigla = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
-            acad.Paralelo = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
-            acad.AcademicHoursWeek = strToDecimal(row,7);
-            acad.AcademicHoursMonth = strToDecimal(row, 8);
-            acad.IdentificadorPago = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-            acad.CategoriaDocente = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
-            acad.CostoHora = strToDecimal(row, 11);
-            acad.CostoMes = strToDecimal(row, 12);
-            acad.CUNI = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
-            acad.Dependency = wb.Worksheet(sheet).Cell(row, 14).Value.ToString();
-            acad.PEI = wb.Worksheet(sheet).Cell(row, 15).Value.ToString();
-            acad.SAPParaleloUnit = wb.Worksheet(sheet).Cell(row, 16).Value.ToString();
+            acad.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            acad.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
+            acad.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
+            acad.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
+            acad.EmployeeType = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
+            acad.Periodo = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
+            acad.Sigla = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
+            acad.Paralelo = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
+            acad.AcademicHoursWeek = strToDecimal(row,10);
+            acad.AcademicHoursMonth = strToDecimal(row, 11);
+            acad.IdentificadorPago = wb.Worksheet(sheet).Cell(row, 12).Value.ToString();
+            acad.CategoriaDocente = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
+            acad.CostoHora = strToDecimal(row, 14);
+            acad.CostoMes = strToDecimal(row, 15);
+            acad.CUNI = wb.Worksheet(sheet).Cell(row, 16).Value.ToString();
+            acad.Dependency = wb.Worksheet(sheet).Cell(row, 17).Value.ToString();
+            acad.PEI = wb.Worksheet(sheet).Cell(row, 18).Value.ToString();
+            acad.SAPParaleloUnit = wb.Worksheet(sheet).Cell(row, 19).Value.ToString();
             
             acad.Matched = 0;
             acad.Porcentaje = 0.0m;
             acad.mes = this.mes;
             acad.gestion = this.gestion;
             acad.segmentoOrigen = this.segmentoOrigen;
+
+            acad.DistFileId = file.Id;
             return acad;
         }
     }

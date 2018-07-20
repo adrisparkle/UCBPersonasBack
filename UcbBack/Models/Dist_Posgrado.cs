@@ -14,7 +14,10 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
         public string Document { set; get; }
-        public string FullName { set; get; }
+        public string FirstName { get; set; }
+        public string FirstSurName { get; set; }
+        public string SecondSurName { get; set; }
+        public string MariedSurName { get; set; }
         public string ProjectName { set; get; }
         public int Vesion { set; get; }
         public decimal TotalPagado { set; get; }
@@ -32,5 +35,8 @@ namespace UcbBack.Models
         public string mes { get; set; }
         [StringLength(4)]
         public string gestion { get; set; }
+
+        public Dist_File DistFile { get; set; }
+        public int DistFileId { get; set; }
     }
 }

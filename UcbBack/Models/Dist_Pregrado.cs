@@ -15,7 +15,10 @@ namespace UcbBack.Models
         public int Id { set; get; }
 
         public string Document { get; set; }
-        public string FullName { get; set; }
+        public string FirstName { get; set; }
+        public string FirstSurName { get; set; }
+        public string SecondSurName { get; set; }
+        public string MariedSurName { get; set; }
         public Decimal TotalNeto { get; set; }
         public string Carrera { get; set; }
         public string CUNI { get; set; }
@@ -28,5 +31,7 @@ namespace UcbBack.Models
         [StringLength(4)]
         public string gestion { get; set; }
 
+        public Dist_File DistFile { get; set; }
+        public int DistFileId { get; set; }
     }
 }

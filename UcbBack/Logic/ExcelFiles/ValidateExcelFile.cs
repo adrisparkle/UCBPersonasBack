@@ -36,23 +36,26 @@ namespace UcbBack.Logic
         private string fileName { get; set; }
         private string resultfileName { get; set; }
         public XLWorkbook wb { get; private set; }
-        private bool valid { get; set; }
+        public bool valid { private get; set; }
         private int sheets { get; set; }
         public int headerin { get; private set; }
         private HanaValidator hanaValidator;
         //Image logo = Image.FromFile(HttpContext.Current.Server.MapPath("~/Images/logo.png"));
         private dynamic errors = new JObject();
         private ValidatePerson personValidator;
+        private ApplicationDbContext _context;
 
-        public ValidateExcelFile(Excelcol[] columns, string fileName, int headerin = 1)
+        public ValidateExcelFile(Excelcol[] columns, string fileName, int headerin = 1,ApplicationDbContext context=null)
         {
             this.columns = columns;
             this.fileName = fileName;
             this.headerin = headerin;
+            _context = context ?? new ApplicationDbContext();
         }
 
-        public ValidateExcelFile(Excelcol[] columns, Stream data, string fileName, int headerin =1, int sheets = 1, string resultfileName = "Result")
+        public ValidateExcelFile(Excelcol[] columns, Stream data, string fileName, int headerin =1, int sheets = 1, string resultfileName = "Result", ApplicationDbContext context=null)
         {
+            _context = context ?? new ApplicationDbContext();
             this.columns = columns;
             this.fileName = fileName;
             this.resultfileName = resultfileName;
@@ -104,6 +107,8 @@ namespace UcbBack.Logic
                 ws.Cell(headerin, i + 1).Style.Font.Bold = true;
                 ws.Cell(headerin, i + 1).Style.Fill.BackgroundColor = XLColor.FromTheme(XLThemeColor.Accent1);
             }
+
+            valid = true;
             return toResponse(template);
         }
 
@@ -200,8 +205,8 @@ namespace UcbBack.Logic
             return res;
         }
 
-        //todo verificar que este en el segmento
-        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd")
+        
+        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1)
         {
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
@@ -210,132 +215,211 @@ namespace UcbBack.Logic
 
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                var strci = ci != -1 ? wb.Worksheet(sheet).Cell(i, ci).Value.ToString() : null;
-                var strcuni = CUNI != -1 ? wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString() : null;
-                var strname = fullname != -1 ? wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() : null;
-                if (!ppllist.Any(x=>x.Document==strci
-                                    && x.CUNI == strcuni
-                                    && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) == strname))
+                string strname = null;
+                string strfsn = null;
+                string strssn = null;
+                string strmsn = null;
+                try
                 {
-                    var p = ppllist.FirstOrDefault(x => x.Document == strci);
-                    if (personActive && !personValidator.IsActive(p,date,format))
-                    {
-                        res = false;
-                        if(fullname!=-1)
-                            paintXY(fullname, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                        if (ci != -1)
-                            paintXY(ci, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                        if (CUNI != -1)
-                            paintXY(CUNI, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                    }
-                    if (strci!= null && ppllist.Any(x => x.Document == strci))
-                    {
-                        if (strname!=null && !ppllist.Any(x => x.Document == strci
-                                              && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                             strname))
-                        {
-                            if (paintcolnombre)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => x.Document == strci).Select(y => (y.FirstSurName + " " + y.SecondSurName + " " + y.Names)).ToList();
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(fullname, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                        if (strcuni != null && !ppllist.Any(x => x.Document == wb.Worksheet(sheet).Cell(i, ci).Value.ToString()
-                                           && x.CUNI == wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString()))
-                        {
-                            if (paintcolcuni)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => x.Document ==strci).Select(y => y.CUNI).ToList();
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                //wb.Worksheet(sheet).Cell(i, CUNI).Value = similarities;
-                                paintXY(CUNI, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                    }
-                    else if (strcuni != null && ppllist.Any(x => x.CUNI == strcuni))
-                    {
-                        if (strname != null && !ppllist.Any(x => x.CUNI == strcuni
-                                              && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                              strname))
-                        {
-                            if (paintcolnombre)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => x.CUNI == strcuni).Select(y => (y.FirstSurName + " " + y.SecondSurName + " " + y.Names)).ToList();
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(fullname, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                        if (strci != null && !ppllist.Any(x => x.Document == strci
-                                              && x.CUNI == strcuni))
-                        {
-                            if (paintcolci)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => x.CUNI == strcuni).Select(y => y.Document).ToList();
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(ci, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                    }
-                    else if (strname != null && ppllist.Any(x => (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                         strname))
-                    {
-                        if (strcuni != null && !ppllist.Any(x => x.CUNI == strcuni
-                                              && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                              strname))
-                        {
-                            if (paintcolcuni)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                                                      strname).Select(y => y.CUNI).ToList();
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(CUNI, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                        if (strci != null && !ppllist.Any(x => x.Document == strci
-                                              && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                              strname))
-                        {
-                            if (paintcolci)
-                            {
-                                res = false;
-                                string aux = "";
-                                var similarities = ppllist.Where(x => (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
-                                                                      strname).Select(y => y.Document).ToList();
+                    string strci = ci != -1 ? wb.Worksheet(sheet).Cell(i, ci).Value.ToString() : null;
+                    string strcuni = CUNI != -1 ? wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString() : null;
 
-                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                                paintXY(ci, i, XLColor.Red, comment + aux);
-                            }
-                        }
-                    }
-                    else
+                    if (fullname != -1)
                     {
-                        string aux = "";
-                        if (strname != null && jaro)
-                        {
-                            var similarities = hanaValidator.Similarities(strname, "'concat(a.\"FirstSurName\"," +"concat('' ''," +"concat(a.\"SecondSurName\"," +"concat('' '',a.\"Names\")" +")" +")" +")'", "People", "concat(a.\"FirstSurName\",concat('' '',concat(a.\"SecondSurName\",concat('' '',a.\"Names\"))))", 0.9f);
-                            aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
-                        }
-                      
-                        if (paintcolnombre)
+                        strfsn = wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname).Value.ToString();
+                        strssn = wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString();
+                        strname = wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString();
+                        strmsn = wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString();
+                    }
+
+                    if (!ppllist.Any(x => x.Document == strci
+                                        && x.CUNI == strcuni
+                                        && x.FirstSurName == strfsn
+                                        && x.SecondSurName == strssn
+                                        && x.Names == strname
+                                        && x.MariedSurName == strmsn))
+                    {
+                        var p = ppllist.FirstOrDefault(x => x.Document == strci);
+                        if (personActive && !personValidator.IsActive(p, date, format, branchId: branchesId))
                         {
                             res = false;
-                            paintXY(fullname, i, XLColor.Red, comment + aux);
+                            if (fullname != -1)
+                            {
+                                paintXY(fullname, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                                paintXY(fullname + 1, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                                paintXY(fullname + 2, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                                paintXY(fullname + 3, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+
+                            }
+                            if (ci != -1)
+                                paintXY(ci, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                            if (CUNI != -1)
+                                paintXY(CUNI, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
                         }
+                        if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
+                        {
+                            if (strname != null && strfsn != null && strssn != null && strmsn != null && !ppllist.Any(x => x.Document == strci
+                                        && x.CUNI == strcuni
+                                        && x.FirstSurName == strfsn
+                                        && x.SecondSurName == strssn
+                                        && x.Names == strname
+                                        && x.MariedSurName == strmsn))
+                            {
+                                if (paintcolnombre)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.Document == strci.ToString()).Select(y => new { y.FirstSurName, y.SecondSurName, y.Names, y.MariedSurName }).ToList();
+                                    aux = similarities.Any() && strfsn != similarities[0].FirstSurName ? "\nNo será: '" + similarities[0].FirstSurName + "'?" : "";
+                                    paintXY(fullname, i, XLColor.Red,  aux);
+
+                                    aux = similarities.Any() && strssn != similarities[0].SecondSurName ? "\nNo será: '" + similarities[0].SecondSurName + "'?" : "";
+                                    
+                                    paintXY(fullname + 1, i, XLColor.Red, aux);
+
+                                    aux = similarities.Any() && strname != similarities[0].Names ? "\nNo será: '" + similarities[0].Names + "'?" : "";
+                                    paintXY(fullname + 2, i, XLColor.Red, aux);
+
+                                    aux = similarities.Any() && strmsn != similarities[0].MariedSurName ? "\nNo será: '" + similarities[0].MariedSurName + "'?" : "";
+                                    paintXY(fullname + 3, i, XLColor.Red, aux);
+                                }
+                            }
+                            if (strcuni != null && !ppllist.Any(x => x.Document == wb.Worksheet(sheet).Cell(i, ci).Value.ToString()
+                                               && x.CUNI == wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString()))
+                            {
+                                if (paintcolcuni)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.Document == strci).Select(y => y.CUNI).ToList();
+                                    aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                                    //wb.Worksheet(sheet).Cell(i, CUNI).Value = similarities;
+                                    paintXY(CUNI, i, XLColor.Red, comment + aux);
+                                }
+                            }
+                        }
+                        else if (strcuni != null && ppllist.Any(x => x.CUNI == strcuni.ToString()))
+                        {
+                            if (strname != null && !ppllist.Any(x => x.CUNI == strcuni
+                                                                     && x.FirstSurName == strfsn
+                                                                     && x.SecondSurName == strssn
+                                                                     && x.Names == strname
+                                                                     && x.MariedSurName == strmsn))
+                            {
+                                if (paintcolnombre)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.Document == strci).Select(y => new { y.FirstSurName, y.SecondSurName, y.Names, y.MariedSurName }).ToList();
+                                    aux = similarities.Any() && strfsn != similarities[0].FirstSurName ? "\nNo será: '" + similarities[0].FirstSurName + "'?" : "";
+                                    paintXY(fullname, i, XLColor.Red,  aux);
+
+                                    aux = similarities.Any() && strssn != similarities[0].SecondSurName ? "\nNo será: '" + similarities[0].SecondSurName + "'?" : "";
+                                    paintXY(fullname + 1, i, XLColor.Red,  aux);
+
+                                    aux = similarities.Any() && strname != similarities[0].Names ? "\nNo será: '" + similarities[0].Names + "'?" : "";
+                                    paintXY(fullname + 2, i, XLColor.Red,  aux);
+
+                                    aux = similarities.Any() && strmsn != similarities[0].MariedSurName ? "\nNo será: '" + similarities[0].MariedSurName + "'?" : "";
+                                    paintXY(fullname + 3, i, XLColor.Red,  aux);
+                                }
+                            }
+                            if (strci != null && !ppllist.Any(x => x.Document == strci
+                                                  && x.CUNI == strcuni))
+                            {
+                                if (paintcolci)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.CUNI == strcuni).Select(y => y.Document).ToList();
+                                    aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                                    paintXY(ci, i, XLColor.Red, comment + aux);
+                                }
+                            }
+                        }
+                        else if (strname != null && ppllist.Any(x => x.FirstSurName == strfsn
+                                                                 && x.SecondSurName == strssn
+                                                                 && x.Names == strname
+                                                                 /*&& x.MariedSurName == strmsn*/))
+                        {
+                            if (strcuni != null && !ppllist.Any(x => x.CUNI == strcuni
+                                                  && x.SecondSurName == strssn
+                                                  && x.Names == strname
+                                                  && x.MariedSurName == strmsn))
+                            {
+                                if (paintcolcuni)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.FirstSurName == strfsn
+                                                                           && x.SecondSurName == strssn
+                                                                           && x.Names == strname
+                                                                           /*&& x.MariedSurName == strmsn*/).Select(y => y.CUNI).ToList();
+                                    aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                                    paintXY(CUNI, i, XLColor.Red, comment + aux);
+                                }
+                            }
+                            if (strci != null && !ppllist.Any(x => x.Document == strci
+                                                  && (x.FirstSurName + " " + x.SecondSurName + " " + x.Names) ==
+                                                  strname))
+                            {
+                                if (paintcolci)
+                                {
+                                    res = false;
+                                    string aux = "";
+                                    var similarities = ppllist.Where(x => x.FirstSurName == strfsn
+                                                                          && x.SecondSurName == strssn
+                                                                          && x.Names == strname
+                                                                          && x.MariedSurName == strmsn).Select(y => y.Document).ToList();
+
+                                    aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                                    paintXY(ci, i, XLColor.Red, comment + aux);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string aux = "";
+                            if (strname != null && jaro)
+                            {
+                                var similarities = hanaValidator.Similarities(strfsn + " " + strssn + " " + strname, "'concat(a.\"FirstSurName\"," + "concat('' ''," + "concat(a.\"SecondSurName\"," + "concat('' '',a.\"Names\")" + ")" + ")" + ")'", "People", "\"CUNI\"", 0.9f);
+                                if (similarities.Count > 0)
+                                {
+                                    string si = similarities[0];
+                                    var person = _context.Person.FirstOrDefault(pe => pe.CUNI == si);
+                                    
+
+                                    aux = strfsn != person.FirstSurName ? "\nNo será: '" + person.FirstSurName + "'?" : "";
+                                    paintXY(fullname, i, XLColor.Red,  aux);
+
+                                    aux = strssn != person.SecondSurName ? "\nNo será: '" + person.SecondSurName + "'?" : "";
+                                    paintXY(fullname + 1, i, XLColor.Red, aux);
+
+                                    aux = strname != person.Names ? "\nNo será: '" + person.Names + "'?" : "";
+                                    paintXY(fullname + 2, i, XLColor.Red,  aux);
+
+                                    aux = strmsn != person.MariedSurName ? "\nNo será: '" + person.MariedSurName + "'?" : "";
+                                    paintXY(fullname + 3, i, XLColor.Red,  aux);
+
+                                    aux = strci != person.Document ? "\nNo será: '" + person.Document + "'?" : "";
+                                    paintXY(ci, i, XLColor.Red,  aux);
+
+                                    aux = strcuni != person.CUNI ? "\nNo será: '" + person.CUNI + "'?" : "";
+                                    paintXY(CUNI, i, XLColor.Red, aux);
+                                }
+                                                                
+                            }
+                        }
+
+
                     }
-
-
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                
             }
             if(!res)
                 addError("Datos Personas","Algunos datos de personas no coinciden o no existen en la Base de datos Nacional.");
@@ -380,12 +464,14 @@ namespace UcbBack.Logic
                     {
                         if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
                         {
-                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            //paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
+                            wb.Worksheet(1).Cell(i, cod).Value = co;
                         }
                         else
                         {
                             paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            paintXY(sigla, i, XLColor.Red, "Este Periodo no es correcto.");
+                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
                         }
                     }
                     else if (list.Any(x => x.sigla==strsigla))
@@ -402,6 +488,7 @@ namespace UcbBack.Logic
                 }
             }
 
+            valid = res;
             return res;
         }
 

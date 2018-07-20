@@ -14,7 +14,10 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
         public string Document { get; set; }
-        public string FullName { get; set; }
+        public string FirstName { get; set; }
+        public string FirstSurName { get; set; }
+        public string SecondSurName { get; set; }
+        public string MariedSurName { get; set; }
         public string EmployeeType { get; set; }
         public string Periodo { get; set; }
         public string Sigla { get; set; }
@@ -37,5 +40,8 @@ namespace UcbBack.Models
         public string mes { get; set; }
         [StringLength(4)]
         public string gestion { get; set; }
+
+        public Dist_File DistFile { get; set; }
+        public int DistFileId { get; set; }
     }
 }

@@ -14,7 +14,10 @@ namespace UcbBack.Logic.ExcelFiles
         private static Excelcol[] cols = new[]
         {
             new Excelcol("Carnet Identidad", typeof(string)),
-            new Excelcol("Nombre Completo", typeof(string)),
+            new Excelcol("Primer Apellido", typeof(string)),
+            new Excelcol("Segundo Apellido", typeof(string)),
+            new Excelcol("Nombres", typeof(string)),
+            new Excelcol("Apellido Casada", typeof(string)),
             new Excelcol("Segmento origen", typeof(string)),
             new Excelcol("Total Neto Ganado", typeof(double)),
             new Excelcol("CUNI", typeof(string)),
@@ -27,13 +30,14 @@ namespace UcbBack.Logic.ExcelFiles
         };
         private ApplicationDbContext _context;
         private string mes, gestion, segmentoOrigen;
-
-        public ORExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen, int headerin = 3, int sheets = 1, string resultfileName = "Result")
+        private Dist_File file;
+        public ORExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen,Dist_File file, int headerin = 3, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName)
         {
             this.segmentoOrigen = segmentoOrigen;
             this.gestion = gestion;
             this.mes = mes;
+            this.file = file;
             _context = context;
             isFormatValid();
         }
@@ -56,25 +60,25 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
-            bool v1 = VerifyColumnValueIn(6,_context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
-            bool v2 = VerifyPerson(ci:1, CUNI:5, fullname:2);
+            //bool v1 = VerifyColumnValueIn(6,connB1.getBusinessPartners(), comment: "No existe este Bussines Partner en SAP.");
+            bool v2 = VerifyPerson(ci: 1, CUNI: 8, fullname: 2, personActive: false);
             var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             pei.Add("");
-            bool v3 = VerifyColumnValueIn(7, pei, comment: "Este PEI no existe en SAP.");
+            bool v3 = VerifyColumnValueIn(10, pei, comment: "Este PEI no existe en SAP.");
             var planacad = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             planacad.Add("");
-            bool v4 = VerifyColumnValueIn(8, planacad, comment: "Este plan de estudios no existe en SAP.");
+            //bool v4 = VerifyColumnValueIn(11, planacad, comment: "Este plan de estudios no existe en SAP.");
             var paralelo = connB1.getCostCenter(B1Connection.Dimension.Paralelo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             paralelo.Add("");
-            bool v5 = VerifyColumnValueIn(9, paralelo, comment: "Este paralelo no existe en SAP.");
+           // bool v5 = VerifyColumnValueIn(12, paralelo, comment: "Este paralelo no existe en SAP.");
             var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             periodo.Add("");
-            bool v6 = VerifyColumnValueIn(10, periodo, comment: "Este periodo no existe en SAP.");
+            bool v6 = VerifyColumnValueIn(13, periodo, comment: "Este periodo no existe en SAP.");
             var projects = connB1.getProjects().ToList();
             projects.Add("");
-            bool v7 = VerifyColumnValueIn(11, projects, comment: "Este proyecto no existe en SAP.");
+            bool v7 = VerifyColumnValueIn(14, projects, comment: "Este proyecto no existe en SAP.");
 
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7;
+            return isValid() && v2 && v3  && v6 && v7;
         }
 
         public Dist_OR ToDistDiscounts(int row, int sheet = 1)
@@ -82,21 +86,26 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_OR dis = new Dist_OR();
             dis.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_OR_sqs\".nextval FROM DUMMY;").ToList()[0];
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            dis.FullName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
-            dis.segmento = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
-            dis.TotalGanado = strToDecimal(row,4);
-            dis.CUNI = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
-            dis.Dependency = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
-            dis.PEI = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
-            dis.PlanEstudios = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
-            dis.Paralelo = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-            dis.Periodo = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
-            dis.Project = wb.Worksheet(sheet).Cell(row, 11).Value.ToString();
+            dis.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
+            dis.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
+            dis.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
+            dis.segmento = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
+            dis.TotalGanado = strToDecimal(row,7);
+            dis.CUNI = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
+            dis.Dependency = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
+            dis.PEI = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
+            dis.PlanEstudios = wb.Worksheet(sheet).Cell(row, 11).Value.ToString();
+            dis.Paralelo = wb.Worksheet(sheet).Cell(row, 12).Value.ToString();
+            dis.Periodo = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
+            dis.Project = wb.Worksheet(sheet).Cell(row, 14).Value.ToString();
 
             dis.Porcentaje = 0m;
             dis.mes = this.mes;
             dis.gestion = this.gestion;
             dis.segmentoOrigen = this.segmentoOrigen;
+
+            dis.DistFileId = file.Id;
             return dis;
         }
     }

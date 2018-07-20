@@ -30,15 +30,24 @@ namespace UcbBack.Logic
             return person;
         }
 
-        public bool IsActive(People person,string date = null,string format ="yyyy-MM-dd")
+        public bool IsActive(People person,string date = null,string format ="yyyy-MM-dd",int branchId=-1)
         {
             try
             {
                 DateTime toDate = date == null
                     ? DateTime.Now
                     : DateTime.ParseExact(date, format, System.Globalization.CultureInfo.InvariantCulture);
-                var xw = _context.Contracts.ToList().Any(x =>
+                bool xw;
+                if(branchId==-1)
+                {
+                    xw = _context.Contracts.ToList().Any(x =>
                     (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate)));
+                }
+                else
+                {
+                    xw = _context.ContractDetails.ToList().Any(x =>
+                        (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate) && x.BranchesId==branchId ));
+                }
                 return xw;
             }
             catch (Exception e)
