@@ -44,6 +44,8 @@ namespace UcbBack.Controllers
             public static string CANCELED = "CANCELED";
         }
 
+        private int ExcelHeaders = 3;
+
         public PayrollController()
         {
             _context = new ApplicationDbContext();
@@ -173,7 +175,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/PayrollExcel")]
         public HttpResponseMessage GetPayrollExcel()
         {
-            PayrollExcel contractExcel = new PayrollExcel(fileName:"Planilla.xlsx",headerin: 3);
+            PayrollExcel contractExcel = new PayrollExcel(fileName: "Planilla.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
         [HttpDelete]
@@ -238,7 +240,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                PayrollExcel contractExcel = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(),file, headerin: 3, sheets: 1);
+                PayrollExcel contractExcel = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -265,7 +267,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/AcademicExcel")]
         public HttpResponseMessage GetAcademicExcel()
         {
-            AcademicExcel contractExcel = new AcademicExcel(fileName: "Academico.xlsx", headerin: 3);
+            AcademicExcel contractExcel = new AcademicExcel(fileName: "Academico.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
 
@@ -332,7 +334,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                AcademicExcel contractExcel = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(),file, headerin: 3, sheets: 1);
+                AcademicExcel contractExcel = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -358,7 +360,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/DiscountExcel")]
         public HttpResponseMessage GetDiscountExcel()
         {
-            DiscountExcel contractExcel = new DiscountExcel(fileName: "Descuentos.xlsx", headerin: 3);
+            DiscountExcel contractExcel = new DiscountExcel(fileName: "Descuentos.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
 
@@ -423,7 +425,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                DiscountExcel contractExcel = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: 3, sheets: 1);
+                DiscountExcel contractExcel = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -449,7 +451,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/PostgradoExcel")]
         public HttpResponseMessage GetPostgradoExcel()
         {
-            PostgradoExcel contractExcel = new PostgradoExcel(fileName: "PosGrado.xlsx", headerin: 3);
+            PostgradoExcel contractExcel = new PostgradoExcel(fileName: "PosGrado.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
 
@@ -515,7 +517,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                PostgradoExcel contractExcel = new PostgradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: 3, sheets: 1);
+                PostgradoExcel contractExcel = new PostgradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -541,7 +543,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/PregradoExcel")]
         public HttpResponseMessage GetPregradoExcel()
         {
-            PregradoExcel contractExcel = new PregradoExcel(fileName: "Pregrado.xlsx", headerin: 3);
+            PregradoExcel contractExcel = new PregradoExcel(fileName: "Pregrado.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
 
@@ -602,11 +604,11 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Content = new StringContent("Ya se subió datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                PregradoExcel contractExcel = new PregradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: 3, sheets: 1);
+                PregradoExcel contractExcel = new PregradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -632,7 +634,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/ORExcel")]
         public HttpResponseMessage GetORExcel()
         {
-            ORExcel contractExcel = new ORExcel(fileName: "OtrasRegionales.xlsx", headerin: 3);
+            ORExcel contractExcel = new ORExcel(fileName: "OtrasRegionales.xlsx", headerin: ExcelHeaders);
             return contractExcel.getTemplate();
         }
 
@@ -697,7 +699,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                ORExcel contractExcel = new ORExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: 3, sheets: 1);
+                ORExcel contractExcel = new ORExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
