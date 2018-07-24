@@ -88,5 +88,9 @@ namespace UcbBack.Models
 
         [MaxLength(20)]
         public string InsuranceNumber { get; set; }
+
+        public bool UseMariedSurName { get; set; }
+
+        public bool UseSecondSurName { get; set; }
     }
 }

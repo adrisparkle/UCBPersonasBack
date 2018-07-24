@@ -6,7 +6,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
-    <_PublishTargetUrl>C:\Users\Adrian\Desktop\dev\www\UcbBack</_PublishTargetUrl>
+    <_PublishTargetUrl>C:\Users\Adrian\Desktop\dev\www2</_PublishTargetUrl>
   </PropertyGroup>
   <ItemGroup>
     <File Include="Areas/HelpPage/HelpPage.css">
@@ -175,10 +175,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:34</publishTime>
     </File>
     <File Include="bin/UcbBack.dll">
-      <publishTime>07/20/2018 12:07:24</publishTime>
+      <publishTime>07/24/2018 12:13:07</publishTime>
     </File>
     <File Include="bin/UcbBack.pdb">
-      <publishTime>07/20/2018 12:07:24</publishTime>
+      <publishTime>07/24/2018 12:13:07</publishTime>
     </File>
     <File Include="bin/WebGrease.dll">
       <publishTime>05/29/2018 19:13:37</publishTime>
@@ -262,7 +262,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>05/29/2018 19:13:27</publishTime>
     </File>
     <File Include="Views/Shared/_Layout.cshtml">
-      <publishTime>05/29/2018 19:13:27</publishTime>
+      <publishTime>07/20/2018 16:24:28</publishTime>
     </File>
     <File Include="Views/Web.config">
       <publishTime>05/29/2018 19:13:27</publishTime>

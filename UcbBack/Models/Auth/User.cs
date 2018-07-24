@@ -23,6 +23,8 @@ namespace UcbBack.Models.Auth
         public string RefreshToken { get; set; }
         public DateTime? TokenCreatedAt { get; set; }
         public DateTime? RefreshTokenCreatedAt { get; set; }
+        public Branches  Branches { get; set; }
+        public int  BranchesId { get; set; }
         public Boolean active { get; set; }
     }
 }

@@ -76,8 +76,10 @@ namespace UcbBack.Logic.ExcelFiles
             bool v6 = VerifyColumnValueIn(18, pei, comment: "Este PEI no existe en SAP.");
             bool v7 = VerifyColumnValueIn(11, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
             bool v8 = VerifyColumnValueIn(15, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
+            bool v0 = isValid();
+            var xx = valid;
 
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v7 && v8 && v6;
+            return v0 && v1 && v2 && v3 && v4 && v5 && v7 && v8 && v6;
         }
 
         public Dist_Academic ToDistAcademic(int row,int sheet = 1)

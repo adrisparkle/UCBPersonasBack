@@ -20,6 +20,6 @@ namespace UcbBack.Models
         public Error Error { get; set; }
         public int ErrorId { get; set; }
         public string Archivos { get; set; }
-        public string State { get; set; }
+        public bool Inspected { get; set; }
     }
 }

@@ -144,7 +144,7 @@ namespace UcbBack.Logic.ExcelFiles
 
             }
 
-            valid = res;
+            valid = valid && res;
             return res;
         }
 

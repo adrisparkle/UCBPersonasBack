@@ -22,11 +22,6 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
 
-        private  struct ErrorState
-        {
-            public static string PENDING = "PENDING";
-            public static string REVIEWED = "REVIEWED";
-        }
         private struct ProcessState
         {
             public static string STARTED = "STARTED";
@@ -42,6 +37,15 @@ namespace UcbBack.Controllers
             public static string UPLOADED = "UPLOADED";
             public static string ERROR = "ERROR";
             public static string CANCELED = "CANCELED";
+        }
+        private enum ExcelFileType
+        {
+            Payroll = 1,
+            Academic,
+            Discount,
+            Postgrado,
+            Pregrado,
+            OR
         }
 
         private int ExcelHeaders = 3;
@@ -63,9 +67,10 @@ namespace UcbBack.Controllers
 
             var process = _context.DistProcesses.FirstOrDefault(f => f.mes == mes
                                                              && f.gestion == gestion
-                                                             && f.BranchesId == branchid);
+                                                             && f.BranchesId == branchid
+                                                             && f.State!=ProcessState.CANCELED);
             if (process == null)
-                return NotFound();
+                return Ok();
             var files = _context.FileDbs.Where(f => f.DistProcessId == process.Id && f.State == FileState.UPLOADED).Include(f => f.DistFileTypeId).Select(f => new { f.DistFileType.FileType });
 
             List<string> tipos = new List<string>();
@@ -82,34 +87,31 @@ namespace UcbBack.Controllers
         }
 
         [NonAction]
-        public Dist_File AddFileToProcess(string mes, string gestion, int BranchesId,int FileType,int userid,string fileName)
+        private Dist_File AddFileToProcess(string mes, string gestion, int BranchesId,ExcelFileType FileType,int userid,string fileName)
         {
             var processInDB =
                 _context.DistProcesses.FirstOrDefault(p =>
-                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes);
+                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR));
+
             if (processInDB != null)
             {
-                if (processInDB.State == ProcessState.STARTED || processInDB.State == ProcessState.ERROR)
-                {     
-                    var fileInDB = _context.FileDbs.FirstOrDefault(f => f.DistProcessId == processInDB.Id && f.DistFileTypeId == FileType && f.State == FileState.UPLOADED);
-                    if (fileInDB == null)
-                    {
-                        processInDB.State = ProcessState.STARTED;
-                        var file = new Dist_File();
-                        file.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
-                        file.UploadedDate = DateTime.Now;
-                        file.DistFileTypeId = FileType;
-                        file.Name = fileName;
-                        file.State = FileState.SENDED;
-                        file.CustomUserId = userid;
-                        file.DistProcessId = processInDB.Id;
-                        _context.FileDbs.Add(file);
-                        _context.SaveChanges();
-                        return file;
-                    }
-                    
+                var fileInDB = _context.FileDbs.FirstOrDefault(f => f.DistProcessId == processInDB.Id && f.DistFileTypeId == (int)FileType && f.State == FileState.UPLOADED);
+                if (fileInDB == null)
+                {
+                    processInDB.State = ProcessState.STARTED;
+                    _context.Database.ExecuteSqlCommand("UPDATE ADMNALRRHH.\"Dist_LogErrores\" set \"Inspected\" = true where \"DistProcessId\" = " + processInDB.Id);
+                    var file = new Dist_File();
+                    file.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+                    file.UploadedDate = DateTime.Now;
+                    file.DistFileTypeId = (int)FileType; 
+                    file.Name = fileName;
+                    file.State = FileState.SENDED;
+                    file.CustomUserId = userid;
+                    file.DistProcessId = processInDB.Id;
+                    _context.FileDbs.Add(file);
+                    _context.SaveChanges();
+                    return file;
                 }
-
             }
             else
             {
@@ -126,7 +128,7 @@ namespace UcbBack.Controllers
                 var file = new Dist_File();
                 file.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
                 file.UploadedDate = DateTime.Now;
-                file.DistFileTypeId = FileType;
+                file.DistFileTypeId = (int)FileType;
                 file.Name = fileName;
                 file.State = FileState.SENDED;
                 file.CustomUserId = userid;
@@ -140,7 +142,7 @@ namespace UcbBack.Controllers
         }
 
         [NonAction]
-        public async Task<System.Dynamic.ExpandoObject> HttpContentToVariables(MultipartMemoryStreamProvider req)
+        private async Task<System.Dynamic.ExpandoObject> HttpContentToVariables(MultipartMemoryStreamProvider req)
         {
             dynamic res = new System.Dynamic.ExpandoObject();      
             foreach (HttpContent contentPart in req.Contents)
@@ -196,7 +198,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 1
+                                     && f.DistFileTypeId == (int)ExcelFileType.Payroll
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -231,7 +233,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, 1, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
@@ -290,7 +292,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 2
+                                     && f.DistFileTypeId == (int) ExcelFileType.Academic
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -325,7 +327,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, 2, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Academic, userid, o.fileName);
 
                 if (file == null)
                 {
@@ -381,7 +383,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 3
+                                     && f.DistFileTypeId == (int)ExcelFileType.Discount
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -416,7 +418,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, 3, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Discount, userid, o.fileName);
 
                 if (file == null)
                 {
@@ -473,7 +475,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 4
+                                     && f.DistFileTypeId == (int) ExcelFileType.Postgrado
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -508,7 +510,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, 4, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Postgrado, userid, o.fileName);
 
                 if (file == null)
                 {
@@ -564,7 +566,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 5
+                                     && f.DistFileTypeId == (int) ExcelFileType.Pregrado
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -599,7 +601,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, 5, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Pregrado, userid, o.fileName);
 
                 if (file == null)
                 {
@@ -655,7 +657,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(f => f.DistProcess.mes == mes
                                      && f.DistProcess.gestion == gestion
                                      && f.DistProcess.BranchesId == branchesid
-                                     && f.DistFileTypeId == 6
+                                     && f.DistFileTypeId == (int) ExcelFileType.OR
                                      && f.State == FileState.UPLOADED);
             if (file == null)
             {
@@ -690,7 +692,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, 6, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.OR, userid, o.fileName);
 
                 if (file == null)
                 {
@@ -730,42 +732,39 @@ namespace UcbBack.Controllers
             if (process == null)
                 return NotFound();
 
-            if (process.State != ProcessState.ERROR)
+            if (process.State != ProcessState.ERROR && process.State != ProcessState.WARNING)
                 return Ok();
 
-            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id).Include(e=>e.Error).Select(e=>new{e.Id,e.ErrorId,e.Error.Name,e.Error.Description,e.Error.Type,e.Archivos,e.CUNI});
+            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected ).Include(e=>e.Error).Select(e=>new{e.Id,e.ErrorId,e.Error.Name,e.Error.Description,e.Error.Type,e.Archivos,e.CUNI});
             return Ok(err);
         }
 
 
-        [HttpPost]
-        [Route("api/payroll/Validate")]
-        public IHttpActionResult Validate([FromBody] JObject data)
+        [HttpGet]
+        [Route("api/payroll/Validate/{id}")]
+        public IHttpActionResult Validate(int id)
         {
-            int DistProcessId = 0;
-            if (!Int32.TryParse(data["DistProcessId"].ToString(), out DistProcessId))
-            {
-                return BadRequest();
-            }
-            var process = _context.DistProcesses.FirstOrDefault(p => p.Id == DistProcessId && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR));
+            var process = _context.DistProcesses.FirstOrDefault(p => p.Id == id && p.State == ProcessState.STARTED);
             if (process == null)
                 return NotFound();
-            int userid = Int32.Parse(Request.Headers.GetValues("id").First());
 
+            int userid = Int32.Parse(Request.Headers.GetValues("id").First());
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.FIX_ACAD(" + process.Id + ")");
+
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CE(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_TIPOEMPLEADO(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OD(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OR(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OTHERINCOMES(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_TIPOEMPLEADO(" + userid + "," + process.Id + ")");
 
 
-            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id).Include(e => e.Error).Select(e => new { e.Id, e.ErrorId, e.Error.Name, e.Error.Description,e.Error.Type, e.Archivos, e.CUNI });
+            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected).Include(e => e.Error).Select(e => new { e.Id, e.ErrorId, e.Error.Name, e.Error.Description,e.Error.Type, e.Archivos, e.CUNI });
             if (err.Count()>0)
             {
-                
-                if(err.Select(e=>e.Type=="E").Count()>0)
+                if(err.Where(e => e.Type == "E").Count()>0)
                     process.State = ProcessState.ERROR;
                 else
                     process.State = ProcessState.WARNING;
@@ -780,19 +779,42 @@ namespace UcbBack.Controllers
         }
 
         [HttpGet]
-        [Route("api/payroll/Distribute/{id}")]
-        public IHttpActionResult Distribute([FromBody] int id)
+        [Route("api/payroll/AcceptWarnings/{id}")]
+        public IHttpActionResult AcceptWarnings(int id)
         {
-            var process = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State == ProcessState.VALIDATED || p.State == ProcessState.WARNING));
+            var process = _context.DistProcesses.FirstOrDefault(p => p.Id == id && p.State==ProcessState.WARNING);
+            if (process == null)
+                return NotFound();
+            process.State = ProcessState.VALIDATED;
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("api/payroll/Distribute/{id}")]
+        public IHttpActionResult Distribute(int id)
+        {
+            var process = _context.DistProcesses.FirstOrDefault(p => p.Id == id && p.State == ProcessState.VALIDATED);
             if (process == null)
                 return NotFound();
 
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.SET_PERCENT(" + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.SET_PERCENTS(" + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.DIST_PERCENTS(" + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.DIST_COSTS(" + process.Id + ")");
             process.State = ProcessState.PROCESSED;
             _context.SaveChanges();
+
             return Ok("Se procesó la información");
+        }
+
+        [HttpGet]
+        [Route("api/payroll/Process")]
+        public IHttpActionResult GetProcesses()
+        {
+            var userid = Int32.Parse(Request.Headers.GetValues("id").First());
+            var user = _context.CustomUsers.FirstOrDefault(u => u.Id == userid);
+            var processes = _context.DistProcesses.Where(p=>p.BranchesId==user.BranchesId && p.State!=ProcessState.CANCELED);
+            return Ok(processes);
         }
 
         [HttpDelete]
@@ -803,6 +825,13 @@ namespace UcbBack.Controllers
             if (processInDB == null)
                 return NotFound();
             processInDB.State = ProcessState.CANCELED;
+            _context.SaveChanges();
+
+            var files = _context.FileDbs.Where(f => f.State == FileState.UPLOADED && f.DistProcessId==processInDB.Id);
+            foreach (var file in files)
+            {
+                file.State = FileState.CANCELED;
+            }
             _context.SaveChanges();
             return Ok("Proceso Cancelado");
         }
@@ -821,28 +850,81 @@ namespace UcbBack.Controllers
             if (file == null)
                 return NotFound();
 
-            var sum = _context.DistPayrolls.Where(p => p.DistFileId == file.Id).ToList();
+            var sum = _context.DistPayrolls.Where(p => p.DistFileId == file.Id).Select(
+                p=>new
+                {
+                    p.BasicSalary,
+                    p.AntiquityBonus,
+                    p.OtherIncome,
+                    p.TeachingIncome,
+                    p.OtherAcademicIncomes,
+                    p.Reintegro,
+                    p.TotalAmountEarned,
+                    p.AFPLaboral,
+                    p.RcIva,
+                    p.Discounts,
+                    p.TotalAmountDiscounts,
+                    p.TotalAfterDiscounts,
+                    p.AFPPatronal,
+                    p.SeguridadCortoPlazoPatronal,
+                    p.ProvAguinaldo,
+                    p.ProvPrimas,
+                    p.ProvIndeminizacion
+                });
 
-            dynamic res = new JObject();
-            res.BasicSalary = sum.Sum(p => p.BasicSalary);
-            res.AntiquityBonus = sum.Sum(p => p.AntiquityBonus);
-            res.OtherIncome = sum.Sum(p => p.OtherIncome);
-            res.TeachingIncome = sum.Sum(p => p.TeachingIncome);
-            res.OtherAcademicIncomes = sum.Sum(p => p.OtherAcademicIncomes);
-            res.Reintegro = sum.Sum(p => p.Reintegro);
-            res.TotalAmountEarned = sum.Sum(p => p.TotalAmountEarned);
-            res.AFPLaboral = sum.Sum(p => p.AFPLaboral);
-            res.RcIva = sum.Sum(p => p.RcIva);
-            res.Discounts = sum.Sum(p => p.Discounts);
-            res.TotalAmountDiscounts = sum.Sum(p => p.TotalAmountDiscounts);
-            res.TotalAfterDiscounts = sum.Sum(p => p.TotalAfterDiscounts);
-            res.AFPPatronal = sum.Sum(p => p.AFPPatronal);
-            res.SeguridadCortoPlazoPatronal = sum.Sum(p => p.SeguridadCortoPlazoPatronal);
-            res.ProvAguinaldo = sum.Sum(p => p.ProvAguinaldo);
-            res.ProvPrimas = sum.Sum(p => p.ProvPrimas);
-            res.ProvIndeminizacion = sum.Sum(p => p.ProvIndeminizacion);
+            List<string> names = new List<string>()
+            {
+                "Haber Basico",
+                "Bono Antiguedad",
+                "Otros Ingresos",
+                "Ingresos por Docencia",
+                "Ingresos por otras actividades academicas",
+                "Reintegro",
+                "Total Ganado",
+                "Aporte Laboral AFP",
+                "RC IVA",
+                "Descuentos",
+                "Total Deducciones",
+                "Liquido Pagable",
+                "Aporte patronal AFP",
+                "Aporte patronal SCP",
+                "Provision Aguinaldos",
+                "Provision Primas",
+                "Provision Indeminizacion",
+            };
+            List<JObject> result = new List<JObject>();
 
-            return Ok(res);
+            List<decimal> totales = new List<decimal>()
+            {
+                sum.Sum(p => p.BasicSalary),
+                sum.Sum(p => p.AntiquityBonus),
+                sum.Sum(p => p.OtherIncome),
+                sum.Sum(p => p.TeachingIncome),
+                sum.Sum(p => p.OtherAcademicIncomes),
+                sum.Sum(p => p.Reintegro),
+                sum.Sum(p => p.TotalAmountEarned),
+                sum.Sum(p => p.AFPLaboral),
+                sum.Sum(p => p.RcIva),
+                sum.Sum(p => p.Discounts),
+                sum.Sum(p => p.TotalAmountDiscounts),
+                sum.Sum(p => p.TotalAfterDiscounts),
+                sum.Sum(p => p.AFPPatronal),
+                sum.Sum(p => p.SeguridadCortoPlazoPatronal),
+                sum.Sum(p => p.ProvAguinaldo),
+                sum.Sum(p => p.ProvPrimas),
+                sum.Sum(p => p.ProvIndeminizacion),
+            };
+
+            for (int j = 0; j < totales.Count; j++)
+            {
+                dynamic re = new JObject();
+                re.name = names[j];
+                re.total = totales[j];
+                result.Add(re);
+            }
+            
+
+            return Ok(result);
         }
 
     }

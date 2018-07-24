@@ -36,7 +36,7 @@ namespace UcbBack.Logic
         private string fileName { get; set; }
         private string resultfileName { get; set; }
         public XLWorkbook wb { get; private set; }
-        public bool valid { private get; set; }
+        public bool valid { get; set; }
         private int sheets { get; set; }
         public int headerin { get; private set; }
         private HanaValidator hanaValidator;
@@ -51,6 +51,7 @@ namespace UcbBack.Logic
             this.fileName = fileName;
             this.headerin = headerin;
             _context = context ?? new ApplicationDbContext();
+            valid = true;
         }
 
         public ValidateExcelFile(Excelcol[] columns, Stream data, string fileName, int headerin =1, int sheets = 1, string resultfileName = "Result", ApplicationDbContext context=null)
@@ -64,6 +65,7 @@ namespace UcbBack.Logic
             this.wb = setExcelFile(data);
             hanaValidator = new HanaValidator();
             personValidator = new ValidatePerson();
+            valid = true;
         }
 
         public abstract void toDataBase();
@@ -130,6 +132,12 @@ namespace UcbBack.Logic
                     addError("Cantidad de Columnas", "Se esperaba tener " + columns.Length + "columnas en la hoja: " + sheet.Name + " se encontró " + UsedRange.ColumnCount());
                     res = false;
                 }
+
+                if (UsedRange.LastRow().RowNumber() <= headerin)
+                {
+                    addError("Archivo Sin Datos", "No se encontró datos en el archivo subido.");
+                    res = false;
+                }
                 for (int i = 1; i <= columns.Length; i++)
                 {
                     var comp = String.Compare(
@@ -143,7 +151,7 @@ namespace UcbBack.Logic
                     }
                     bool tipocol = true;
                     if (columns[i - 1].typeofcol != typeof(string))    
-                    for (int j = headerin + 1; j < UsedRange.RowCount(); j++)
+                    for (int j = headerin + 1; j < UsedRange.LastRow().RowNumber(); j++)
                     {
                         
                         if (sheet.Cell(j, i).Value.GetType() != columns[i - 1].typeofcol)
@@ -162,7 +170,7 @@ namespace UcbBack.Logic
                 }
             }
 
-            valid = res;
+            valid = valid && res;
             return res;
         }
 
@@ -464,9 +472,9 @@ namespace UcbBack.Logic
                     {
                         if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
                         {
-                            //paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
-                            wb.Worksheet(1).Cell(i, cod).Value = co;
+                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            //string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
+                            //wb.Worksheet(1).Cell(i, cod).Value = co;
                         }
                         else
                         {
@@ -488,7 +496,7 @@ namespace UcbBack.Logic
                 }
             }
 
-            valid = res;
+            valid = valid && res;
             return res;
         }
 

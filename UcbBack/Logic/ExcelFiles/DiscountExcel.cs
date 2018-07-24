@@ -38,7 +38,7 @@ namespace UcbBack.Logic.ExcelFiles
         {
             IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
 
-            for (int i = 1 + headerin; i <= UsedRange.RowCount() + headerin; i++)
+            for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
             {
                 _context.DistDiscountses.Add(ToDistDiscounts(i));
             }
