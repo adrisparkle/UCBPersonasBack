@@ -69,8 +69,39 @@ namespace UcbBack.Logic.ExcelFiles
             bool v5 = VerifyColumnValueIn(13, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
             //bool v6 = VerifyColumnValueIn(14, connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
             //bool v7 = VerifyColumnValueIn(15, connB1.getProjects(), comment: "Este proyecto no existe en SAP.");
+            bool v7 = verifyproject();
             bool v8 = VerifyPerson(ci: 1, fullname: 2, CUNI: 10, date: gestion + "-" + mes + "-01", personActive: false);
-            return isValid()  && v2 && v3 && v4&& v8 &&v5;
+            return isValid()  && v2 && v3 && v4&& v8 &&v5 && v7;
+        }
+
+        private bool verifyproject(int sheet = 1)
+        {
+            string commnet = "Este proyecto no existe en SAP.";
+            var connB1 = B1Connection.Instance;
+            List<string> list = connB1.getProjects();
+            int index = 15;
+            int tipoproy = 11;
+            bool res = true;
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var l = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                if (!list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                {
+                    var a1 = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
+                    var a2 = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
+                    if (!(wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "EC" &&
+                        wb.Worksheet(sheet).Cell(i, index).Value.ToString() == ""))
+                    {
+                        res = false;
+                        paintXY(index, i, XLColor.Red, commnet);
+                    }    
+                }
+            }
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "Valor o valores no validos en la columna: " + index, false);
+            return res;
         }
 
         public Dist_Posgrado ToDistDiscounts(int row, int sheet = 1)

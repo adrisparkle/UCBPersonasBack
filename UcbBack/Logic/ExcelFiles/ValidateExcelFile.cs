@@ -191,6 +191,7 @@ namespace UcbBack.Logic
             var l = UsedRange.LastRow().RowNumber();
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
+                //var xxx = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
                 if (list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase))==notin)
                 {
                     res = false;
@@ -425,7 +426,8 @@ namespace UcbBack.Logic
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
-                    throw;
+                    return false;
+                    //throw;
                 }
                 
             }

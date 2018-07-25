@@ -140,8 +140,8 @@ namespace UcbBack.Controllers
             if (hash.Verify(newpassword))
                 return BadRequest("La nueva Contraseña no pude ser igual a la Contraseña actual");
 
-            if (!hash.Verify(oldpassword))
-                return Unauthorized();
+           // if (!hash.Verify(oldpassword))
+            //    return Unauthorized();
 
             user.Password = hashnewpassword;
             user.Token = validator.getToken(user);

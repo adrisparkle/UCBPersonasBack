@@ -356,6 +356,12 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
                 return response;
             }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
+                return response;
+            }
         }
 
         [HttpGet]
@@ -406,28 +412,34 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (!((IDictionary<string, object>)o).ContainsKey("mes")
-                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
-                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
-                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                if (!((IDictionary<string, object>) o).ContainsKey("mes")
+                    || !((IDictionary<string, object>) o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>) o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>) o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>) o).ContainsKey("excelStream"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    response.Content =
+                        new StringContent(
+                            "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Discount, userid, o.fileName);
+                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Discount, userid,
+                    o.fileName);
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Content =
+                        new StringContent(
+                            "Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                DiscountExcel contractExcel = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                DiscountExcel contractExcel = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion,
+                    o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
@@ -437,6 +449,7 @@ namespace UcbBack.Controllers
                     response.Content = new StringContent("Se subio el archivo correctamente.");
                     return response;
                 }
+
                 file.State = FileState.CANCELED;
                 _context.SaveChanges();
                 return contractExcel.toResponse();
@@ -445,6 +458,12 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
         }
@@ -536,7 +555,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                return response;
+            }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
         }
@@ -627,7 +652,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                return response;
+            }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
         }
@@ -718,7 +749,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                return response;
+            }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
         }
@@ -813,7 +850,17 @@ namespace UcbBack.Controllers
         {
             var userid = Int32.Parse(Request.Headers.GetValues("id").First());
             var user = _context.CustomUsers.FirstOrDefault(u => u.Id == userid);
-            var processes = _context.DistProcesses.Where(p=>p.BranchesId==user.BranchesId && p.State!=ProcessState.CANCELED);
+            var processes = _context.DistProcesses.Include(p=>p.Branches).
+                Where(p=>p.BranchesId==user.BranchesId && p.State!=ProcessState.CANCELED).
+                Select(p=> new
+            {
+                p.BranchesId,
+                p.Branches.Name,
+                p.State,
+                p.Id,
+                p.gestion,
+                p.mes
+            });
             return Ok(processes);
         }
 
