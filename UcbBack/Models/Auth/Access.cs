@@ -17,5 +17,8 @@ namespace UcbBack.Models.Auth
         public string Path { get; set; }
         public string Description { get; set; }
         public bool Public { get; set; }
+
+        public Resource Resource { get; set; }
+        public int ResourceId { get; set; }
     }
 }

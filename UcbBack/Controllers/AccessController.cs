@@ -67,6 +67,7 @@ namespace UcbBack.Controllers
             accessInDB.Method = access.Method;
             accessInDB.Path = access.Path;
             accessInDB.Description = access.Description;
+            accessInDB.ResourceId = access.ResourceId;
             accessInDB.Public = access.Public;
             _context.SaveChanges();
             return Ok(accessInDB);

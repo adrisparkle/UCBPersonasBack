@@ -214,7 +214,13 @@ namespace UcbBack.Logic
             return res;
         }
 
-        
+        public string cleanText(string a)
+        {
+            return a == null
+                ? null
+                : a.Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O").Replace("Ú", "U");
+        }
+
         public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1)
         {
             bool res = true;
@@ -235,10 +241,14 @@ namespace UcbBack.Logic
 
                     if (fullname != -1)
                     {
-                        strfsn = wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname).Value.ToString();
-                        strssn = wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString();
-                        strname = wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString();
-                        strmsn = wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString();
+                        strfsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname).Value.ToString());
+
+                        strssn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString());
+
+                        strname = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString());
+
+                        strmsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString());
+
                     }
 
                     if (!ppllist.Any(x => x.Document == strci
@@ -426,6 +436,7 @@ namespace UcbBack.Logic
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                    valid = false;
                     return false;
                     //throw;
                 }
@@ -474,9 +485,9 @@ namespace UcbBack.Logic
                     {
                         if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
                         {
-                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            //string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
-                            //wb.Worksheet(1).Cell(i, cod).Value = co;
+                            //paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
+                            wb.Worksheet(1).Cell(i, cod).Value = co;
                         }
                         else
                         {

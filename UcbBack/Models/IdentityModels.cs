@@ -46,6 +46,8 @@ namespace UcbBack.Models
         public DbSet<Dist_LogErrores> DistLogErroreses  { get; set; }
         public DbSet<Dist_Process> DistProcesses  { get; set; }
         public DbSet<Dist_FileType> DistFileTypes  { get; set; }
+        public DbSet<Module> Modules  { get; set; }
+        public DbSet<Resource> Resources  { get; set; }
         
 
         //auth models

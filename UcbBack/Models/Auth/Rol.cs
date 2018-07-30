@@ -15,6 +15,10 @@ namespace UcbBack.Models.Auth
         public int Id { get; set; }
         public string Name { get; set; }
         public int Level { get; set; }
+
+        public Resource Resource { get; set; }
+        public int ResourceId { get; set; }
+
         //public virtual ICollection<RolhasAccess> RolhasAccesses { get; set; }
     }
 }

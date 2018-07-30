@@ -84,7 +84,32 @@ namespace UcbBack.Logic.ExcelFiles
             bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: false);
             //bool v6 = VerifyColumnValueIn(25, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado como un Bussines Partner en SAP");
             bool v7 = ValidateLiquidoPagable();
-            return isValid() && v1 && v2 && v4 && v5  && v7 && v3;
+            bool v8 = ValidatenoZero();
+            return isValid() && v1 && v2 && v4 && v5  && v7 && v3 && v8;
+        }
+
+        public bool ValidatenoZero(int sheet = 1)
+        {
+            int tipo = 20;
+            int nozero = 22;
+            bool res = true;
+            string comment = "Este Valor no puede se cero.";
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var l = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                int nz = -1;
+                if (wb.Worksheet(sheet).Cell(i, tipo).Value.ToString() != "TH" && Int32.TryParse(wb.Worksheet(sheet).Cell(i, nozero).Value.ToString(),out nz))
+                {
+                    if (nz == 0)
+                    {
+                        res = false;
+                        paintXY(nozero, i, XLColor.Red, comment);
+                    }
+                }
+            }
+            valid = valid && res;
+            return res;
         }
 
         public bool ValidateLiquidoPagable(int sheet=1)

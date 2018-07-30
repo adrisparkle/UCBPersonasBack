@@ -228,11 +228,13 @@
     <Compile Include="Controllers\GrupoContableController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LevelController.cs" />
+    <Compile Include="Controllers\ModuleController.cs" />
     <Compile Include="Controllers\OrganizationalUnitController.cs" />
     <Compile Include="Controllers\PayrollController.cs" />
     <Compile Include="Controllers\PeopleController.cs" />
     <Compile Include="Controllers\PerformanceAreaController.cs" />
     <Compile Include="Controllers\PositionController.cs" />
+    <Compile Include="Controllers\ResourceController.cs" />
     <Compile Include="Controllers\RolController.cs" />
     <Compile Include="Controllers\TipoEmpleadoDistController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
@@ -271,6 +273,7 @@
     <Compile Include="Models\CuentaContable.cs" />
     <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\DistErrores.cs" />
+    <Compile Include="Models\Distribution.cs" />
     <Compile Include="Models\Dist_Academic.cs" />
     <Compile Include="Models\Dist_Discounts.cs" />
     <Compile Include="Models\Dist_FileType.cs" />
@@ -284,12 +287,14 @@
     <Compile Include="Models\GrupoContable.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
+    <Compile Include="Models\Module.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
     <Compile Include="Models\Pais.cs" />
     <Compile Include="Models\Payroll.cs" />
     <Compile Include="Models\people.cs" />
     <Compile Include="Models\PerformanceArea.cs" />
     <Compile Include="Models\Positions.cs" />
+    <Compile Include="Models\Resource.cs" />
     <Compile Include="Models\TipoEmpleadoDist.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />

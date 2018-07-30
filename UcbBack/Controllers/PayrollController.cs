@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,9 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models;
 using System.Linq;
+using System.Net.Http.Headers;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace UcbBack.Controllers
 {
@@ -262,6 +266,18 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
                 return response;
             }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
+                return response;
+            }
+            catch (System.Exception e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
+                return response;
+            }
         }
 
 
@@ -354,6 +370,12 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
@@ -460,6 +482,12 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
                 return response;
             }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
+                return response;
+            }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
@@ -555,7 +583,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
@@ -652,7 +686,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
@@ -749,7 +789,13 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" );
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                return response;
+            }
+            catch (System.IO.IOException e)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
@@ -789,12 +835,13 @@ namespace UcbBack.Controllers
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.FIX_ACAD(" + process.Id + ")");
 
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CE(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_TIPOEMPLEADO(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CE(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OD(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OR(" + userid + "," + process.Id + ")");
+
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OTHERINCOMES(" + userid + "," + process.Id + ")");
 
 
@@ -881,6 +928,45 @@ namespace UcbBack.Controllers
             }
             _context.SaveChanges();
             return Ok("Proceso Cancelado");
+        }
+
+        [HttpGet]
+        [Route("api/payroll/GetDistribution/{id}")]
+        public HttpResponseMessage GetDistribution(int id)
+        {
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
+            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\","+
+            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\","+
+            " b.\"mes\",b.\"gestion\",e.\"Name\" as Branches ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            " FROM ADMNALRRHH.\"Dist_Cost\" a "+
+                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " + 
+                " on a.\"DistProcessId\"=b.\"Id\" "+
+            " AND a.\"DistProcessId\"= "+ id +
+            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c "+
+                "on a.\"TipoEmpleado\"=c.\"Name\" "+
+            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d "+
+               " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
+            " and b.\"BranchesId\" = d.\"BranchesId\" "+
+            " and a.\"Columna\" = d.\"Concept\" "+
+            " INNER JOIN ADMNALRRHH.\"Branches\" e "+
+               " on b.\"BranchesId\" = e.\"Id\"").ToList();
+
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            ex.Worksheets.Add(d.CreateDataTable(dist), "Result");
+
+
+            HttpResponseMessage response = new HttpResponseMessage();
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "Distribucion-"+id+".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin); 
+            return response;
         }
 
         [HttpGet]

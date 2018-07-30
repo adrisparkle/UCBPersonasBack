@@ -11,6 +11,9 @@ namespace UcbBack.Logic
     {
         private ApplicationDbContext _context;
         private ValidatePerson validator;
+        public int tokenLife = 15*60;
+        public int refeshtokenLife = 4*60*60;
+
 
         public ValidateAuth()
         {
@@ -25,6 +28,18 @@ namespace UcbBack.Logic
             {
                 return false;
             }
+            var now = DateTime.Now;
+            if (user.TokenCreatedAt == null)
+                return false;
+            int seconds = (int)now.Subtract(user.TokenCreatedAt.Value).TotalSeconds;
+            if (seconds > tokenLife)
+            {
+                user.Token = null;
+                user.TokenCreatedAt = null;
+                _context.SaveChanges();
+                return false;
+            }
+            
             else
             {
                 return true;
