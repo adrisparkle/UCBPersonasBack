@@ -40,10 +40,7 @@ namespace UcbBack.Logic
                 return false;
             }
             
-            else
-            {
-                return true;
-            }
+            return true;
         }
 
         public bool hasAccess(int id, string path,string method)
@@ -53,6 +50,11 @@ namespace UcbBack.Logic
             if (user == null)
             {
                 return false;
+            }
+
+            if (user.RolId == 1)
+            {
+                return true;
             }
 
             Access access = _context.Accesses.FirstOrDefault(a => a.Path == path && a.Method == method);
@@ -74,22 +76,22 @@ namespace UcbBack.Logic
 
         public bool isPublic(string path, string method)
         {
-            Access access = _context.Accesses.FirstOrDefault(a => a.Path == path && a.Method == method && a.Public==true);
+            Access access = _context.Accesses.FirstOrDefault(a =>
+                string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
 
-            if (access == null)
-            {
-                return false;
-            }
 
-            return true;
+
+            return access==null?false:access.Public;
         }
 
         public bool shallYouPass(int id, string token, string path, string method)
         {
+            path = path.EndsWith("/")? path.Substring(0, path.Length - 1):path;
+
             bool ispublic = isPublic(path, method);
             bool isauthenticated = isAuthenticated(id, token);
             bool hasaccess = hasAccess(id,path,method);
-            return (ispublic || (isauthenticated&&hasaccess));
+            return (ispublic || (isauthenticated && hasaccess));
         }
     }
 }

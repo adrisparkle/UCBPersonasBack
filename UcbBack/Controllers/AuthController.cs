@@ -156,6 +156,7 @@ namespace UcbBack.Controllers
             dynamic respose = new JObject();
             respose.Token = user.Token;
             respose.ExpiresIn = validateauth.tokenLife;
+            respose.RefreshExpiresIn = validateauth.refeshtokenLife-((int)DateTime.Now.Subtract(user.RefreshTokenCreatedAt.Value).TotalSeconds);
 
             return Ok(respose);
         }
