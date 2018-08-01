@@ -16,7 +16,7 @@ namespace UcbBack
     {
         public void Configuration(IAppBuilder app)
         {
-            bool debugmode = true;
+            bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
                     var req = environment.Request;
@@ -41,7 +41,7 @@ namespace UcbBack
                         }
                     }
 
-                    if (!validator.shallYouPass(userid, token, endpoint, verb) || debugmode)
+                    if (!validator.shallYouPass(userid, token, endpoint, verb) && debugmode)
                     {
                         environment.Response.StatusCode = 401;
                         environment.Response.Body = new MemoryStream();

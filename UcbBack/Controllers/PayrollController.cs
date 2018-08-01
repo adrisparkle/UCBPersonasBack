@@ -915,7 +915,7 @@ namespace UcbBack.Controllers
         [Route("api/payroll/Process/{id}")]
         public IHttpActionResult Process(int id)
         {
-            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR));
+            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR || p.State == ProcessState.VALIDATED));
             if (processInDB == null)
                 return NotFound();
             processInDB.State = ProcessState.CANCELED;
