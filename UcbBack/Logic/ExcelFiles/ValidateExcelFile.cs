@@ -486,9 +486,9 @@ namespace UcbBack.Logic
                     {
                         if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
                         {
-                            //paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
-                            wb.Worksheet(1).Cell(i, cod).Value = co;
+                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
+                            //string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
+                            //wb.Worksheet(1).Cell(i, cod).Value = co;
                         }
                         else
                         {

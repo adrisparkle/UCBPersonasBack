@@ -1,7 +1,7 @@
 @ECHO OFF
 
 set rootpath=%~dp0
-set destination="C:\Users\Adrian\Desktop\www"
+set destination="C:\inetpub\wwwroot\RRHH"
 
 mkdir "%destination%\Areas"
 robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL
@@ -27,8 +27,8 @@ robocopy "%rootpath%\Static" "%destination%\Static" /E /COPYALL
 mkdir "%destination%\Views"
 robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL
 
-robocopy "C:\Program Files (x86)\Jenkins\workspace\Windows Service Deployment\UcbBack" "C:\Users\Adrian\Desktop\www" favicon.ico
-robocopy "%rootpath%\" %destination% Global.asax
+robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL
+robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL
 robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL
 robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL
 
