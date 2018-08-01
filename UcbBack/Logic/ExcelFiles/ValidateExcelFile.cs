@@ -436,6 +436,7 @@ namespace UcbBack.Logic
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                    addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                     valid = false;
                     return false;
                     //throw;
@@ -566,6 +567,7 @@ namespace UcbBack.Logic
 
         public void addError(string error_name,string err,bool replace = true)
         {
+            valid = false;
             error_name = HttpUtility.HtmlEncode(error_name);
             err = HttpUtility.HtmlEncode(err);
             errors[error_name] = replace ? err : errors[error_name] == null ? errors[error_name] = err : errors[error_name]+","+err;

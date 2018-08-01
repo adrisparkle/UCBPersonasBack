@@ -220,18 +220,21 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadPayrollExcel()
         {
             var response = new HttpResponseMessage();
+            PayrollExcel ExcelFile = null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (!((IDictionary<string, object>)o).ContainsKey("mes") 
-                    || !((IDictionary<string, object>)o).ContainsKey("gestion") 
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
                     || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
                     || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -242,14 +245,15 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                PayrollExcel contractExcel = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                ExcelFile = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -258,23 +262,26 @@ namespace UcbBack.Controllers
                 }
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -326,6 +333,7 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadAcademicExcel()
         {
             var response = new HttpResponseMessage();
+            AcademicExcel ExcelFile=null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
@@ -335,27 +343,31 @@ namespace UcbBack.Controllers
                     || !((IDictionary<string, object>)o).ContainsKey("gestion")
                     || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
                     || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Academic, userid, o.fileName);
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                AcademicExcel contractExcel = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                ExcelFile = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     response.StatusCode = HttpStatusCode.OK;
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
@@ -364,23 +376,26 @@ namespace UcbBack.Controllers
                 }
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -429,42 +444,41 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadDiscountExcel()
         {
             var response = new HttpResponseMessage();
+            DiscountExcel ExcelFile = null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (!((IDictionary<string, object>) o).ContainsKey("mes")
-                    || !((IDictionary<string, object>) o).ContainsKey("gestion")
-                    || !((IDictionary<string, object>) o).ContainsKey("segmentoOrigen")
-                    || !((IDictionary<string, object>) o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>) o).ContainsKey("excelStream"))
+                if (!((IDictionary<string, object>)o).ContainsKey("mes")
+                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content =
-                        new StringContent(
-                            "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Discount, userid,
-                    o.fileName);
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content =
-                        new StringContent(
-                            "Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                DiscountExcel contractExcel = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion,
+                ExcelFile = new DiscountExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion,
                     o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -474,23 +488,26 @@ namespace UcbBack.Controllers
 
                 file.State = FileState.CANCELED;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -540,6 +557,7 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadPostgradoExcel()
         {
             var response = new HttpResponseMessage();
+            PostgradoExcel ExcelFile = null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
@@ -549,27 +567,30 @@ namespace UcbBack.Controllers
                     || !((IDictionary<string, object>)o).ContainsKey("gestion")
                     || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
                     || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Postgrado, userid, o.fileName);
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                PostgradoExcel contractExcel = new PostgradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                ExcelFile = new PostgradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -578,23 +599,26 @@ namespace UcbBack.Controllers
                 }
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -643,6 +667,7 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadPregradoExcel()
         {
             var response = new HttpResponseMessage();
+            PregradoExcel ExcelFile = null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
@@ -652,27 +677,30 @@ namespace UcbBack.Controllers
                     || !((IDictionary<string, object>)o).ContainsKey("gestion")
                     || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
                     || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.Pregrado, userid, o.fileName);
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Ya se subió datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                PregradoExcel contractExcel = new PregradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                ExcelFile = new PregradoExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -681,23 +709,26 @@ namespace UcbBack.Controllers
                 }
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -746,6 +777,7 @@ namespace UcbBack.Controllers
         public async Task<HttpResponseMessage> UploadORExcel()
         {
             var response = new HttpResponseMessage();
+            ORExcel ExcelFile = null;
             try
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
@@ -755,27 +787,30 @@ namespace UcbBack.Controllers
                     || !((IDictionary<string, object>)o).ContainsKey("gestion")
                     || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
                     || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream"))
+                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                    || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes, o.gestion, o.segmentoOrigen, ExcelFileType.OR, userid, o.fileName);
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                ORExcel contractExcel = new ORExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                if (contractExcel.ValidateFile())
+                ExcelFile = new ORExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                if (ExcelFile.ValidateFile())
                 {
-                    contractExcel.toDataBase();
+                    ExcelFile.toDataBase();
                     file.State = FileState.UPLOADED;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -784,23 +819,26 @@ namespace UcbBack.Controllers
                 }
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
-                return contractExcel.toResponse();
+                return ExcelFile.toResponse();
             }
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xls, .xslx)" + e);
+                ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
+                response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
             }
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
