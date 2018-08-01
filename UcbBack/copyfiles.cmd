@@ -29,7 +29,7 @@ robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL
 
 robocopy "C:\Program Files (x86)\Jenkins\workspace\Windows Service Deployment\UcbBack" "C:\Users\Adrian\Desktop\www" favicon.ico
 robocopy "%rootpath%\" %destination% Global.asax
-robocopy "%rootpath%\" "%destination%\\" "packages.config"
-robocopy "%rootpath%\" "%destination%\\" "Web.config"
+robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL
+robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL
 
 ECHO ON
