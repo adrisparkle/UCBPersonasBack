@@ -22,9 +22,6 @@ robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is
 mkdir "%destination%\Scripts"
 robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /is
 
-mkdir "%destination%\Static"
-robocopy "%rootpath%\Static" "%destination%\Static" /E /COPYALL /is
-
 mkdir "%destination%\Views"
 robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL /is
 
@@ -39,8 +36,9 @@ set /a strlen=%strlen%-8
 
 CALL SET prevpath=%%rootpath:~0,%strlen%%%
 
+mkdir "%destination%\Static"
 robocopy "%prevpath%\Front\dist\static" "%destination%\Static" /E /COPYALL /is
-robocopy "%prevpath%\Front\dist\\" "%destination%\Views\Home\\" "index.html" /E /COPYALL /is
+robocopy "%prevpath%\Front\dist\\" "%destination%\Views\Home\\" "index.html" /COPYALL /is
 
 
 echo "@{    Layout = "";   }" > "%prevpath%\UcbBack\Views\Home\Index.cshtml"
