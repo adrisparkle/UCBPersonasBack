@@ -353,7 +353,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Academic, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
@@ -464,7 +464,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Discount, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
@@ -577,7 +577,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Postgrado, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
@@ -687,7 +687,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Pregrado, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
@@ -797,7 +797,7 @@ namespace UcbBack.Controllers
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.OR, userid, o.fileName.ToString());
 
                 if (file == null)
                 {

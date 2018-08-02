@@ -1,35 +1,57 @@
 @ECHO OFF
 
 set rootpath=%~dp0
-set destination="C:\inetpub\wwwroot\RRHH"
+set destinationserver="C:\inetpub\wwwroot\RRHH"
+set destination="C:\Users\Adrian\Desktop\www"
 
 mkdir "%destination%\Areas"
-robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL
+robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /is
 
 mkdir "%destination%\bin"
-robocopy "%rootpath%\bin" "%destination%\bin" /E /COPYALL
+robocopy "%rootpath%\bin" "%destination%\bin" /E /COPYALL /is
 
 mkdir "%destination%\Content"
-robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL
+robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL /is
 
 mkdir "%destination%\fonts"
-robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL
+robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL /is
 
 mkdir "%destination%\Images"
-robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL
+robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is
 
 mkdir "%destination%\Scripts"
-robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL
+robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /is
 
 mkdir "%destination%\Static"
-robocopy "%rootpath%\Static" "%destination%\Static" /E /COPYALL
+robocopy "%rootpath%\Static" "%destination%\Static" /E /COPYALL /is
 
 mkdir "%destination%\Views"
-robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL
+robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL /is
 
-robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL
-robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL
-robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL
-robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL
+robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL /is
+robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL /is
+robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL /is
+robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL /is
+
+
+call :strLen rootpath strlen
+set /a strlen=%strlen%-8
+
+CALL SET prevpath=%%rootpath:~0,%strlen%%%
+
+robocopy "%prevpath%\Front\dist\static" "%prevpath%\UcbBack\Static" /E /COPYALL /is
+robocopy "%prevpath%\Front\dist\" "%prevpath%\UcbBack\Views\Home\\" "index.html" /E /COPYALL /is
+
+
+echo "@{    Layout = "";   }" > "%prevpath%\UcbBack\Views\Home\Index.cshtml"
+type "%prevpath%\UcbBack\Views\Home\index.html" >> "%prevpath%\UcbBack\Views\Home\Index.cshtml"
 
 ECHO ON
+exit /b
+
+:strLen
+setlocal enabledelayedexpansion
+:strLen_Loop
+  if not "!%1:~%len%!"=="" set /A len+=1 & goto :strLen_Loop
+(endlocal & set %2=%len%)
+goto :eof
