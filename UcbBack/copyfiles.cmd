@@ -39,8 +39,8 @@ set /a strlen=%strlen%-8
 
 CALL SET prevpath=%%rootpath:~0,%strlen%%%
 
-robocopy "%prevpath%\Front\dist\static" "%prevpath%\UcbBack\Static" /E /COPYALL /is
-robocopy "%prevpath%\Front\dist\" "%prevpath%\UcbBack\Views\Home\\" "index.html" /E /COPYALL /is
+robocopy "%prevpath%\Front\dist\static" "%destination%\Static" /E /COPYALL /is
+robocopy "%prevpath%\Front\dist\" "%destination%\Views\Home\\" "index.html" /E /COPYALL /is
 
 
 echo "@{    Layout = "";   }" > "%prevpath%\UcbBack\Views\Home\Index.cshtml"
