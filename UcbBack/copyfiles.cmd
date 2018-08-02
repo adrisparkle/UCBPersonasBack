@@ -41,8 +41,8 @@ robocopy "%prevpath%\Front\dist\static" "%destination%\Static" /E /COPYALL /is
 robocopy "%prevpath%\Front\dist\\" "%destination%\Views\Home\\" "index.html" /COPYALL /is
 
 
-echo "@{    Layout = "";   }" > "%prevpath%\UcbBack\Views\Home\Index.cshtml"
-type "%prevpath%\UcbBack\Views\Home\index.html" >> "%prevpath%\UcbBack\Views\Home\Index.cshtml"
+echo "@{    Layout = "";   }" > "%destination%\Views\Home\Index.cshtml"
+type "%destination%\Views\Home\index.html" >> "%destination%\Views\Home\Index.cshtml"
 
 ECHO ON
 exit /b
