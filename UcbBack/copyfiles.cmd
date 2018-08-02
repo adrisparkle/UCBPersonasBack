@@ -1,8 +1,8 @@
 @ECHO OFF
 
 set rootpath=%~dp0
-set destinationserver="C:\inetpub\wwwroot\RRHH"
-set destination="C:\Users\Adrian\Desktop\www"
+set destination="C:\inetpub\wwwroot\RRHH"
+set destinationdev="C:\Users\Adrian\Desktop\www"
 
 mkdir "%destination%\Areas"
 robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /is
