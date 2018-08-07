@@ -234,7 +234,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -245,7 +245,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -267,6 +267,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -274,6 +275,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -281,6 +283,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
@@ -347,7 +350,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -358,7 +361,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -381,6 +384,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -388,6 +392,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -395,6 +400,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
@@ -458,7 +464,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -469,7 +475,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -493,6 +499,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -500,6 +507,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -507,6 +515,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
@@ -571,7 +580,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -582,7 +591,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -604,6 +613,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -611,6 +621,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -618,6 +629,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
@@ -681,7 +693,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -692,7 +704,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -714,6 +726,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -721,6 +734,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -728,6 +742,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
@@ -791,7 +806,7 @@ namespace UcbBack.Controllers
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)");
+                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
@@ -802,7 +817,7 @@ namespace UcbBack.Controllers
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
                     response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
@@ -824,6 +839,7 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -831,6 +847,7 @@ namespace UcbBack.Controllers
             catch (System.IO.IOException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
@@ -838,6 +855,7 @@ namespace UcbBack.Controllers
             catch (System.Exception e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;

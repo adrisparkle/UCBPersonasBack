@@ -11,8 +11,8 @@ namespace UcbBack.Logic
     {
         private ApplicationDbContext _context;
         private ValidatePerson validator;
-        public int tokenLife = 15*60;
-        public int refeshtokenLife = 4*60*60;
+        public int tokenLife = 10;//15*60;
+        public int refeshtokenLife = 60;//4*60*60;
 
 
         public ValidateAuth()
