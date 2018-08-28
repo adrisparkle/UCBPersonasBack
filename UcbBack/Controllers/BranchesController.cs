@@ -6,23 +6,40 @@ using System.Net.Http;
 using System.Web.Helpers;
 using System.Web.Http;
 using UcbBack.Models;
+using System.Data.Entity;
+using UcbBack.Logic;
 
 namespace UcbBack.Controllers
 {
     
     public class BranchesController : ApiController
     {
-        private ApplicationDbContext _context;    
+        private ApplicationDbContext _context;
+        private ValidateAuth auth;
 
         public BranchesController()
         {
             _context = new ApplicationDbContext();
+            auth = new ValidateAuth();
         }
 
         // GET api/Branches
         public IHttpActionResult Get()
         {
-                return Ok(_context.Branch.ToList()); 
+            var brs = _context.Branch.Include(x => x.Dependency).Select(x =>
+                new {x.Id, 
+                    x.Name, 
+                    x.ADGroupName, 
+                    x.ADOUName, 
+                    x.Abr, 
+                    Dependency = x.Dependency.Name,
+                    x.InitialsInterRegional,
+                    x.SerieComprobanteContalbeSAP,
+                    x.SocioGenericDerechosLaborales}).OrderBy(x=>x.Id);
+
+            var user = auth.getUser(Request);
+            var res = auth.filerByRegional(brs, user,isBranchtable:true);
+            return Ok(res); 
         }
 
         // GET api/Branches/5
@@ -44,7 +61,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            branch.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Branches_sqs\".nextval FROM DUMMY;").ToList()[0];
+            branch.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Branches_sqs\".nextval FROM DUMMY;").ToList()[0];
 
             _context.Branch.Add(branch);
             _context.SaveChanges();
@@ -64,6 +81,12 @@ namespace UcbBack.Controllers
 
             brachInDB.Name = branch.Name;
             brachInDB.Abr = branch.Abr;
+            brachInDB.ADGroupName = branch.ADGroupName;
+            brachInDB.ADOUName = branch.ADOUName;
+            brachInDB.DependencyId = branch.DependencyId;
+            brachInDB.InitialsInterRegional = branch.InitialsInterRegional;
+            brachInDB.SerieComprobanteContalbeSAP = branch.SerieComprobanteContalbeSAP;
+            brachInDB.SocioGenericDerechosLaborales = branch.SocioGenericDerechosLaborales;
 
             _context.SaveChanges();
             return Ok(brachInDB);

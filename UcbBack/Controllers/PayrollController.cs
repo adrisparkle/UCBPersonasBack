@@ -19,6 +19,7 @@ using System.Linq;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
+using UcbBack.Logic;
 
 namespace UcbBack.Controllers
 {
@@ -34,6 +35,7 @@ namespace UcbBack.Controllers
             public static string VALIDATED = "VALIDATED";
             public static string PROCESSED = "PROCESSED";
             public static string WARNING = "WARNING";
+            public static string INSAP = "INSAP";
         }
         private struct FileState
         {
@@ -54,8 +56,10 @@ namespace UcbBack.Controllers
 
         private int ExcelHeaders = 3;
 
+        private ValidateAuth auth;
         public PayrollController()
         {
+            auth = new ValidateAuth();
             _context = new ApplicationDbContext();
         }
 
@@ -105,7 +109,7 @@ namespace UcbBack.Controllers
                     processInDB.State = ProcessState.STARTED;
                     _context.Database.ExecuteSqlCommand("UPDATE ADMNALRRHH.\"Dist_LogErrores\" set \"Inspected\" = true where \"DistProcessId\" = " + processInDB.Id);
                     var file = new Dist_File();
-                    file.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+                    file.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
                     file.UploadedDate = DateTime.Now;
                     file.DistFileTypeId = (int)FileType; 
                     file.Name = fileName;
@@ -121,7 +125,7 @@ namespace UcbBack.Controllers
             {
                 var process = new Dist_Process();
                 process.UploadedDate = DateTime.Now;
-                process.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_Process_sqs\".nextval FROM DUMMY;").ToList()[0];
+                process.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Process_sqs\".nextval FROM DUMMY;").ToList()[0];
                 process.BranchesId = BranchesId;
                 process.mes = mes;
                 process.gestion = gestion;
@@ -130,7 +134,7 @@ namespace UcbBack.Controllers
                 _context.SaveChanges();
 
                 var file = new Dist_File();
-                file.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+                file.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
                 file.UploadedDate = DateTime.Now;
                 file.DistFileTypeId = (int)FileType;
                 file.Name = fileName;
@@ -239,7 +243,12 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                int userid = Int32.Parse(Request.Headers.GetValues("id").First());
+                int userid = 0;
+                if (!Int32.TryParse(Request.Headers.GetValues("id").First(),out userid))
+                {
+                    response.StatusCode = HttpStatusCode.Unauthorized;
+                    return response;
+                }
                 var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
@@ -251,6 +260,7 @@ namespace UcbBack.Controllers
                 }
 
                 ExcelFile = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                
                 if (ExcelFile.ValidateFile())
                 {
                     ExcelFile.toDataBase();
@@ -284,7 +294,6 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -401,7 +410,6 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -630,7 +638,6 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -743,7 +750,6 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -856,7 +862,6 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
@@ -951,27 +956,30 @@ namespace UcbBack.Controllers
         [Route("api/payroll/Process")]
         public IHttpActionResult GetProcesses()
         {
-            var userid = Int32.Parse(Request.Headers.GetValues("id").First());
-            var user = _context.CustomUsers.FirstOrDefault(u => u.Id == userid);
-            var processes = _context.DistProcesses.Include(p=>p.Branches).
-                Where(p=>p.BranchesId==user.BranchesId && p.State!=ProcessState.CANCELED).
+            var processes = _context.DistProcesses.Include(p => p.Branches)
+                .Where(p => p.State != ProcessState.CANCELED).
                 Select(p=> new
-            {
-                p.BranchesId,
-                p.Branches.Name,
-                p.State,
-                p.Id,
-                p.gestion,
-                p.mes
-            });
-            return Ok(processes);
+                {
+                    p.BranchesId,
+                    p.Branches.Name,
+                    p.State,
+                    p.Id,
+                    p.gestion,
+                    p.mes
+                });
+
+            var user = auth.getUser(Request);
+            var res = auth.filerByRegional(processes, user);
+
+            return Ok(res);
         }
 
         [HttpDelete]
         [Route("api/payroll/Process/{id}")]
         public IHttpActionResult Process(int id)
         {
-            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR || p.State == ProcessState.VALIDATED));
+
+            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State != ProcessState.CANCELED || p.State != ProcessState.INSAP ));
             if (processInDB == null)
                 return NotFound();
             processInDB.State = ProcessState.CANCELED;
@@ -992,8 +1000,8 @@ namespace UcbBack.Controllers
         {
             IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
             " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\","+
-            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\","+
-            " b.\"mes\",b.\"gestion\",e.\"Name\" as Branches ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
+            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
             " FROM ADMNALRRHH.\"Dist_Cost\" a "+
                 " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " + 
                 " on a.\"DistProcessId\"=b.\"Id\" "+

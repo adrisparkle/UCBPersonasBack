@@ -14,17 +14,13 @@ namespace UcbBack.Models.Auth
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
         [Required]
-        public string UserName { get; set; }
-        [MaxLength(50)]
-        public string Password { get; set; }
-        public Rol Rol { get; set; }
-        public int RolId { get; set; }
+        public string UserPrincipalName { get; set; }
+        public People People { get; set; }
+        public int PeopleId { get; set; }
         public string Token { get; set; }
         public string RefreshToken { get; set; }
         public DateTime ?TokenCreatedAt { get; set; }
         public DateTime ?RefreshTokenCreatedAt { get; set; }
-        public Branches  Branches { get; set; }
-        public int  BranchesId { get; set; }
-        public Boolean active { get; set; }
+
     }
 }

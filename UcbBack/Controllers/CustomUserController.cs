@@ -17,18 +17,28 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
         private ValidateToken validator;
+        private ADClass activeDirectory;
 
         public CustomUserController()
         {
             _context = new ApplicationDbContext();
             validator = new ValidateToken();
+            activeDirectory = new ADClass();
         }
 
         // GET api/user
         [Route("api/user/")]
         public IHttpActionResult Get()
         {
-            var userlist = _context.CustomUsers.Include(u => u.Rol).ToList().Select(x=> new{ x.Id ,x.UserName , Rol= x.Rol.Name });
+            var userlist = _context.CustomUsers.Include(x=>x.People)
+                .ToList().
+                Select(x => new
+                {
+                    x.Id,
+                    x.UserPrincipalName,
+                    person = x.People.GetFullName(),
+                    x.PeopleId
+                });
             return Ok(userlist);
 
         }
@@ -39,15 +49,15 @@ namespace UcbBack.Controllers
         {
             CustomUser userInDB = null;
 
-            userInDB = _context.CustomUsers.Include(u => u.Rol).FirstOrDefault(d => d.Id == id);
+            userInDB = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(d => d.Id == id);
 
             if (userInDB == null)
                 return NotFound();
             dynamic respose = new JObject();
             respose.Id = userInDB.Id;
-            respose.UserName = userInDB.UserName;
-            respose.RolId = userInDB.RolId;
-
+            respose.UserPrincipalName = userInDB.UserPrincipalName;
+            respose.PeopleId = userInDB.People.Id;
+            respose.Name = userInDB.People.GetFullName();
             return Ok(respose);
         }
 
@@ -59,13 +69,9 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            PasswordHash hash = new PasswordHash(user.Password);
-            byte[] hashBytes = hash.ToArray();
-            user.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_User_sqs\".nextval FROM DUMMY;").ToList()[0];
-            //user.Password = Encoding.ASCII.GetString(hashBytes);
-            user.Password = Convert.ToBase64String(hashBytes);
+            user.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_User_sqs\".nextval FROM DUMMY;").ToList()[0];
+
             user.Token = validator.getToken(user);
-            user.active = true;
             user.TokenCreatedAt = DateTime.Now;
             user.RefreshToken = validator.getRefreshToken(user);
             user.RefreshTokenCreatedAt = DateTime.Now;
@@ -74,90 +80,23 @@ namespace UcbBack.Controllers
 
             dynamic respose = new JObject();
             respose.Id = user.Id;
-            respose.UserName = user.UserName;
+            respose.UserPrincipalName = user.UserPrincipalName;
             respose.Token = user.Token;
             respose.RefreshToken = user.RefreshToken;
-            respose.active = user.active;
 
             return Created(new Uri(Request.RequestUri + "/" + respose.Id), respose);
         }
 
-
-
-        // PUT api/People/5
+        // GET api/user
         [HttpPut]
         [Route("api/user/{id}")]
-        public IHttpActionResult Put(int id, [FromBody]CustomUser user)
+        public IHttpActionResult Put(int id, CustomUser user)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            CustomUser userInDB = _context.CustomUsers.FirstOrDefault(d => d.Id == id);
-            if (userInDB == null)
-                return NotFound();
-            userInDB.UserName = user.UserName;
-            userInDB.RolId = user.RolId;
-            userInDB.active = user.active;
+            var userInDb = _context.CustomUsers.FirstOrDefault(x => x.Id == id);
+            userInDb.UserPrincipalName = user.UserPrincipalName;
             _context.SaveChanges();
+            return Ok(userInDb);
 
-            dynamic respose = new JObject();
-            respose.Id = userInDB.Id;
-            respose.UserName = userInDB.UserName;
-
-            return Ok(respose);
-        }
-
-        [HttpPost]
-        [Route("api/user/ChangePassword/{id}")]
-        //POST api/user/ChangePassword/5
-        public IHttpActionResult ChangePassword(int id, [FromBody]JObject credentials)
-        {
-            if (credentials["oldpassword"] == null || credentials["newpassword"] == null || credentials["newpassword2"] == null)
-                return BadRequest();
-
-            string oldpassword = credentials["oldpassword"].ToString();
-            string newpassword = credentials["newpassword"].ToString();
-            string newpassword2 = credentials["newpassword2"].ToString();
-
-            CustomUser user = _context.CustomUsers.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-                return Unauthorized();
-     
-            if (newpassword != newpassword2)
-                return BadRequest("Las Contraseñas no coinciden");
-            
-
-            PasswordHash hash = new PasswordHash(newpassword);
-            byte[] hashBytes = hash.ToArray();
-
-            //string hashnewpassword = System.Text.Encoding.Default.GetString(hashBytes, 0, hashBytes.Length); ;
-            string hashnewpassword = Convert.ToBase64String(hashBytes);
-
-            hashBytes = Encoding.Default.GetBytes(user.Password);
-            hashBytes = Convert.FromBase64String(user.Password);
-            hash = new PasswordHash(hashBytes);
-
-            if (hash.Verify(newpassword))
-                return BadRequest("La nueva Contraseña no pude ser igual a la Contraseña actual");
-
-           // if (!hash.Verify(oldpassword))
-            //    return Unauthorized();
-
-            user.Password = hashnewpassword;
-            user.Token = validator.getToken(user);
-            user.TokenCreatedAt = DateTime.Now;
-            user.RefreshToken = validator.getRefreshToken(user);
-            user.RefreshTokenCreatedAt = DateTime.Now;
-
-            _context.SaveChanges();
-
-            dynamic respose = new JObject();
-            respose.Id = user.Id;
-            respose.UserName = user.UserName;
-            respose.Token = user.Token;
-            respose.RefreshToken = user.RefreshToken;
-
-            return Ok(respose);
         }
 
         // DELETE api/user/5

@@ -59,7 +59,7 @@ namespace UcbBack.Controllers
         [Route("api/CostCenters/Proyectos")]
         public IHttpActionResult Proyectos()
         {
-            var y = B1conn.getProjects();
+            var y = B1conn.getProjects("*");
             return Ok(y);
         }
     }

@@ -60,7 +60,7 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
-            //bool v1 = VerifyColumnValueIn(6,connB1.getBusinessPartners(), comment: "No existe este Bussines Partner en SAP.");
+            bool v1 = VerifyColumnValueIn(6,_context.Branch.Select(x=>x.Abr).ToList(),comment:"Esta Regional No existe");
             bool v2 = VerifyPerson(ci: 1, CUNI: 8, fullname: 2, personActive: false);
             var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             pei.Add("");
@@ -78,13 +78,13 @@ namespace UcbBack.Logic.ExcelFiles
             projects.Add("");
             bool v7 = VerifyColumnValueIn(14, projects, comment: "Este proyecto no existe en SAP.");
 
-            return isValid() && v2 && v3  && v6 && v7;
+            return isValid() && v1 && v2 && v3  && v6 && v7;
         }
 
         public Dist_OR ToDistDiscounts(int row, int sheet = 1)
         {
             Dist_OR dis = new Dist_OR();
-            dis.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_OR_sqs\".nextval FROM DUMMY;").ToList()[0];
+            dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_OR_sqs\".nextval FROM DUMMY;").ToList()[0];
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             dis.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

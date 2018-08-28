@@ -15,9 +15,11 @@ namespace UcbBack.Models
         public int Id { set; get; }
 
         [Required(ErrorMessage = "Te olvidaste de {0}")]
+        [MaxLength(10,ErrorMessage = "Cadena de texto muy grande")]
         public string Cod { get; set; }
 
         [Required(ErrorMessage = "Te olvidaste de {0}")]
+        [MaxLength(150,ErrorMessage = "Cadena de texto muy grande")]
         public string Name { get; set; }
 
         public Dependency Parent { get; set; }

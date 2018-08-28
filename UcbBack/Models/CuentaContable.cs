@@ -15,11 +15,24 @@ namespace UcbBack.Models
         public int Id { set; get; }
 
         public GrupoContable GrupoContable { get; set; }
+
+        [Required]
         public int GrupoContableId { get; set; }
+
+        [MaxLength(50, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Concept { get; set; }
         public Branches Branches { get; set; }
+
+        [Required]
         public int BranchesId { get; set; }
+
+        [MaxLength(50, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Name { get; set; }
+
+        [MaxLength(50, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Indicator { get; set; }
     }
 }

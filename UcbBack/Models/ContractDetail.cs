@@ -35,7 +35,7 @@ namespace UcbBack.Models
         [Column(TypeName = "date")]
         public DateTime StartDate { get; set; }
         [Column(TypeName = "date")]
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public bool AI { get; set; }
 
     }

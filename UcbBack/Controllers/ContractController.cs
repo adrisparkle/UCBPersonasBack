@@ -133,7 +133,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            contract.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+            contract.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.ContractDetails.Add(contract);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);

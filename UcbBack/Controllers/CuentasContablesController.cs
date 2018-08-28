@@ -45,7 +45,7 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            cuentaContable.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_CuentasContables_sqs\".nextval FROM DUMMY;").ToList()[0];
+            cuentaContable.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_CuentasContables_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.CuentaContables.Add(cuentaContable);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + cuentaContable.Id), cuentaContable);

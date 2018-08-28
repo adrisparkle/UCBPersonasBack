@@ -65,13 +65,13 @@ namespace UcbBack.Logic.ExcelFiles
             //bool v1 = VerifyColumnValueIn(6, connB1.getProjects(col: "PrjName").ToList(), comment: "Este Proyecto no existe en SAP.");
             bool v2 = VerifyColumnValueIn(9, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
             bool v3 = VerifyColumnValueIn(11, new List<string>{"POST","EC","INV"}, comment: "No existe este tipo de proyecto.");
-            bool v4 = VerifyColumnValueIn(12, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "OTR" }, comment: "No existe este tipo de tarea asignada.");
-            bool v5 = VerifyColumnValueIn(13, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
-            //bool v6 = VerifyColumnValueIn(14, connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
+            bool v4 = VerifyColumnValueIn(12, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "OTR", "PAN" }, comment: "No existe este tipo de tarea asignada.");
+            //bool v5 = VerifyColumnValueIn(13, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
+            bool v6 = VerifyColumnValueIn(14, connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
             //bool v7 = VerifyColumnValueIn(15, connB1.getProjects(), comment: "Este proyecto no existe en SAP.");
-            bool v7 = verifyproject();
+           // bool v7 = verifyproject();
             bool v8 = VerifyPerson(ci: 1, fullname: 2, CUNI: 10, date: gestion + "-" + mes + "-01", personActive: false);
-            return isValid()  && v2 && v3 && v4&& v8 &&v5 && v7;
+            return isValid()  && v2 && v3 && v4&& v8 /*&&v5 && v7*/;
         }
 
         private bool verifyproject(int sheet = 1)
@@ -107,7 +107,7 @@ namespace UcbBack.Logic.ExcelFiles
         public Dist_Posgrado ToDistDiscounts(int row, int sheet = 1)
         {
             Dist_Posgrado dis = new Dist_Posgrado();
-            dis.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_Posgrado_sqs\".nextval FROM DUMMY;").ToList()[0];
+            dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Posgrado_sqs\".nextval FROM DUMMY;").ToList()[0];
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             dis.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

@@ -16,17 +16,19 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
         private ValidatePerson validator;
+        private ADClass activeDirectory;
 
         public RolController()
         {
             _context = new ApplicationDbContext();
             validator = new ValidatePerson(_context);
+            activeDirectory = new ADClass();
         }
 
         // GET api/Rol
         public IHttpActionResult Get()
         {
-            return Ok(_context.Rols.Include("Resource").Select(r => new { r.Id, r.Name, r.Level, r.ResourceId, Resource=r.Resource.Name }).ToList());
+            return Ok(_context.Rols.Include("Resource").Select(r => new { r.Id, r.Name, r.Level, r.ResourceId, Resource=r.Resource.Name,r.ADGroupName }).ToList());
         }
 
         // GET api/Rol/5
@@ -47,10 +49,12 @@ namespace UcbBack.Controllers
         public IHttpActionResult Post([FromBody]Rol rol)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
-            rol.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Rol_sqs\".nextval FROM DUMMY;").ToList()[0];
+                return BadRequest(ModelState);
+            rol.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Rol_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.Rols.Add(rol);
             _context.SaveChanges();
+            activeDirectory.createGroup(rol.ADGroupName);
+
             return Created(new Uri(Request.RequestUri + "/" + rol.Id), rol);
         }
 
@@ -70,6 +74,7 @@ namespace UcbBack.Controllers
             rolInDB.Name = rol.Name;
             rolInDB.Level = rol.Level;
             rolInDB.ResourceId = rol.ResourceId;
+            rolInDB.ADGroupName = rol.ADGroupName;
             _context.SaveChanges();
 
             return Ok(rolInDB);
@@ -125,7 +130,7 @@ namespace UcbBack.Controllers
                 return NotFound();
 
             RolhasAccess rolhasAccess = new RolhasAccess();
-            rolhasAccess.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_RolhasAccess_sqs\".nextval FROM DUMMY;").ToList()[0];
+            rolhasAccess.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_RolhasAccess_sqs\".nextval FROM DUMMY;").ToList()[0];
             rolhasAccess.Accessid = accessid;
             rolhasAccess.Rolid = id;
             _context.RolshaAccesses.Add(rolhasAccess);

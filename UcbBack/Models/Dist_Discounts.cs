@@ -12,7 +12,7 @@ namespace UcbBack.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { set; get; }
+        public long Id { set; get; }
         public string BussinesPartner { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
@@ -24,6 +24,6 @@ namespace UcbBack.Models
         public string gestion { get; set; }
 
         public Dist_File DistFile { get; set; }
-        public int DistFileId { get; set; }
+        public long DistFileId { get; set; }
     }
 }

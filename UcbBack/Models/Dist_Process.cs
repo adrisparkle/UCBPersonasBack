@@ -12,7 +12,7 @@ namespace UcbBack.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { set; get; }
+        public long Id { set; get; }
 
         public DateTime UploadedDate { get; set; }
 

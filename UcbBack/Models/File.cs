@@ -13,20 +13,31 @@ namespace UcbBack.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int Id { set; get; }
+        public long Id { set; get; }
 
+        [Required]
         public DateTime UploadedDate { get; set; }
+
+        [MaxLength(150, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Name { get; set; }
 
+        
         public Dist_FileType DistFileType { get; set; }
+        [Required]
         public int DistFileTypeId { get; set; }
 
+        [MaxLength(15, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string State { get; set; }
 
+        [Required]
         public Dist_Process DistProcess { get; set; }
-        public int DistProcessId { get; set; }
+        public long DistProcessId { get; set; }
 
+        
         public CustomUser CustomUser { get; set; }
+        [Required]
         public int CustomUserId { get; set; }
 
     }

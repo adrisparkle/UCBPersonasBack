@@ -19,16 +19,12 @@ namespace UcbBack.Controllers
             _context = new ApplicationDbContext();
         }
 
+        // GET /B1
         public IHttpActionResult Get()
         {
             var B1con = B1Connection.Instance;
-            var test = B1con.TestHanaConection();
-            string a="";
-            string b="";
 
-            //B1con.CargaMoneda(out a,out b);
-
-            return Ok(B1con.ConnectB1()+"-"+B1con.getLastError());
+            return Ok(B1con.ConnectB1()+"  ****  "+B1con.getLastError());
         }
 
         [HttpGet]

@@ -13,8 +13,17 @@ namespace UcbBack.Models.Auth
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
+
+        [Required]
+        [MaxLength(50, ErrorMessage = "Cadena de texto muy grande")]
         public string Name { get; set; }
+
+        [Required]
         public int Level { get; set; }
+
+        [Required]
+        [MaxLength(100, ErrorMessage = "Cadena de texto muy grande")]
+        public string ADGroupName { get; set; }
 
         public Resource Resource { get; set; }
         public int ResourceId { get; set; }

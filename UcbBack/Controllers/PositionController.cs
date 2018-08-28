@@ -44,7 +44,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            position.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Position_sqs\".nextval FROM DUMMY;").ToList()[0];
+            position.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Position_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.Position.Add(position);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + position.Id), position);

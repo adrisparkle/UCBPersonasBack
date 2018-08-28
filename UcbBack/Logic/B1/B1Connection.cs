@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Web;
 using Newtonsoft.Json.Linq;
@@ -13,7 +14,7 @@ namespace UcbBack.Logic.B1
 {
     public class B1Connection
     {
-        private static B1Connection instance;
+        private static B1Connection instance=null;
 
 
         private SAPbobsCOM.Company company;
@@ -22,6 +23,7 @@ namespace UcbBack.Logic.B1
         private int errorCode = 0;
         private string errorMessage = "";
         private string DatabaseName;
+        public bool connectedtoHana=false;
 
         public enum Dimension
         {
@@ -34,13 +36,19 @@ namespace UcbBack.Logic.B1
         };
 
 
-        private B1Connection(string db)
+        private B1Connection()
         {
-            if (TestHanaConection())
+            connectedtoHana = TestHanaConection();
+            if (connectedtoHana)
             {
-                DatabaseName = db;
-                string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema="+DatabaseName;
-                ConnectB1();
+                DatabaseName = ConfigurationManager.AppSettings["B1CompanyDB"];
+                //string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema="+DatabaseName;
+                //string cadenadeconexion = "Server=SAPHANA01:30015;UserID=SDKRRHH;Password=Rrhh1234;Current Schema=UCBTEST"+DatabaseName;
+                string cadenadeconexion = "Server=" + ConfigurationManager.AppSettings["B1Server"] +
+                                          ";UserID=" + ConfigurationManager.AppSettings["HanaBDUser"] +
+                                            ";Password=" + ConfigurationManager.AppSettings["HanaPassword"] +
+                                            ";Current Schema=" + ConfigurationManager.AppSettings["HanaBD"];
+                //ConnectB1();
                 HanaConn = new HanaConnection(cadenadeconexion);
                 HanaConn.Open();
             }
@@ -52,7 +60,8 @@ namespace UcbBack.Logic.B1
 
         public static B1Connection Instance
         {
-            get { return instance ?? (instance = new B1Connection("UCATOLICA")); }
+            // get { return instance ?? (instance = new B1Connection("UCATOLICA")); }
+            get { return instance ?? (instance = new B1Connection()); }
         }
 
 
@@ -80,31 +89,56 @@ namespace UcbBack.Logic.B1
             company = new SAPbobsCOM.Company();
 
             company.Server = "SAPHANA01:30015";
-            company.CompanyDB = "UCATOLICA";
+            company.CompanyDB = "UCBTEST";
             company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
-            company.DbUserName = "RRHH_SDK";
-            company.DbPassword = "Rrhh1234";
-            company.UserName = "managerrrhh";
-            company.Password = "Rrhh1234";
+            company.DbUserName = "DESARROLLO1";
+            company.DbPassword = "Rrhh12345";
+            company.UserName = "manager7";
+            company.Password = "sandra2018";
             company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
             company.UseTrusted = true;
             company.LicenseServer = "SAPHANA01:30015";
             company.SLDServer = "SAPHANA01:40000";
 
+            /*company.Server = ConfigurationManager.AppSettings["B1Server"];
+            company.CompanyDB = ConfigurationManager.AppSettings["B1CompanyDB"];
+            company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
+            company.DbUserName = ConfigurationManager.AppSettings["B1DbUserName"];
+            company.DbPassword = ConfigurationManager.AppSettings["B1DbPassword"];
+            company.UserName = ConfigurationManager.AppSettings["B1UserName"];
+            company.Password = ConfigurationManager.AppSettings["B1Password"];
+            company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
+            company.UseTrusted = true;
+            company.LicenseServer = ConfigurationManager.AppSettings["B1LicenseServer"];
+            company.SLDServer = ConfigurationManager.AppSettings["B1SLDServer"];*/
+
+
 
             connectionResult = company.Connect();
-
-            if (connectionResult != 0)
+            var x = company.Connected;
+        if (connectionResult != 0)
             {
                 company.GetLastError(out errorCode, out errorMessage);
             }
-
+            var _context = new ApplicationDbContext();
+//            var yo = _context.Person.FirstOrDefault(xx => xx.CUNI == "RFA940908");
+            var yo = new People();
+            yo.CUNI = "QWE123456";
+            yo.Document = "1234567";
+            yo.FirstSurName = "Valdes";
+            yo.FirstSurName = "Juan";
+            if (yo == null)
+                return -1;
+            var  res = personToBP(yo);
             return connectionResult;
         }  
 
         public bool TestHanaConection()
         {
-            string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema=UCATOLICA";
+            string cadenadeconexion = "Server=" + ConfigurationManager.AppSettings["B1Server"] +
+                                      ";UserID=" + ConfigurationManager.AppSettings["HanaBDUser"] +
+                                      ";Password=" + ConfigurationManager.AppSettings["HanaPassword"] +
+                                      ";Current Schema=" + ConfigurationManager.AppSettings["HanaBD"];
             //Realizamos la conexion a SQL                            
             bool resultado = false;
             try
@@ -121,34 +155,6 @@ namespace UcbBack.Logic.B1
             }
             return resultado;
         }
-
-
-        public void CargaMoneda(out string MonedaLocal, out string MonedaSistema)
-        {
-            string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema=UCATOLICA";
-            MonedaLocal = ""; MonedaSistema = "";
-            string query = "Select \"MainCurncy\", \"SysCurrncy\" from " + DatabaseName + ".OADM"; //si se quiere llamar a un procedimiento almacenado utilizar "CALL nombreSP"            
-            HanaConnection conn = new HanaConnection(cadenadeconexion);
-            conn.Open();
-            HanaCommand consulta = new HanaCommand(query, conn);
-            HanaDataReader resultado = consulta.ExecuteReader();
-            if (resultado.HasRows)
-            {
-                while (resultado.Read())
-                {
-                    MonedaLocal = resultado["MainCurncy"].ToString();
-                    MonedaSistema = resultado["SysCurrncy"].ToString();
-                }
-            }
-            else
-            {
-                MonedaLocal = "";
-                MonedaSistema = "";
-            }
-            resultado.Close();
-            conn.Close();
-        }
-
 
         public string addPersonToB1(People person)
         {
@@ -203,7 +209,10 @@ namespace UcbBack.Logic.B1
 
                     businessObject.CardName = person.FirstSurName + " " + person.Names;
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                    businessObject.CardCode = "RC" + person.CUNI;
+                    businessObject.CardCode = "R" + "123456";
+                    var lis = businessObject.UserFields.Fields;
+                    businessObject.UserFields.Fields.Item("").Value = 1234567;
+
 
                     businessObject.Add();
                     string newKey = company.GetNewObjectKey();
@@ -233,16 +242,20 @@ namespace UcbBack.Logic.B1
 
         public List<string> getBusinessPartners(string col = "CardCode")
         {
-            string cl = col == "*"?col:"\"" + col + "\"";
-            string query = "Select "+cl+" from " + DatabaseName + ".OCRD";
-            HanaCommand command = new HanaCommand(query, HanaConn);
-            HanaDataReader dataReader = command.ExecuteReader();
             List<string> res = new List<string>();
-            if (dataReader.HasRows)
+            if (connectedtoHana)
             {
-                while (dataReader.Read())
+                string cl = col == "*" ? col : "\"" + col + "\"";
+                string query = "Select " + cl + " from " + DatabaseName + ".OCRD";
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
                 {
-                    res.Add(dataReader[col].ToString());
+                    while (dataReader.Read())
+                    {
+                        res.Add(dataReader[col].ToString());
+                    }
                 }
             }
 
@@ -251,24 +264,57 @@ namespace UcbBack.Logic.B1
 
         public List<string> getProjects(string col="PrjCode")
         {
-            string query = "Select \"" + col + "\" from " + DatabaseName + ".OPRJ";
-            HanaCommand command = new HanaCommand(query, HanaConn);
-            HanaDataReader dataReader = command.ExecuteReader();
             List<string> res = new List<string>();
-            if (dataReader.HasRows)
+            string[] dim1cols = new string[]
             {
-                while (dataReader.Read())
-                {
-                    res.Add(dataReader[col].ToString());
-                }
+                "\"PrjCode\"", "\"PrjName\"", "\"Locked\"", "\"DataSource\"", "\"ValidFrom\"",
+                "\"ValidTo\"", "\"Active\"", "\"U_ModalidadProy\"", "\"U_Sucursal\"", "\"U_Tipo\""
+            };
+
+            string strcol = "";
+            bool first = true;
+
+            foreach (var column in dim1cols)
+            {
+                strcol += (first ? "" : ",") + column;
+                first = false;
             }
 
+            if (connectedtoHana)
+            {
+                string query = "Select " + strcol + " from " + DatabaseName + ".OPRJ";
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
+                {
+                    while (dataReader.Read())
+                    {
+                        if (col == "*")
+                        {
+                            dynamic x = new JObject();
+                            foreach (var column in dim1cols)
+                            {
+                                x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                            }
+                            res.Add(x);
+                        }
+                        else
+                            res.Add(dataReader[col].ToString());
+                    }
+                }
+            }
+            
             return res;
         }
+        
 
         public List<dynamic> getCostCenter(Dimension dimesion,string mes=null,string gestion=null, string col = "PrcCode")
         {
-            string[][] dim1cols = new string[][]
+            List<dynamic> res = new List<dynamic>();
+            if (connectedtoHana)
+            {
+                string[][] dim1cols = new string[][]
             {
                 new [] {"*"},
                 new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_TipoUnidadO\""}, 
@@ -278,44 +324,45 @@ namespace UcbBack.Logic.B1
                 new [] {"\"PrcCode\"", "\"PrcName\"", "\"ValidFrom\"", "\"ValidTo\"", "\"U_GestionPeriodo\"", "\"U_TipoPeriodo\""},
             };
 
-            string strcol = "";
-            bool first = true;
+                string strcol = "";
+                bool first = true;
 
-            foreach (var column in dim1cols[(int)dimesion])
-            {
-                strcol +=  (first? "":",")+column ;
-                first = false;
-            }
-
-            string where = (int) dimesion == 0
-                ? ((mes!=gestion)?" where ('2018-02-01 01:00:00' " +
-                  "between \"ValidFrom\" and \"ValidTo\")" +
-                  "or ('"+gestion+"-"+mes+"-01 01:00:00' > \"ValidFrom\" " +
-                  "and \"ValidTo\" is null)":"")
-                : ((mes!=gestion)?" where \"DimCode\"=" + (int) dimesion +
-                  " and (('"+gestion+"-"+mes+"-01 01:00:00' " +
-                  "between \"ValidFrom\" and \"ValidTo\")" +
-                  "or ('2018-02-01 01:00:00' > \"ValidFrom\" " +
-                  "and \"ValidTo\" is null))" : " where \"DimCode\"=" + (int)dimesion);
-            string query = "Select "+strcol+" from " + DatabaseName + ".OPRC"+where;
-            HanaCommand command = new HanaCommand(query, HanaConn);
-            HanaDataReader dataReader = command.ExecuteReader();
-            List<dynamic> res = new List<dynamic>();
-            if (dataReader.HasRows)
-            {
-                while (dataReader.Read())
+                foreach (var column in dim1cols[(int)dimesion])
                 {
-                    if (col == "*")
+                    strcol += (first ? "" : ",") + column;
+                    first = false;
+                }
+
+                string where = (int)dimesion == 0
+                    ? ((mes != gestion) ? " where ('2018-02-01 01:00:00' " +
+                      "between \"ValidFrom\" and \"ValidTo\")" +
+                      "or ('" + gestion + "-" + mes + "-01 01:00:00' > \"ValidFrom\" " +
+                      "and \"ValidTo\" is null)" : "")
+                    : ((mes != gestion) ? " where \"DimCode\"=" + (int)dimesion +
+                      " and (('" + gestion + "-" + mes + "-01 01:00:00' " +
+                      "between \"ValidFrom\" and \"ValidTo\")" +
+                      "or ('2018-02-01 01:00:00' > \"ValidFrom\" " +
+                      "and \"ValidTo\" is null))" : " where \"DimCode\"=" + (int)dimesion);
+                string query = "Select " + strcol + " from " + DatabaseName + ".OPRC" + where;
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
+                {
+                    while (dataReader.Read())
                     {
-                        dynamic x = new JObject();
-                        foreach (var column in dim1cols[(int)dimesion])
+                        if (col == "*")
                         {
-                            x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                            dynamic x = new JObject();
+                            foreach (var column in dim1cols[(int)dimesion])
+                            {
+                                x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                            }
+                            res.Add(x);
                         }
-                        res.Add(x);
+                        else
+                            res.Add(dataReader[col].ToString());
                     }
-                    else
-                    res.Add(dataReader[col].ToString());
                 }
             }
 
@@ -324,19 +371,23 @@ namespace UcbBack.Logic.B1
 
         public List<object> getParalels()
         {
-            string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\" from " + DatabaseName + ".OPRC ";
-            HanaCommand command = new HanaCommand(query, HanaConn);
-            HanaDataReader dataReader = command.ExecuteReader();
             List<object> list = new List<object>();
-            if (dataReader.HasRows)
+            if (connectedtoHana)
             {
-                while (dataReader.Read())
+                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\" from " + DatabaseName + ".OPRC ";
+                HanaCommand command = new HanaCommand(query, HanaConn);
+                HanaDataReader dataReader = command.ExecuteReader();
+
+                if (dataReader.HasRows)
                 {
-                    dynamic o = new JObject();
-                    o.cod = dataReader["PrcCode"].ToString();
-                    o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
-                    o.sigla = dataReader["U_Sigla"].ToString();
-                    list.Add(o);
+                    while (dataReader.Read())
+                    {
+                        dynamic o = new JObject();
+                        o.cod = dataReader["PrcCode"].ToString();
+                        o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
+                        o.sigla = dataReader["U_Sigla"].ToString();
+                        list.Add(o);
+                    }
                 }
             }
 

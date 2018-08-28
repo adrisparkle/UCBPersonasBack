@@ -59,6 +59,8 @@
     <Reference Include="SAPBusinessOneSDK, Version=1.0.0.1, Culture=neutral, PublicKeyToken=c7c3cb60e45d119f, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Web.Entity" />
@@ -241,6 +243,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Logic\ADClass.cs" />
     <Compile Include="Logic\B1\B1Connection.cs" />
     <Compile Include="Logic\ExcelFiles\AcademicExcel.cs" />
     <Compile Include="Logic\ExcelFiles\ContractExcel.cs" />

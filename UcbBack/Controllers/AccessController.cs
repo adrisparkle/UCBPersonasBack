@@ -7,6 +7,7 @@ using System.Web.Http;
 using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using System.Data.Entity;
 
 namespace UcbBack.Controllers
 {
@@ -24,7 +25,10 @@ namespace UcbBack.Controllers
         // GET api/Access
         public IHttpActionResult Get()
         {
-            return Ok(_context.Accesses.ToList());
+            var res = _context.Accesses.Include(x => x.Resource).Select(x =>
+                    new {x.Id, x.Description, x.Method, x.Path, x.Public, x.ResourceId, Resource = x.Resource.Name})
+                .ToList();
+            return Ok(res);
         }
 
         // GET api/Access/5
@@ -46,7 +50,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            access.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Access_sqs\".nextval FROM DUMMY;").ToList()[0];
+            access.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Access_sqs\".nextval FROM DUMMY;").ToList()[0];
 
             _context.Accesses.Add(access);
             _context.SaveChanges();

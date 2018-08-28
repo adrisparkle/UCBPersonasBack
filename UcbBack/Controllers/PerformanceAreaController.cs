@@ -42,7 +42,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            performanceArea.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_PerformanceArea_sqs\".nextval FROM DUMMY;").ToList()[0];
+            performanceArea.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_PerformanceArea_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.PerformanceAreas.Add(performanceArea);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + performanceArea.Id), performanceArea);

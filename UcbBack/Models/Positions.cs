@@ -14,11 +14,16 @@ namespace UcbBack.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
+
+        [MaxLength(50, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public String Name { get; set; }
 
+        [Required]
         public int LevelId { get; set; }
         public Level Level { get; set; }
 
+        [Required]
         public int BranchesId { get; set; }
         public Branches Branches { get; set; }
         

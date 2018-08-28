@@ -42,7 +42,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            level.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Level_sqs\".nextval FROM DUMMY;").ToList()[0];
+            level.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Level_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.Levels.Add(level);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + level.Id), level);

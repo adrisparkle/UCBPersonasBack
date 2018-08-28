@@ -13,7 +13,13 @@ namespace UcbBack.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
+
+        [MaxLength(10, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Cod { get; set; }
+
+        [MaxLength(150, ErrorMessage = "Cadena de texto muy grande")]
+        [Required]
         public string Name { get; set; }
     }
 }

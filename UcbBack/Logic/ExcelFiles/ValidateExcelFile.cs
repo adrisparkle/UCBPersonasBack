@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Web;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Office2013.Word;
 using ExcelDataReader;
 using Newtonsoft.Json.Linq;
@@ -216,9 +217,12 @@ namespace UcbBack.Logic
 
         public string cleanText(string a)
         {
-            return a == null
+            var res = a == null
                 ? null
-                : a.Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O").Replace("Ú", "U");
+                : a.Replace("Á", "A").Replace("É", "E")
+                    .Replace("Í", "I").Replace("Ó", "O")
+                    .Replace("Ú", "U").Replace("  ", " ");
+            return res==null?null:res.EndsWith(" ")?res.Substring(0, res.Length - 1):res;
         }
 
         public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1)
@@ -241,15 +245,16 @@ namespace UcbBack.Logic
 
                     if (fullname != -1)
                     {
-                        strfsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname).Value.ToString());
+                        strfsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname).Value.ToString().ToUpper());
 
-                        strssn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString());
+                        strssn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 1).Value.ToString().ToUpper());
 
-                        strname = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString());
+                        strname = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 2).Value.ToString().ToUpper());
 
-                        strmsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString());
+                        strmsn = cleanText(wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString() == "" ? null : wb.Worksheet(sheet).Cell(i, fullname + 3).Value.ToString().ToUpper());
 
                     }
+
 
                     if (!ppllist.Any(x => x.Document == strci
                                         && x.CUNI == strcuni
@@ -277,7 +282,7 @@ namespace UcbBack.Logic
                         }
                         if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
                         {
-                            if (strname != null && strfsn != null && strssn != null && strmsn != null && !ppllist.Any(x => x.Document == strci
+                            if (!ppllist.Any(x => x.Document == strci
                                         && x.CUNI == strcuni
                                         && x.FirstSurName == strfsn
                                         && x.SecondSurName == strssn
@@ -435,6 +440,7 @@ namespace UcbBack.Logic
                 }
                 catch (Exception e)
                 {
+                    paintXY(CUNI, i, XLColor.Red, "Existen Enlaces a otros archivos");
                     Console.WriteLine(e);
                     addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
                     valid = false;

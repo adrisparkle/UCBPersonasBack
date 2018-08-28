@@ -18,12 +18,14 @@ namespace UcbBack.Controllers
         private ApplicationDbContext _context;
         private ValidateToken validator;
         private ValidateAuth validateauth;
+        private ADClass activeDirectory;
 
         public AuthController()
         {
             _context = new ApplicationDbContext();
             validator = new ValidateToken();
             validateauth = new ValidateAuth();
+            activeDirectory = new ADClass();
         }
 
         [HttpGet]
@@ -37,21 +39,31 @@ namespace UcbBack.Controllers
             if (!Int32.TryParse(headerId.FirstOrDefault(), out userid))
                 return Unauthorized();
 
-            var user = _context.CustomUsers.FirstOrDefault(cu => cu.Id == userid);
+            var user = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(cu => cu.Id == userid);
             if (user == null)
                 return Unauthorized();
+            var rls = activeDirectory.getUserRols(user).Select(x=>x.Id);
+            var br = activeDirectory.getUserBranches(user);
 
             List<Access> access;
-            if (user.RolId == 1)
+            //activeDirectory.AddUserToGroup(user.UserPrincipalName, "Personas.Admin");
+            //if admin return all
+            if (activeDirectory.memberOf(user, "Personas.Admin"))
             {
-                access = _context.Accesses.Include(a => a.Resource.Module).Include(a => a.Resource).ToList();
+                access = _context.Accesses
+                    .Include(a => a.Resource.Module)
+                    .Include(a => a.Resource).ToList();
             }
+            // else search all the user access
             else
             {
-                var rolaccess = _context.RolshaAccesses.Include(a => a.Access).Include(a => a.Access.Resource.Module).Include(a => a.Access.Resource).Where(a => a.Rolid == user.RolId).ToList();
-                access = _context.Accesses.Include(a => a.Resource.Module).Include(a => a.Resource).ToList();
-                access = access.Where(a => rolaccess.ToList().Where(r => r.Accessid == a.Id).Count() > 0).ToList();
-            } 
+                access = _context.RolshaAccesses.Include(a => a.Access)
+                    .Include(a => a.Rol)
+                    .Include(a => a.Access.Resource.Module)
+                    .Include(a => a.Access.Resource).ToList()
+                    .Where(r => rls.Contains(r.Rolid)).Select(a => a.Access).ToList();
+            }
+            
             List<dynamic> res = new List<dynamic>();
             var listModules = access.Select(a=>a.Resource.Module).Distinct();
             var listResources = access.Select(a=>a.Resource).Distinct();
@@ -86,18 +98,15 @@ namespace UcbBack.Controllers
             if (credentials["username"] == null || credentials["password"] == null)
                 return BadRequest();
 
-            string username = credentials["username"].ToString();
+            string username = credentials["username"].ToString().ToUpper();
             string password = credentials["password"].ToString();
 
-            CustomUser user = _context.CustomUsers.Include(u => u.Rol).Include(u => u.Rol.Resource).FirstOrDefault(u => u.UserName == username);
+            CustomUser user = _context.CustomUsers.FirstOrDefault(u => u.UserPrincipalName == username);
 
             if(user==null)
                 return Unauthorized();
 
-            byte[] hashBytes = Convert.FromBase64String(user.Password);
-            PasswordHash hash = new PasswordHash(hashBytes);
-
-            if (!hash.Verify(password))
+            if (!activeDirectory.ActiveDirectoryAuthenticate(user.UserPrincipalName,password))
                 return Unauthorized();
 
             user.Token = validator.getToken(user);
@@ -111,13 +120,20 @@ namespace UcbBack.Controllers
             //response.Headers.Add("Token", user.Token);
             //response.Headers.Add("RefreshToken", user.RefreshToken);
             //return ResponseMessage(response);
+            var rols = activeDirectory.getUserRols(user);
+            var principalrol = rols.OrderByDescending(x => x.Level).FirstOrDefault();
+            if (principalrol==null)
+            {
+                return Unauthorized();
+            }
+
             dynamic respose = new JObject();
             respose.Id = user.Id;
             respose.Token = user.Token;
             respose.RefreshToken = user.RefreshToken;
             respose.ExpiresIn = validateauth.tokenLife;
-            respose.RefreshExpiresIn = validateauth.refeshtokenLife;
-            respose.AccessDefault = user.Rol.Resource.Path;
+            respose.RefreshExpiresIn = validateauth.refeshtokenLife;     
+            respose.AccessDefault = principalrol.Resource.Path;
             return Ok(respose);
         }
 

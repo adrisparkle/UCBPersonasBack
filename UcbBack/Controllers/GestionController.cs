@@ -42,7 +42,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            gestion.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Gestion_sqs\".nextval FROM DUMMY;").ToList()[0];
+            gestion.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Gestion_sqs\".nextval FROM DUMMY;").ToList()[0];
             _context.Gestions.Add(gestion);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + gestion.Id), gestion);

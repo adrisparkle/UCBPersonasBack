@@ -1,23 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Web;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using System.Data.Entity;
 
 namespace UcbBack.Logic
 {
     public class ValidateAuth
     {
         private ApplicationDbContext _context;
-        private ValidatePerson validator;
-        public int tokenLife = 10;//15*60;
-        public int refeshtokenLife = 60;//4*60*60;
+        private ADClass activeDirectory;
+        public int tokenLife = 15*60;
+        public int refeshtokenLife = 4*60*60;
 
 
         public ValidateAuth()
         {
             _context = new ApplicationDbContext();
+            activeDirectory = new ADClass();
         }
 
         public bool isAuthenticated(int id, string token)
@@ -52,7 +55,7 @@ namespace UcbBack.Logic
                 return false;
             }
 
-            if (user.RolId == 1)
+            if (user.PeopleId == 1)
             {
                 return true;
             }
@@ -65,7 +68,7 @@ namespace UcbBack.Logic
             }
 
             RolhasAccess rolhasAccess =
-                _context.RolshaAccesses.FirstOrDefault(ra => ra.Accessid == access.Id && ra.Rolid == user.RolId);
+                _context.RolshaAccesses.FirstOrDefault(ra => ra.Accessid == access.Id );
             if (rolhasAccess == null)
             {
                 return false;
@@ -79,9 +82,15 @@ namespace UcbBack.Logic
             Access access = _context.Accesses.FirstOrDefault(a =>
                 string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
 
-
-
             return access==null?false:access.Public;
+        }
+
+        public bool nedAuth(string path, string method)
+        {
+            Access access = _context.Accesses.FirstOrDefault(a =>
+                string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
+
+            return access == null ? false : access.NedAuth;
         }
 
         public bool shallYouPass(int id, string token, string path, string method)
@@ -90,8 +99,55 @@ namespace UcbBack.Logic
 
             bool ispublic = isPublic(path, method);
             bool isauthenticated = isAuthenticated(id, token);
+            bool nedauth = nedAuth(path, method);
             bool hasaccess = hasAccess(id,path,method);
-            return (ispublic || (isauthenticated && hasaccess));
+
+            if (nedauth && !isauthenticated) return false;
+            if (!ispublic && !hasaccess) return false;
+
+            return true; 
         }
+
+        public CustomUser getUser(HttpRequestMessage request)
+        {
+            IEnumerable<string> idlist;
+            int userid;
+            if (!request.Headers.TryGetValues("id", out idlist))
+            {
+                return null;
+            }
+
+            if (!Int32.TryParse(idlist.First(), out userid))
+            {
+                return null;
+            }
+
+            var user = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(u => u.Id == userid);
+
+            return user;
+        }
+
+        public IQueryable<dynamic> filerByRegional(IQueryable<dynamic> list, CustomUser user,bool isBranchtable=false)
+        {
+            IQueryable<dynamic> res=list;
+            if (!activeDirectory.memberOf(user, "Personas.Admin"))
+            {
+                var brs = activeDirectory.getUserBranches(user);
+                var br = brs.Select(x => x.Id).ToList();
+                
+                if (isBranchtable)
+                {
+                    res = list.ToList().Where(x => br.Contains(x.Id)).AsQueryable();
+
+                }
+                else
+                {
+                    res = list.ToList().Where(x => br.Contains(x.BranchesId)).AsQueryable();
+
+                }
+            }           
+            return res;
+        }
+
     }
 }

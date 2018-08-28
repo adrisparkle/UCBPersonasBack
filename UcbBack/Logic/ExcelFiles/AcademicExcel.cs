@@ -66,6 +66,11 @@ namespace UcbBack.Logic.ExcelFiles
         public override bool ValidateFile()
         {
             var connB1 = B1Connection.Instance;
+            if (!connB1.connectedtoHana)
+            {
+                addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
+            }
+
             bool v1 = VerifyPerson(ci:1, CUNI:16, fullname:2,personActive:false);
             bool v2 = VerifyColumnValueIn(6, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
             bool v3 = VerifyParalel(cod:19,periodo: 7, sigla:8);
@@ -73,19 +78,19 @@ namespace UcbBack.Logic.ExcelFiles
             bool v5 = VerifyColumnValueIn(17, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
             var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
             pei.Add("0");
-            bool v6 = VerifyColumnValueIn(18, pei, comment: "Este PEI no existe en SAP.");
+            //bool v6 = VerifyColumnValueIn(18, pei, comment: "Este PEI no existe en SAP.");
             bool v7 = VerifyColumnValueIn(11, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
             bool v8 = VerifyColumnValueIn(15, new List<string> { "0" }, comment: "Este valor no puede ser 0", notin: true);
             bool v0 = isValid();
             var xx = valid;
 
-            return v0 && v1 && v2 && v3 && v4 && v5 && v7 && v8 && v6;
+            return v0 && v1 && v2 && v3 && v4 && v5 && v7 && v8;// && v6;
         }
 
         public Dist_Academic ToDistAcademic(int row,int sheet = 1)
         {
             Dist_Academic acad = new Dist_Academic();
-            acad.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_Dist_Academic_sqs\".nextval FROM DUMMY;").ToList()[0];
+            acad.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Academic_sqs\".nextval FROM DUMMY;").ToList()[0];
             acad.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             acad.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             acad.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

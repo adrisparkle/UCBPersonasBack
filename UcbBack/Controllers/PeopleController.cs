@@ -4,11 +4,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-using System.Web.Mvc;
 using System.Web.UI.WebControls;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
+using System.Data.Entity;
+
 
 namespace UcbBack.Controllers
 {
@@ -16,11 +17,13 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
         private ValidatePerson validator;
+        private ADClass activeDirectory;
 
         public PeopleController()
         {
             _context = new ApplicationDbContext();
             validator = new ValidatePerson(_context);
+            activeDirectory = new ADClass();
         }
 
         // GET api/People
@@ -42,12 +45,51 @@ namespace UcbBack.Controllers
             return Ok(personInDB);
         }
 
+        [HttpGet]
+        [Route("api/addalltoAD")]
+        public IHttpActionResult addalltoAD()
+        {
+            /*List<string> branches = _context.Branch.Select(x => x.ADGroupName).ToList();
+            List<string> roles = _context.Rols.Select(x => x.ADGroupName).ToList();
+
+            foreach (var branch in branches)
+            {
+                activeDirectory.createGroup(branch);
+            }
+
+            foreach (var rol in roles)
+            {
+                activeDirectory.createGroup(rol);
+            }*/
+
+
+            /*DateTime date = new DateTime(2018,4,1);
+            //todo run for all people   solo fata pasar fechas de corte
+            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
+                Where(y => y.StartDate < date 
+                           && (y.EndDate > date || y.EndDate == null) 
+                           && y.Positions.Name != "DOCENTE TIEMPO HORARIO").Select(x => x.People).ToList();
+
+            List<string> asd = new List<string>();
+            foreach (var pe in person)
+            {
+                //var tt = activeDirectory.findUser(pe);
+                activeDirectory.addUser(pe);
+                _context.SaveChanges();
+            }*/
+            //activeDirectory.createGroup("");
+            var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "AMG680422");
+            activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.SALOMON");
+            var yo = activeDirectory.findUser(_context.Person.FirstOrDefault(x => x.CUNI == "AMG680422"));
+            
+            return Ok(yo.UserPrincipalName+" - "+yo.DisplayName);
+        }
         // POST api/People
-        [System.Web.Http.HttpPost]
+        [HttpPost]
         public IHttpActionResult Post([FromBody]People person)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             person = validator.CleanName(person);
             person = validator.UcbCode(person);
@@ -78,21 +120,23 @@ namespace UcbBack.Controllers
             }
             
             //si pasa la confirmacion anterior se le asigna un id y se guarda la nueva persona en la BDD
-            person.Id = _context.Database.SqlQuery<int>("SELECT \"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
+            person.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
             
             _context.Person.Add(person);
             _context.SaveChanges();
+            activeDirectory.addUser(person);
+
             return Created(new Uri(Request.RequestUri + "/" + person.Id), person);
         }
 
         
 
         // PUT api/People/5
-        [System.Web.Http.HttpPut]
+        [HttpPut]
         public IHttpActionResult Put(int id, [FromBody]People person)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             People personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
             if (personInDB == null)
