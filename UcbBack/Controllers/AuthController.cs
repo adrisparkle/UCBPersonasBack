@@ -65,8 +65,8 @@ namespace UcbBack.Controllers
             }
             
             List<dynamic> res = new List<dynamic>();
-            var listModules = access.Select(a=>a.Resource.Module).Distinct();
-            var listResources = access.Select(a=>a.Resource).Distinct();
+            var listModules = access.Select(a=>a.Resource.Module).Distinct().OrderBy(x=>x.Id);
+            var listResources = access.Select(a => a.Resource).Distinct().OrderBy(x => x.Id);
             foreach (var module in listModules)
             {
                 List<dynamic> children = new List<dynamic>();

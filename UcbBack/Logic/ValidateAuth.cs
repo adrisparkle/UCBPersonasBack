@@ -13,7 +13,7 @@ namespace UcbBack.Logic
     {
         private ApplicationDbContext _context;
         private ADClass activeDirectory;
-        public int tokenLife = 15*60;
+        public int tokenLife = 1*60;
         public int refeshtokenLife = 4*60*60;
 
 
@@ -48,14 +48,14 @@ namespace UcbBack.Logic
 
         public bool hasAccess(int id, string path,string method)
         {
-            CustomUser user = _context.CustomUsers.FirstOrDefault(u => u.Id == id);
+            CustomUser user = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(u => u.Id == id);
 
             if (user == null)
             {
                 return false;
             }
 
-            if (user.PeopleId == 1)
+            if (activeDirectory.memberOf(user, "Personas.Admin"))
             {
                 return true;
             }
@@ -95,17 +95,34 @@ namespace UcbBack.Logic
 
         public bool shallYouPass(int id, string token, string path, string method)
         {
+            
+            bool pass = true;
+
             path = path.EndsWith("/")? path.Substring(0, path.Length - 1):path;
+            path = path.StartsWith("/")? path.Substring(1, path.Length-1):path;
 
             bool ispublic = isPublic(path, method);
             bool isauthenticated = isAuthenticated(id, token);
             bool nedauth = nedAuth(path, method);
             bool hasaccess = hasAccess(id,path,method);
 
-            if (nedauth && !isauthenticated) return false;
-            if (!ispublic && !hasaccess) return false;
+            if (nedauth && !isauthenticated) pass = false;
+            if (!ispublic && !hasaccess) pass = false;
 
-            return true; 
+            Access access = _context.Accesses.FirstOrDefault(a =>
+                string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
+
+            AccessLogs log = new AccessLogs();
+            log.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_AccessLogs_sqs\".nextval FROM DUMMY;").ToList()[0];
+            log.Method = method;
+            log.Path = path;
+            log.UserId = id;
+            log.Success = pass;
+            log.AccessId = access == null ? 0 : access.Id;
+            _context.AccessLogses.Add(log);
+            _context.SaveChanges();
+
+            return pass; 
         }
 
         public CustomUser getUser(HttpRequestMessage request)
