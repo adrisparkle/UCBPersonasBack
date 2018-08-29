@@ -1,5 +1,7 @@
 @ECHO OFF
 
+git submodule update --recursive --remote
+
 set rootpath=%~dp0
 set destination="C:\inetpub\wwwroot\RRHH"
 set destinationdev="C:\Users\Adrian\Desktop\www"
