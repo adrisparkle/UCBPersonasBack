@@ -221,7 +221,8 @@ namespace UcbBack.Logic
                 ? null
                 : a.Replace("Á", "A").Replace("É", "E")
                     .Replace("Í", "I").Replace("Ó", "O")
-                    .Replace("Ú", "U").Replace("  ", " ");
+                    .Replace("Ú", "U").Replace("  ", " ")
+                    .Replace("'","").Replace("´","").Replace("`","");
             return res==null?null:res.EndsWith(" ")?res.Substring(0, res.Length - 1):res;
         }
 
@@ -258,10 +259,10 @@ namespace UcbBack.Logic
 
                     if (!ppllist.Any(x => x.Document == strci
                                         && x.CUNI == strcuni
-                                        && x.FirstSurName == strfsn
-                                        && x.SecondSurName == strssn
-                                        && x.Names == strname
-                                        && x.MariedSurName == strmsn))
+                                        && cleanText(x.FirstSurName) == strfsn
+                                        && (!x.UseSecondSurName || cleanText(x.SecondSurName) == strssn)
+                                        && cleanText(x.Names) == strname
+                                        && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
                     {
                         var p = ppllist.FirstOrDefault(x => x.Document == strci);
                         if (personActive && !personValidator.IsActive(p, date, format, branchId: branchesId))
@@ -283,29 +284,33 @@ namespace UcbBack.Logic
                         if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
                         {
                             if (!ppllist.Any(x => x.Document == strci
-                                        && x.CUNI == strcuni
-                                        && x.FirstSurName == strfsn
-                                        && x.SecondSurName == strssn
-                                        && x.Names == strname
-                                        && x.MariedSurName == strmsn))
+                                                  && cleanText(x.FirstSurName) == strfsn
+                                                  && (!x.UseSecondSurName || cleanText(x.SecondSurName) == strssn)
+                                                  && cleanText(x.Names) == strname
+                                                  && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
                             {
                                 if (paintcolnombre)
                                 {
                                     res = false;
                                     string aux = "";
-                                    var similarities = ppllist.Where(x => x.Document == strci.ToString()).Select(y => new { y.FirstSurName, y.SecondSurName, y.Names, y.MariedSurName }).ToList();
-                                    aux = similarities.Any() && strfsn != similarities[0].FirstSurName ? "\nNo será: '" + similarities[0].FirstSurName + "'?" : "";
+                                    var similarities = ppllist.Where(x => x.Document == strci.ToString()).Select(y => new { y.UseMariedSurName,y.UseSecondSurName,y.FirstSurName, y.SecondSurName, y.Names, y.MariedSurName }).FirstOrDefault();
+                                    aux = similarities!=null && strfsn != similarities.FirstSurName ? "\nNo será: '" + similarities.FirstSurName + "'?" : "";
                                     paintXY(fullname, i, XLColor.Red,  aux);
 
-                                    aux = similarities.Any() && strssn != similarities[0].SecondSurName ? "\nNo será: '" + similarities[0].SecondSurName + "'?" : "";
+                                    if (similarities != null && similarities.UseSecondSurName)
+                                    {
+                                        aux = similarities != null && strssn != similarities.SecondSurName ? "\nNo será: '" + similarities.SecondSurName + "'?" : "";
+                                        paintXY(fullname + 1, i, XLColor.Red, aux);
+                                    }
                                     
-                                    paintXY(fullname + 1, i, XLColor.Red, aux);
-
-                                    aux = similarities.Any() && strname != similarities[0].Names ? "\nNo será: '" + similarities[0].Names + "'?" : "";
+                                    aux = similarities != null && strname != similarities.Names ? "\nNo será: '" + similarities.Names + "'?" : "";
                                     paintXY(fullname + 2, i, XLColor.Red, aux);
 
-                                    aux = similarities.Any() && strmsn != similarities[0].MariedSurName ? "\nNo será: '" + similarities[0].MariedSurName + "'?" : "";
-                                    paintXY(fullname + 3, i, XLColor.Red, aux);
+                                    if (similarities != null && similarities.UseMariedSurName)
+                                    {
+                                        aux = similarities != null && strmsn != similarities.MariedSurName ? "\nNo será: '" + similarities.MariedSurName + "'?" : "";
+                                        paintXY(fullname + 3, i, XLColor.Red, aux);
+                                    }
                                 }
                             }
                             if (strcuni != null && !ppllist.Any(x => x.Document == wb.Worksheet(sheet).Cell(i, ci).Value.ToString()
@@ -361,15 +366,14 @@ namespace UcbBack.Logic
                                 }
                             }
                         }
-                        else if (strname != null && ppllist.Any(x => x.FirstSurName == strfsn
-                                                                 && x.SecondSurName == strssn
-                                                                 && x.Names == strname
-                                                                 /*&& x.MariedSurName == strmsn*/))
+                        else if (strname != null && ppllist.Any(x => cleanText(x.FirstSurName) == strfsn
+                                                                 && cleanText(x.SecondSurName) == strssn
+                                                                 && cleanText(x.Names) == strname))
                         {
                             if (strcuni != null && !ppllist.Any(x => x.CUNI == strcuni
-                                                  && x.SecondSurName == strssn
-                                                  && x.Names == strname
-                                                  && x.MariedSurName == strmsn))
+                                                  && cleanText(x.SecondSurName) == strssn
+                                                  && cleanText(x.Names) == strname
+                                                  && cleanText(x.MariedSurName) == strmsn))
                             {
                                 if (paintcolcuni)
                                 {
@@ -391,10 +395,10 @@ namespace UcbBack.Logic
                                 {
                                     res = false;
                                     string aux = "";
-                                    var similarities = ppllist.Where(x => x.FirstSurName == strfsn
-                                                                          && x.SecondSurName == strssn
-                                                                          && x.Names == strname
-                                                                          && x.MariedSurName == strmsn).Select(y => y.Document).ToList();
+                                    var similarities = ppllist.Where(x => cleanText(x.FirstSurName) == strfsn
+                                                                          && cleanText(x.SecondSurName) == strssn
+                                                                          && cleanText(x.Names) == strname
+                                                                          && cleanText(x.MariedSurName) == strmsn).Select(y => y.Document).ToList();
 
                                     aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
                                     paintXY(ci, i, XLColor.Red, comment + aux);

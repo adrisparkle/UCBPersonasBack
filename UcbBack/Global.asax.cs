@@ -18,6 +18,7 @@ namespace UcbBack
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+            //HttpContext.Current.Response.AddHeader("Access-Control-Expose-Headers", allowedOrigin);
         }
     }
 }

@@ -14,6 +14,7 @@ namespace UcbBack
 {
     public partial class Startup
     {
+
         public void Configuration(IAppBuilder app)
         {
             bool debugmode = true;

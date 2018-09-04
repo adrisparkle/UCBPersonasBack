@@ -20,6 +20,7 @@ using System.Net.Http.Headers;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using UcbBack.Logic;
+using UcbBack.Models.Not_Mapped;
 
 namespace UcbBack.Controllers
 {
@@ -97,9 +98,9 @@ namespace UcbBack.Controllers
         [NonAction]
         private Dist_File AddFileToProcess(string mes, string gestion, int BranchesId,ExcelFileType FileType,int userid,string fileName)
         {
-            var processInDB =
-                _context.DistProcesses.FirstOrDefault(p =>
-                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR));
+            var processInDB = _context.DistProcesses.FirstOrDefault(p =>
+                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR || p.State == ProcessState.WARNING));
+
 
             if (processInDB != null)
             {
@@ -998,6 +999,15 @@ namespace UcbBack.Controllers
         [Route("api/payroll/GetDistribution/{id}")]
         public HttpResponseMessage GetDistribution(int id)
         {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var pro = _context.DistProcesses.Include(x => x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
             IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
             " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\","+
             " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
@@ -1017,16 +1027,106 @@ namespace UcbBack.Controllers
 
             var ex = new XLWorkbook();
             var d = new Distribution();
-            ex.Worksheets.Add(d.CreateDataTable(dist), "Result");
+            ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
 
 
-            HttpResponseMessage response = new HttpResponseMessage();
             var ms = new MemoryStream();
             ex.SaveAs(ms);
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "Distribucion-"+id+".xlsx";
+            response.Content.Headers.ContentDisposition.FileName = "Distribucion-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin); 
+            return response;
+        }
+        
+        [HttpGet]
+        [Route("api/payroll/GetSAPResume/{id}")]
+        public HttpResponseMessage GetSAPResume(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+            
+            var pro = _context.DistProcesses.Include(x=>x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
+            IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT null \"ParentKey\",null \"LineNum\",null \"AccountCode\",null \"Debit\",null \"Credit\",null \"ShortName\", null as \"LineMemo\",null \"ProjectCode\",null \"CostingCode\",null \"CostingCode2\",null \"CostingCode3\",null \"CostingCode4\",null \"CostingCode5\" from dummy " +
+                                                                                  " union  SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",case when replace(sum(\"Debit\"),',','.')='0.00' then null else replace(sum(\"Debit\"),',','.') end \"Debit\",case when replace(sum(\"Credit\"),',','.')='0.00' then null else replace(sum(\"Credit\"),',','.') end \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\" " +
+                                                                                        " FROM ("+
+                                                                                        " select 1 \"ParentKey\"," +
+                                                                                        "  null \"LineNum\"," +
+                                                                                        "  coalesce(b.\"AcctCode\",x.\"CUENTASCONTABLES\") \"AccountCode\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='D' then x.\"MontoDividido\" else 0 end as \"Debit\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='H' then x.\"MontoDividido\"else 0 end as \"Credit\"," +
+                                                                                        "  x.\"BussinesPartner\" \"ShortName\"," +
+                                                                                        "  x.\"Concept\" \"LineMemo\"," +
+                                                                                        "  x.\"Project\" \"ProjectCode\"," +
+                                                                                        "  f.\"Cod\" \"CostingCode\"," +
+                                                                                        "  x.\"PEI\" \"CostingCode2\"," +
+                                                                                        "  x.\"PlanEstudios\" \"CostingCode3\"," +
+                                                                                        "  x.\"Paralelo\" \"CostingCode4\"," +
+                                                                                        "  x.\"Periodo\" \"CostingCode5\"" +
+                                                                                        " from  (SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
+                                                                                        "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\","+
+                                                                                        "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\","+
+                                                                                        "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\""+
+                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a "+
+                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b "+
+                                                                                        "               on a.\"DistProcessId\"=b.\"Id\" "+
+                                                                                        "           AND a.\"DistProcessId\"= " + id +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c "+
+                                                                                        "                on a.\"TipoEmpleado\"=c.\"Name\" "+
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d "+
+                                                                                        "              on c.\"GrupoContableId\" = d.\"GrupoContableId\""+
+                                                                                        "           and b.\"BranchesId\" = d.\"BranchesId\" "+
+                                                                                        "           and a.\"Columna\" = d.\"Concept\" "+
+                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e "+
+                                                                                        "              on b.\"BranchesId\" = e.\"Id\") x"+
+                                                                                        " left join ucatolica.oact b"+
+                                                                                        " on x.CUENTASCONTABLES=b.\"FormatCode\""+
+                                                                                        " left join admnalrrhh.\"Dependency\" d"+
+                                                                                        " on x.\"Dependency\"=d.\"Cod\""+
+                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f"+
+                                                                                        " on d.\"OrganizationalUnitId\"=f.\"Id\""+
+                                                                                        ") V "+
+                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\";").ToList();
+
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+
+            var lastday = pro.gestion + pro.mes + DateTime.DaysInMonth(Int32.Parse(pro.gestion), Int32.Parse(pro.mes)).ToString();
+
+            IEnumerable<VoucherHeader> dist1 = _context.Database.SqlQuery<VoucherHeader>("SELECT null \"ParentKey\", null \"ReferenceDate\",null \"Memo\",null \"TaxDate\",null \"Series\",null \"DueDate\" FROM DUMMY " +
+                                                                                         "union SELECT '1' \"ParentKey\", '" + lastday + "' \"ReferenceDate\",'Planilla Menusal " + pro.Branches.Abr + "-" + pro.mes + "-" + pro.gestion + "' \"Memo\",'" + lastday + "' \"TaxDate\",'" + pro.Branches.SerieComprobanteContalbeSAP + "' \"Series\",'" + lastday + "' \"DueDate\" FROM DUMMY;");
+            var n = d.CreateDataTable(dist1);
+            int desiredSize = 1;
+
+            while (n.Columns.Count > desiredSize)
+            {
+                n.Columns.RemoveAt(desiredSize);
+            }
+            ex.Worksheets.Add(n,"Voucher");
+
+            ex.Worksheets.Add(d.CreateDataTable(dist1), "Cabecera");
+            
+
+            ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
+
+
+
+            
+
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "SAP_Voucher_Lines-"+pro.Branches.Abr+"-"+pro.mes+pro.gestion+".xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin); 

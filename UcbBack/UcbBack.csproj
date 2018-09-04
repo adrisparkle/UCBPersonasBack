@@ -277,7 +277,7 @@
     <Compile Include="Models\CuentaContable.cs" />
     <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\DistErrores.cs" />
-    <Compile Include="Models\Distribution.cs" />
+    <Compile Include="Models\Not Mapped\Distribution.cs" />
     <Compile Include="Models\Dist_Academic.cs" />
     <Compile Include="Models\Dist_Discounts.cs" />
     <Compile Include="Models\Dist_FileType.cs" />
@@ -292,6 +292,8 @@
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\Level.cs" />
     <Compile Include="Models\Module.cs" />
+    <Compile Include="Models\Not Mapped\SapVoucher.cs" />
+    <Compile Include="Models\Not Mapped\VoucherHeader.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
     <Compile Include="Models\Pais.cs" />
     <Compile Include="Models\Payroll.cs" />

@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Sap.Data.Hana;
 using SAPbobsCOM;
 using UcbBack.Models;
+using UcbBack.Models.Not_Mapped;
 
 namespace UcbBack.Logic.B1
 {
@@ -213,7 +214,6 @@ namespace UcbBack.Logic.B1
                     var lis = businessObject.UserFields.Fields;
                     businessObject.UserFields.Fields.Item("").Value = 1234567;
 
-
                     businessObject.Add();
                     string newKey = company.GetNewObjectKey();
                     company.GetLastError(out errorCode, out errorMessage);
@@ -238,6 +238,42 @@ namespace UcbBack.Logic.B1
                 DisconnectB1();
             }
             return message;     
+        }
+
+        public string addVoucher(IEnumerable<SapVoucher> lines, Dist_Process process)
+        {
+            string message = "";
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
+
+                    
+                    string newKey = company.GetNewObjectKey();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        message = "Error - " + errorCode + ": " + errorMessage;
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                            newKey = newKey.Replace("\t1", "");
+                            message = newKey + "- successful!";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                message = message + " - Error: " + ex.Message;
+                DisconnectB1();
+            }
+            return message;
         }
 
         public List<string> getBusinessPartners(string col = "CardCode")

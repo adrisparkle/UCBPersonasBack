@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Web;
 
-namespace UcbBack.Models
+namespace UcbBack.Models.Not_Mapped
 {
     [NotMapped]
     public class Distribution
@@ -19,6 +19,7 @@ namespace UcbBack.Models
         public string Paralelo { get; set; }
         public string Periodo { get; set; }
         public string Project { get; set; }
+        public string BussinesPartner { get; set; }
         public string Monto { get; set; }
         public string Porcentaje { get; set; }
         public string MontoDividido { get; set; }

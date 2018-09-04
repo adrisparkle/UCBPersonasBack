@@ -46,7 +46,7 @@ namespace UcbBack.Controllers
             var br = activeDirectory.getUserBranches(user);
 
             List<Access> access;
-            //activeDirectory.AddUserToGroup(user.UserPrincipalName, "Personas.Admin");
+           // activeDirectory.AddUserToGroup("G.ARANA.M@UCB.BO", "Personas.Segmentos.Cochabamba");
             //if admin return all
             if (activeDirectory.memberOf(user, "Personas.Admin"))
             {
