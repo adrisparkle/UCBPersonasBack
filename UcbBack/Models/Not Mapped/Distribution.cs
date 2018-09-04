@@ -22,7 +22,7 @@ namespace UcbBack.Models.Not_Mapped
         public string BussinesPartner { get; set; }
         public string Monto { get; set; }
         public string Porcentaje { get; set; }
-        public string MontoDividido { get; set; }
+        public decimal MontoDividido { get; set; }
         public string segmentoOrigen { get; set; }
         public string mes { get; set; }
         public string gestion { get; set; }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
@@ -1041,7 +1042,149 @@ namespace UcbBack.Controllers
             ms.Seek(0, SeekOrigin.Begin); 
             return response;
         }
-        
+
+        [HttpGet]
+        [Route("api/payroll/GetTotalGeneral/{id}")]
+        public HttpResponseMessage GetTotalGeneral(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var pro = _context.DistProcesses.Include(x => x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
+            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\"," +
+            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
+            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            " FROM ADMNALRRHH.\"Dist_Cost\" a " +
+                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                " on a.\"DistProcessId\"=b.\"Id\" " +
+            " AND a.\"DistProcessId\"= " + id +
+            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                "on a.\"TipoEmpleado\"=c.\"Name\" " +
+            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+               " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
+            " and b.\"BranchesId\" = d.\"BranchesId\" " +
+            " and a.\"Columna\" = d.\"Concept\" " +
+            " INNER JOIN ADMNALRRHH.\"Branches\" e " +
+               " on b.\"BranchesId\" = e.\"Id\"").ToList();
+
+            var groupedD = dist.Where(x=>x.Indicator=="D").GroupBy(x => new
+                                            {
+                                                x.Concept, x.Indicator
+                                            })
+                                .Select(y=> new
+                                            {
+                                                Concepto = y.First().Concept,
+                                                D = y.Sum(z => z.MontoDividido),
+                                                H = 0.0m
+                                            });
+            var groupedH = dist.Where(x => x.Indicator == "H").GroupBy(x => new
+                {
+                    x.Concept,
+                    x.Indicator
+                })
+                .Select(y => new
+                {
+                    Concepto = y.First().Concept,
+                    D = 0.0m,
+                    H = y.Sum(z => z.MontoDividido)
+                });
+            var res = groupedH.Concat(groupedD);
+
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            ex.Worksheets.Add(d.CreateDataTable(res), "Detalle");
+
+
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "TotalGeneral-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
+            return response;
+        }
+
+        [HttpGet]
+        [Route("api/payroll/GetTotalCuenta/{id}")]
+        public HttpResponseMessage GetTotalCuenta(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var pro = _context.DistProcesses.Include(x => x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
+            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\"," +
+            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
+            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            " FROM ADMNALRRHH.\"Dist_Cost\" a " +
+                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                " on a.\"DistProcessId\"=b.\"Id\" " +
+            " AND a.\"DistProcessId\"= " + id +
+            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                "on a.\"TipoEmpleado\"=c.\"Name\" " +
+            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+               " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
+            " and b.\"BranchesId\" = d.\"BranchesId\" " +
+            " and a.\"Columna\" = d.\"Concept\" " +
+            " INNER JOIN ADMNALRRHH.\"Branches\" e " +
+               " on b.\"BranchesId\" = e.\"Id\"").ToList();
+
+            var groupedD = dist.Where(x => x.Indicator == "D").GroupBy(x => new
+                {
+                    x.CuentasContables,
+                    x.Indicator
+                })
+                .Select(y => new
+                {
+                    Cuenta = y.First().CuentasContables,
+                    D = y.Sum(z => z.MontoDividido),
+                    H = 0.0m
+                });
+            var groupedH = dist.Where(x => x.Indicator == "H").GroupBy(x => new
+                {
+                    x.CuentasContables,
+                    x.Indicator
+                })
+                .Select(y => new
+                {
+                    Cuenta = y.First().CuentasContables,
+                    D = 0.0m,
+                    H = y.Sum(z => z.MontoDividido)
+                });
+            var res = groupedH.Concat(groupedD);
+
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            ex.Worksheets.Add(d.CreateDataTable(res), "Detalle");
+
+
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "TotalPorCuenta-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
+            return response;
+        }
+
+
         [HttpGet]
         [Route("api/payroll/GetSAPResume/{id}")]
         public HttpResponseMessage GetSAPResume(int id)
@@ -1114,12 +1257,7 @@ namespace UcbBack.Controllers
 
             ex.Worksheets.Add(d.CreateDataTable(dist1), "Cabecera");
             
-
             ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
-
-
-
-            
 
             var ms = new MemoryStream();
             ex.SaveAs(ms);
