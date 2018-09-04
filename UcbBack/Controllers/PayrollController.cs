@@ -1009,10 +1009,10 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
-            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\","+
-            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
-            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
+              " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
+              " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
+              " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
             " FROM ADMNALRRHH.\"Dist_Cost\" a "+
                 " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " + 
                 " on a.\"DistProcessId\"=b.\"Id\" "+
@@ -1056,10 +1056,10 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
-            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\"," +
-            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
-            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
+                " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
+                " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
+                " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
             " FROM ADMNALRRHH.\"Dist_Cost\" a " +
                 " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
                 " on a.\"DistProcessId\"=b.\"Id\" " +
@@ -1073,28 +1073,30 @@ namespace UcbBack.Controllers
             " INNER JOIN ADMNALRRHH.\"Branches\" e " +
                " on b.\"BranchesId\" = e.\"Id\"").ToList();
 
-            var groupedD = dist.Where(x=>x.Indicator=="D").GroupBy(x => new
-                                            {
-                                                x.Concept, x.Indicator
-                                            })
-                                .Select(y=> new
-                                            {
-                                                Concepto = y.First().Concept,
-                                                D = y.Sum(z => z.MontoDividido),
-                                                H = 0.0m
-                                            });
-            var groupedH = dist.Where(x => x.Indicator == "H").GroupBy(x => new
+            var groupedD = dist.Where(x=>x.Indicador=="D").GroupBy(x => new
                 {
-                    x.Concept,
-                    x.Indicator
+                    x.Concepto, x.Indicador
+                })
+                .Select(y=> new
+                            {
+                                Concepto = y.First().Concepto,
+                                Debe = y.Sum(z => z.MontoDividido),
+                                Haber = 0.0m
+                            })
+                .OrderBy(x=>x.Concepto);
+            var groupedH = dist.Where(x => x.Indicador == "H").GroupBy(x => new
+                {
+                    x.Concepto,
+                    x.Indicador
                 })
                 .Select(y => new
                 {
-                    Concepto = y.First().Concept,
-                    D = 0.0m,
-                    H = y.Sum(z => z.MontoDividido)
-                });
-            var res = groupedH.Concat(groupedD);
+                    Concepto = y.First().Concepto,
+                    Debe = 0.0m,
+                    Haber = y.Sum(z => z.MontoDividido)
+                })
+                .OrderBy(x => x.Concepto);
+            var res = groupedD.Concat(groupedH);
 
             var ex = new XLWorkbook();
             var d = new Distribution();
@@ -1126,10 +1128,10 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
-            " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\",a.\"BussinesPartner\"," +
-            " a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
-            " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\" " +
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
+              " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
+              " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
+              " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
             " FROM ADMNALRRHH.\"Dist_Cost\" a " +
                 " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
                 " on a.\"DistProcessId\"=b.\"Id\" " +
@@ -1143,29 +1145,29 @@ namespace UcbBack.Controllers
             " INNER JOIN ADMNALRRHH.\"Branches\" e " +
                " on b.\"BranchesId\" = e.\"Id\"").ToList();
 
-            var groupedD = dist.Where(x => x.Indicator == "D").GroupBy(x => new
+            var groupedD = dist.Where(x => x.Indicador == "D").GroupBy(x => new
                 {
                     x.CuentasContables,
-                    x.Indicator
+                    x.Indicador
                 })
                 .Select(y => new
                 {
                     Cuenta = y.First().CuentasContables,
-                    D = y.Sum(z => z.MontoDividido),
-                    H = 0.0m
-                });
-            var groupedH = dist.Where(x => x.Indicator == "H").GroupBy(x => new
+                    Debe = y.Sum(z => z.MontoDividido),
+                    Haber = 0.0m
+                }).OrderBy(x => x.Cuenta);
+            var groupedH = dist.Where(x => x.Indicador == "H").GroupBy(x => new
                 {
                     x.CuentasContables,
-                    x.Indicator
+                    x.Indicador
                 })
                 .Select(y => new
                 {
                     Cuenta = y.First().CuentasContables,
-                    D = 0.0m,
-                    H = y.Sum(z => z.MontoDividido)
-                });
-            var res = groupedH.Concat(groupedD);
+                    Debe = 0.0m,
+                    Haber = y.Sum(z => z.MontoDividido)
+                }).OrderBy(x => x.Cuenta);
+            var res = groupedD.Concat(groupedH);
 
             var ex = new XLWorkbook();
             var d = new Distribution();

@@ -11,25 +11,25 @@ namespace UcbBack.Models.Not_Mapped
     [NotMapped]
     public class Distribution
     {
-        public string Document { get; set; }
+        public string Documento { get; set; }
         public string TipoEmpleado { get; set; }
-        public string Dependency { get; set; }
+        public string Dependencia { get; set; }
         public string PEI { get; set; }
         public string PlanEstudios { get; set; }
         public string Paralelo { get; set; }
         public string Periodo { get; set; }
-        public string Project { get; set; }
-        public string BussinesPartner { get; set; }
-        public string Monto { get; set; }
+        public string Proyecto { get; set; }
+        public string SocioNegocio { get; set; }
+        public string MontoBase { get; set; }
         public string Porcentaje { get; set; }
         public decimal MontoDividido { get; set; }
         public string segmentoOrigen { get; set; }
         public string mes { get; set; }
         public string gestion { get; set; }
-        public string Branches { get; set; }
-        public string Concept { get; set; }
+        public string Segmento { get; set; }
+        public string Concepto { get; set; }
         public string CuentasContables { get; set; }
-        public string Indicator { get; set; }
+        public string Indicador { get; set; }
 
 
         public DataTable CreateDataTable<T>(IEnumerable<T> list)
