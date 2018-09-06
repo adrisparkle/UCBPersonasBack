@@ -1012,7 +1012,7 @@ namespace UcbBack.Controllers
             IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
               " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
               " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
-              " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
+              " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\",g.\"Cod\" \"UnidadOrganizacional\" " +
             " FROM ADMNALRRHH.\"Dist_Cost\" a "+
                 " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " + 
                 " on a.\"DistProcessId\"=b.\"Id\" "+
@@ -1024,7 +1024,11 @@ namespace UcbBack.Controllers
             " and b.\"BranchesId\" = d.\"BranchesId\" "+
             " and a.\"Columna\" = d.\"Concept\" "+
             " INNER JOIN ADMNALRRHH.\"Branches\" e "+
-               " on b.\"BranchesId\" = e.\"Id\"").ToList();
+               " on b.\"BranchesId\" = e.\"Id\" " +
+            " INNER JOIN ADMNALRRHH.\"Dependency\" f " +
+                " on f.\"Cod\" = a.\"Dependency\" " +
+            " INNER JOIN ADMNALRRHH.\"OrganizationalUnit\" g " +
+                " on g.\"Id\" = f.\"OrganizationalUnitId\" ").ToList();
 
             var ex = new XLWorkbook();
             var d = new Distribution();
@@ -1200,10 +1204,10 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT null \"ParentKey\",null \"LineNum\",null \"AccountCode\",null \"Debit\",null \"Credit\",null \"ShortName\", null as \"LineMemo\",null \"ProjectCode\",null \"CostingCode\",null \"CostingCode2\",null \"CostingCode3\",null \"CostingCode4\",null \"CostingCode5\" from dummy " +
-                                                                                  " union  SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",case when replace(sum(\"Debit\"),',','.')='0.00' then null else replace(sum(\"Debit\"),',','.') end \"Debit\",case when replace(sum(\"Credit\"),',','.')='0.00' then null else replace(sum(\"Credit\"),',','.') end \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\" " +
+            IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\",'Cuentas' \"AccountCode\",'Debe BS' \"Debit\",'Credito BS' \"Credit\",'ShortName' \"ShortName\", 'Glosa de linea' as \"LineMemo\",'Project' \"ProjectCode\",'ProfitCode' \"CostingCode\",'OcrCode2' \"CostingCode2\",'OcrCode3' \"CostingCode3\",'OcrCode4' \"CostingCode4\",'OcrCode5' \"CostingCode5\",'BPLId' \"BPLId\" from dummy " +
+                                                                                  " union  SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",case when replace(sum(\"Debit\"),',','.')='0.00' then null else replace(sum(\"Debit\"),',','.') end \"Debit\",case when replace(sum(\"Credit\"),',','.')='0.00' then null else replace(sum(\"Credit\"),',','.') end \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
                                                                                         " FROM ("+
-                                                                                        " select 1 \"ParentKey\"," +
+                                                                                        " select '1' \"ParentKey\"," +
                                                                                         "  null \"LineNum\"," +
                                                                                         "  coalesce(b.\"AcctCode\",x.\"CUENTASCONTABLES\") \"AccountCode\"," +
                                                                                         "  CASE WHEN x.\"Indicator\"='D' then x.\"MontoDividido\" else 0 end as \"Debit\"," +
@@ -1215,11 +1219,12 @@ namespace UcbBack.Controllers
                                                                                         "  x.\"PEI\" \"CostingCode2\"," +
                                                                                         "  x.\"PlanEstudios\" \"CostingCode3\"," +
                                                                                         "  x.\"Paralelo\" \"CostingCode4\"," +
-                                                                                        "  x.\"Periodo\" \"CostingCode5\"" +
+                                                                                        "  x.\"Periodo\" \"CostingCode5\"," +
+                                                                                        "  x.\"CodigoSAP\" \"BPLId\"" +
                                                                                         " from  (SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
                                                                                         "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\","+
                                                                                         "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\","+
-                                                                                        "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\""+
+                                                                                        "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
                                                                                         "           FROM ADMNALRRHH.\"Dist_Cost\" a "+
                                                                                         "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b "+
                                                                                         "               on a.\"DistProcessId\"=b.\"Id\" "+
@@ -1239,15 +1244,15 @@ namespace UcbBack.Controllers
                                                                                         " left join admnalrrhh.\"OrganizationalUnit\" f"+
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\""+
                                                                                         ") V "+
-                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\";").ToList();
+                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
 
             var ex = new XLWorkbook();
             var d = new Distribution();
 
             var lastday = pro.gestion + pro.mes + DateTime.DaysInMonth(Int32.Parse(pro.gestion), Int32.Parse(pro.mes)).ToString();
 
-            IEnumerable<VoucherHeader> dist1 = _context.Database.SqlQuery<VoucherHeader>("SELECT null \"ParentKey\", null \"ReferenceDate\",null \"Memo\",null \"TaxDate\",null \"Series\",null \"DueDate\" FROM DUMMY " +
-                                                                                         "union SELECT '1' \"ParentKey\", '" + lastday + "' \"ReferenceDate\",'Planilla Menusal " + pro.Branches.Abr + "-" + pro.mes + "-" + pro.gestion + "' \"Memo\",'" + lastday + "' \"TaxDate\",'" + pro.Branches.SerieComprobanteContalbeSAP + "' \"Series\",'" + lastday + "' \"DueDate\" FROM DUMMY;");
+            IEnumerable<VoucherHeader> dist1 = _context.Database.SqlQuery<VoucherHeader>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\", 'Fecha Contabilización' \"ReferenceDate\",'Glosa del asiento' \"Memo\",'Ref1' \"Reference\",'Ref2' \"Reference2\",'TransCode' \"TransactionCode\",'Project' \"ProjectCode\",'Fecha Documento' \"TaxDate\",'Indicator' \"Indicator\",'AutoStorno' \"UseAutoStorno\",'StornoDate' \"StornoDate\",'VatDate' \"VatDate\",'Series' \"Series\",'StampTax' \"StampTax\",'DueDate' \"DueDate\",'AutoVAT' \"AutoVAT\",'ReportEU' \"ReportEU\",'Report347' \"Report347\",'Location' \"LocationCode\",'BlockDunn' \"BlockDunningLetter\",'AutoWT' \"AutomaticWT\",'Corisptivi' \"Corisptivi\" FROM DUMMY " +
+                                                                                         "union SELECT '1' \"ParentKey\", null \"LineNum\", '" + lastday + "' \"ReferenceDate\",'Planilla Menusal " + pro.Branches.Abr + "-" + pro.mes + "-" + pro.gestion + "' \"Memo\",null \"Reference\",null \"Reference2\",null \"TransactionCode\",null \"ProjectCode\",'" + lastday + "' \"TaxDate\",null \"Indicator\",null \"UseAutoStorno\",null \"StornoDate\",null \"VatDate\",'" + pro.Branches.SerieComprobanteContalbeSAP + "' \"Series\",null \"StampTax\",'" + lastday + "' \"DueDate\",null \"AutoVAT\",null \"ReportEU\",null \"Report347\",null \"LocationCode\",null \"BlockDunningLetter\",null \"AutomaticWT\",null \"Corisptivi\" FROM DUMMY;");
             var n = d.CreateDataTable(dist1);
             int desiredSize = 1;
 

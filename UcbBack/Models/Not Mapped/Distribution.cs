@@ -30,6 +30,7 @@ namespace UcbBack.Models.Not_Mapped
         public string Concepto { get; set; }
         public string CuentasContables { get; set; }
         public string Indicador { get; set; }
+        public string UnidadOrganizacional { get; set; }
 
 
         public DataTable CreateDataTable<T>(IEnumerable<T> list)

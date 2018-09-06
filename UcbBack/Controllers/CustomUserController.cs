@@ -176,7 +176,7 @@ namespace UcbBack.Controllers
             if (userInDB == null)
                 return NotFound();
 
-            _context.CustomUsers.Remove(userInDB);
+            //_context.CustomUsers.Remove(userInDB);
             _context.SaveChanges();
             return Ok();
         }

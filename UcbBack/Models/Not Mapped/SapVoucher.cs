@@ -25,6 +25,7 @@ namespace UcbBack.Models.Not_Mapped
         public string CostingCode3 { get; set; }
         public string CostingCode4 { get; set; }
         public string CostingCode5 { get; set; }
+        public string BPLId { get; set; }
     }
     
 }
