@@ -43,6 +43,74 @@ namespace UcbBack.Controllers
 
         }
 
+        [HttpPost]
+        [Route("api/user/Branches/{id}")]
+        public IHttpActionResult AddSegment(int id, [FromBody]JObject credentials)
+        {
+            CustomUser userInDB = null;
+
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            int branchesId = 0;
+            if (credentials["BranchesId"] == null)
+                return BadRequest();
+
+            if (!Int32.TryParse(credentials["BranchesId"].ToString(), out branchesId))
+                return BadRequest();
+
+            var branchInDB = _context.Branch.FirstOrDefault(b => b.Id == branchesId);
+
+            if (branchInDB == null)
+                return BadRequest();
+
+            activeDirectory.AddUserToGroup(userInDB.UserPrincipalName, branchInDB.ADGroupName);
+
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("api/user/Branches/{id}")]
+        public IHttpActionResult GetSegments(int id)
+        {
+            CustomUser userInDB = null;
+
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            var br = activeDirectory.getUserBranches(userInDB).Select(x=>new {x.Id,x.Abr,x.Name});
+            
+            return Ok(br);
+        }
+
+        [HttpDelete]
+        [Route("api/user/Branches/{id}")]
+        public IHttpActionResult RemoveSegment(int id, [FromUri]int branchesId)
+        {
+            CustomUser userInDB = null;
+
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            if (branchesId == 0)
+                return BadRequest();
+
+            var branchInDB = _context.Branch.FirstOrDefault(b => b.Id == branchesId);
+
+            if (branchInDB == null)
+                return BadRequest();
+
+            activeDirectory.RemoveUserFromGroup(userInDB.UserPrincipalName, branchInDB.ADGroupName);
+
+            return Ok();
+        }
+
         // GET api/user/5
         [Route("api/user/{id}")]
         public IHttpActionResult Get(int id)

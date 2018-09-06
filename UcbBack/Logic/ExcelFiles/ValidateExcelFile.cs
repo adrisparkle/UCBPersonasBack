@@ -473,6 +473,7 @@ namespace UcbBack.Logic
                 var strcod = cod != -1 ? wb.Worksheet(sheet).Cell(i, cod).Value.ToString() : null;
                 var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
                 var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
+                // todo change, view first code in SAP then verify the other fields
                 if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla))
                 {
                     res = false;

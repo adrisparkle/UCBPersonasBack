@@ -35,7 +35,9 @@ namespace UcbBack.Controllers
                     Dependency = x.Dependency.Name,
                     x.InitialsInterRegional,
                     x.SerieComprobanteContalbeSAP,
-                    x.SocioGenericDerechosLaborales}).OrderBy(x=>x.Id);
+                    x.SocioGenericDerechosLaborales,
+                    x.CodigoSAP
+                }).OrderBy(x=>x.Id);
 
             var user = auth.getUser(Request);
             var res = auth.filerByRegional(brs, user,isBranchtable:true);
@@ -87,6 +89,7 @@ namespace UcbBack.Controllers
             brachInDB.InitialsInterRegional = branch.InitialsInterRegional;
             brachInDB.SerieComprobanteContalbeSAP = branch.SerieComprobanteContalbeSAP;
             brachInDB.SocioGenericDerechosLaborales = branch.SocioGenericDerechosLaborales;
+            brachInDB.CodigoSAP = branch.CodigoSAP;
 
             _context.SaveChanges();
             return Ok(brachInDB);

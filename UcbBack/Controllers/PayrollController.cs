@@ -1028,7 +1028,7 @@ namespace UcbBack.Controllers
 
             var ex = new XLWorkbook();
             var d = new Distribution();
-            ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
+            ex.Worksheets.Add(d.CreateDataTable(dist), "TotalDetalle");
 
 
             var ms = new MemoryStream();
@@ -1036,7 +1036,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "Distribucion-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "TotalDetalle.xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin); 
@@ -1100,7 +1100,7 @@ namespace UcbBack.Controllers
 
             var ex = new XLWorkbook();
             var d = new Distribution();
-            ex.Worksheets.Add(d.CreateDataTable(res), "Detalle");
+            ex.Worksheets.Add(d.CreateDataTable(res), "TotalGeneral");
 
 
             var ms = new MemoryStream();
@@ -1108,7 +1108,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "TotalGeneral-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "TotalGeneral.xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);
@@ -1171,7 +1171,7 @@ namespace UcbBack.Controllers
 
             var ex = new XLWorkbook();
             var d = new Distribution();
-            ex.Worksheets.Add(d.CreateDataTable(res), "Detalle");
+            ex.Worksheets.Add(d.CreateDataTable(res), "TotalPorCuenta");
 
 
             var ms = new MemoryStream();
@@ -1179,7 +1179,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "TotalPorCuenta-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "TotalPorCuenta.xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);

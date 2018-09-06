@@ -96,7 +96,7 @@ namespace UcbBack.Controllers
         }
 
         [HttpGet]
-        [Route("api/rol/GetAccess/{id}")]
+        [Route("api/rol/Access/{id}")]
         public IHttpActionResult GetAccess(int id)
         {
            var rha = _context.RolshaAccesses.Include(r=>r.Access).Where(r => r.Rolid == id).
@@ -112,8 +112,30 @@ namespace UcbBack.Controllers
             return Ok(rha);
         }
 
+        [HttpDelete]
+        [Route("api/rol/Access/{id}")]
+        public IHttpActionResult DeleteAccess(int id, [FromUri]int AccessId)
+        {
+            var xss = AccessId;
+
+            if (AccessId==0)
+                return BadRequest();
+
+            Rol rol = _context.Rols.FirstOrDefault(r => r.Id == id);
+            Access access = _context.Accesses.FirstOrDefault(a => a.Id == AccessId);
+
+            if (rol == null || access == null)
+                return NotFound();
+
+            RolhasAccess rha = _context.RolshaAccesses.FirstOrDefault(x => x.Accessid == AccessId && x.Rolid == id);
+
+            _context.RolshaAccesses.Remove(rha);
+            _context.SaveChanges();
+            return Ok();
+        }
+
         [HttpPost]
-        [Route("api/rol/AddAccess/{id}")]
+        [Route("api/rol/Access/{id}")]
         public IHttpActionResult AddAccess(int id,[FromBody]JObject credentials)
         {
             int accessid = 0;
@@ -128,6 +150,10 @@ namespace UcbBack.Controllers
 
             if (rol == null || access == null)
                 return NotFound();
+            RolhasAccess rha = _context.RolshaAccesses.FirstOrDefault(x => x.Accessid == accessid && x.Rolid == id);
+
+            if (rha != null)
+                return Ok("El usuario ya tiene este acceso!");
 
             RolhasAccess rolhasAccess = new RolhasAccess();
             rolhasAccess.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_RolhasAccess_sqs\".nextval FROM DUMMY;").ToList()[0];

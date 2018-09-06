@@ -46,5 +46,7 @@ namespace UcbBack.Models
 
         public int? DependencyId { get; set; }
 
+        public string CodigoSAP { get; set; }
+
     }
 }
