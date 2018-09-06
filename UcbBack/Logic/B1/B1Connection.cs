@@ -410,7 +410,7 @@ namespace UcbBack.Logic.B1
             List<object> list = new List<object>();
             if (connectedtoHana)
             {
-                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\" from " + DatabaseName + ".OPRC ";
+                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\",\"U_Paralelo\" from " + DatabaseName + ".OPRC ";
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -422,6 +422,7 @@ namespace UcbBack.Logic.B1
                         o.cod = dataReader["PrcCode"].ToString();
                         o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
                         o.sigla = dataReader["U_Sigla"].ToString();
+                        o.paralelo = dataReader["U_Paralelo"].ToString();
                         list.Add(o);
                     }
                 }

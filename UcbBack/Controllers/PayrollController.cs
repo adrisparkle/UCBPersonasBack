@@ -1025,9 +1025,9 @@ namespace UcbBack.Controllers
             " and a.\"Columna\" = d.\"Concept\" "+
             " INNER JOIN ADMNALRRHH.\"Branches\" e "+
                " on b.\"BranchesId\" = e.\"Id\" " +
-            " INNER JOIN ADMNALRRHH.\"Dependency\" f " +
+            " LEFT JOIN ADMNALRRHH.\"Dependency\" f " +
                 " on f.\"Cod\" = a.\"Dependency\" " +
-            " INNER JOIN ADMNALRRHH.\"OrganizationalUnit\" g " +
+            " LEFT JOIN ADMNALRRHH.\"OrganizationalUnit\" g " +
                 " on g.\"Id\" = f.\"OrganizationalUnitId\" ").ToList();
 
             var ex = new XLWorkbook();

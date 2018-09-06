@@ -460,7 +460,7 @@ namespace UcbBack.Logic
 
         }
 
-        public bool VerifyParalel(int cod,int periodo, int sigla,int sheet =1)
+        public bool VerifyParalel(int cod,int periodo, int sigla, int paralelo, int sheet =1)
         {
             var B1conn = B1Connection.Instance;
             bool res = true;
@@ -473,50 +473,38 @@ namespace UcbBack.Logic
                 var strcod = cod != -1 ? wb.Worksheet(sheet).Cell(i, cod).Value.ToString() : null;
                 var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
                 var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
-                // todo change, view first code in SAP then verify the other fields
-                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla))
+                var strparalelo = paralelo != -1 ? wb.Worksheet(sheet).Cell(i, paralelo).Value.ToString() : null;
+                // todo uncomment to validate paralel number
+                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla /*&& x.paralelo == strparalelo*/))
                 {
                     res = false;
                     if (list.Any(x => x.cod==strcod))
                     {
-                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo))
+                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo /*&& x.paralelo == strparalelo*/))
                         {
                             paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta." );
                         }
-                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla))
+                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla /*&& x.paralelo == strparalelo*/))
                         {
                             paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
                         }
+                        /*else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.periodo == strperiodo))
+                        {
+                            paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
+                        }*/
                         else
                         {
                             paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
                             paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
+                            paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
                         }
-                    }
-                    else if (list.Any(x => x.periodo==strperiodo))
-                    {
-                        if (list.Any(x => x.periodo == strperiodo && x.sigla == strsigla))
-                        {
-                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            //string co = list.FirstOrDefault(l => l.periodo == strperiodo && l.sigla == strsigla).cod;
-                            //wb.Worksheet(1).Cell(i, cod).Value = co;
-                        }
-                        else
-                        {
-                            paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
-                        }
-                    }
-                    else if (list.Any(x => x.sigla==strsigla))
-                    {
-                        paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                        paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
                     }
                     else
                     {
                         paintXY(cod, i, XLColor.Red, "Este Codigo no es correcto.");
-                        paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
-                        paintXY(sigla, i, XLColor.Red, "Este Periodo no es correcto.");
+                        paintXY(periodo, i, XLColor.Red, "No es posible validar este Periodo.");
+                        paintXY(sigla, i, XLColor.Red, "No es posible validar esta Sigla.");
+                        paintXY(paralelo, i, XLColor.Red, "No es posible validar este Paralelo.");
                     }
                 }
             }
