@@ -226,7 +226,7 @@ namespace UcbBack.Logic
             return res==null?null:res.EndsWith(" ")?res.Substring(0, res.Length - 1):res;
         }
 
-        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1)
+        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, int dependency = -1, bool paintdep=false, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1,int tipo =-1)
         {
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
@@ -243,6 +243,8 @@ namespace UcbBack.Logic
                 {
                     string strci = ci != -1 ? wb.Worksheet(sheet).Cell(i, ci).Value.ToString() : null;
                     string strcuni = CUNI != -1 ? wb.Worksheet(sheet).Cell(i, CUNI).Value.ToString() : null;
+                    string strdep = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
+                    string strtipo = tipo != -1 ? wb.Worksheet(sheet).Cell(i, tipo).Value.ToString() : null;
 
                     if (fullname != -1)
                     {
@@ -256,6 +258,34 @@ namespace UcbBack.Logic
 
                     }
 
+                    var p = ppllist.FirstOrDefault(x => x.CUNI == strcuni);
+                    if (paintdep && p!=null)
+                    {
+                        if (tipo != -1 && strtipo != "TH")
+                        {
+                            if (!personValidator.IspersonDependency(p, strdep, date, format))
+                            {
+                                paintXY(dependency, i, XLColor.Red, "Esta Persona NO se encuentra en esta Dependencia, según la base de datos nacional\n");
+                            }
+                        }
+                        
+                    }  
+                    if (personActive && p!=null && !personValidator.IsActive(p, date, format, branchId: branchesId))
+                    {
+                        res = false;
+                        if (fullname != -1)
+                        {
+                            paintXY(fullname, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                            paintXY(fullname + 1, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                            paintXY(fullname + 2, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                            paintXY(fullname + 3, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+
+                        }
+                        if (ci != -1)
+                            paintXY(ci, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                        if (CUNI != -1)
+                            paintXY(CUNI, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
+                    }
 
                     if (!ppllist.Any(x => x.Document == strci
                                         && x.CUNI == strcuni
@@ -264,23 +294,7 @@ namespace UcbBack.Logic
                                         && cleanText(x.Names) == strname
                                         && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
                     {
-                        var p = ppllist.FirstOrDefault(x => x.Document == strci);
-                        if (personActive && !personValidator.IsActive(p, date, format, branchId: branchesId))
-                        {
-                            res = false;
-                            if (fullname != -1)
-                            {
-                                paintXY(fullname, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                                paintXY(fullname + 1, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                                paintXY(fullname + 2, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                                paintXY(fullname + 3, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-
-                            }
-                            if (ci != -1)
-                                paintXY(ci, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                            if (CUNI != -1)
-                                paintXY(CUNI, i, XLColor.Red, "Esta Persona NO se encuentra Activa\n");
-                        }
+                        
                         if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
                         {
                             if (!ppllist.Any(x => x.Document == strci

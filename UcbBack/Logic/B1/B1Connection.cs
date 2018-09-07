@@ -42,7 +42,7 @@ namespace UcbBack.Logic.B1
             connectedtoHana = TestHanaConection();
             if (connectedtoHana)
             {
-                DatabaseName = ConfigurationManager.AppSettings["B1CompanyDB"];
+                DatabaseName = ConfigurationManager.AppSettings["HanaBD"];
                 //string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema="+DatabaseName;
                 //string cadenadeconexion = "Server=SAPHANA01:30015;UserID=SDKRRHH;Password=Rrhh1234;Current Schema=UCBTEST"+DatabaseName;
                 string cadenadeconexion = "Server=" + ConfigurationManager.AppSettings["B1Server"] +

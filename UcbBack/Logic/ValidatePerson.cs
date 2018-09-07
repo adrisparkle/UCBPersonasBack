@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using UcbBack.Models;
+using System.Data.Entity;
 
 namespace UcbBack.Logic
 {
@@ -40,11 +41,14 @@ namespace UcbBack.Logic
                 bool xw;
                 if(branchId==-1)
                 {
-                    xw = _context.Contracts.ToList().Any(x =>
+                    xw = _context.ContractDetails.ToList().Any(x =>
                     (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate)));
                 }
                 else
                 {
+                    var xa = _context.ContractDetails.Where(x =>
+                        (x.CUNI == person.CUNI && x.StartDate <= toDate &&
+                         (x.EndDate == null || x.StartDate >= toDate) && x.BranchesId == branchId));
                     xw = _context.ContractDetails.ToList().Any(x =>
                         (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate) && x.BranchesId==branchId ));
                 }
@@ -55,6 +59,16 @@ namespace UcbBack.Logic
                 return false;
             }
             
+        }
+
+        public bool IspersonDependency(People person, string dependencyCod,string date = null,string format ="yyyy-MM-dd")
+        {
+            DateTime toDate = date == null
+                ? DateTime.Now
+                : DateTime.ParseExact(date, format, System.Globalization.CultureInfo.InvariantCulture);
+            bool xw = _context.ContractDetails.Include(x=>x.Dependency).ToList().Any(x =>
+                (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate) && x.Dependency.Cod==dependencyCod));
+            return xw;
         }
 
         

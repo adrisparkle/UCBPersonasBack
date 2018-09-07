@@ -100,10 +100,9 @@ namespace UcbBack.Controllers
         private Dist_File AddFileToProcess(string mes, string gestion, int BranchesId,ExcelFileType FileType,int userid,string fileName)
         {
             var processInDB = _context.DistProcesses.FirstOrDefault(p =>
-                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes && (p.State == ProcessState.STARTED || p.State == ProcessState.ERROR || p.State == ProcessState.WARNING));
+                    p.BranchesId == BranchesId && p.gestion == gestion && p.mes == mes && p.State!=ProcessState.CANCELED);
 
-
-            if (processInDB != null)
+            if (processInDB != null && (processInDB.State == ProcessState.STARTED || processInDB.State == ProcessState.ERROR || processInDB.State == ProcessState.WARNING))
             {
                 var fileInDB = _context.FileDbs.FirstOrDefault(f => f.DistProcessId == processInDB.Id && f.DistFileTypeId == (int)FileType && f.State == FileState.UPLOADED);
                 if (fileInDB == null)
@@ -122,6 +121,12 @@ namespace UcbBack.Controllers
                     _context.SaveChanges();
                     return file;
                 }
+            }
+
+            else if (processInDB != null &&
+                (processInDB.State == ProcessState.INSAP || processInDB.State == ProcessState.PROCESSED || processInDB.State == ProcessState.VALIDATED))
+            {
+                return null;
             }
             else
             {

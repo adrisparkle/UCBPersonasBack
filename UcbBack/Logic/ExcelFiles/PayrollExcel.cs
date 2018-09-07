@@ -82,16 +82,17 @@ namespace UcbBack.Logic.ExcelFiles
                 addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
             }
 
-            //todo cabiar a socio de negocio
-            //bool v1 = VerifyColumnValueIn(13,new List<string>{"FUT","PRE"});
-            bool v2 = VerifyColumnValueIn(20, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
-            //bool v3 = VerifyColumnValueIn(21, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
-            bool v4 = VerifyColumnValueIn(23, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.");
-            bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: false);
+            //bool v1 = VerifyColumnValueIn(13, connB1.getBusinessPartners().ToList(), comment: "Esta AFP no esta registrada como un Bussines Partner en SAP");
+            bool v2 = VerifyColumnValueIn(20, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.\n");
+            var xxx = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion)
+                .Cast<string>().ToList();
+            bool v3 = VerifyColumnValueIn(21, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.\n");
+            bool v4 = VerifyColumnValueIn(23, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.\n");
+            bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: true, branchesId:Int32.Parse(this.segmentoOrigen), date: this.gestion + "-" + this.mes + "-01", dependency:23,paintdep:true,tipo:20);
             //bool v6 = VerifyColumnValueIn(25, connB1.getBusinessPartners(),comment:"Este seguro no esta registrado como un Bussines Partner en SAP");
             bool v7 = ValidateLiquidoPagable();
             bool v8 = ValidatenoZero();
-            return isValid() /*&& v1*/ && v2 && v4 && v5  && v7 /*&& v3*/ && v8;
+            return isValid() /*&& v1*/ && v2 && v3 && v4 && v5 /*&& v6*/  && v7 && v8;
         }
 
         public bool ValidatenoZero(int sheet = 1)
