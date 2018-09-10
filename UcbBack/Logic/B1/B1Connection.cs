@@ -121,16 +121,6 @@ namespace UcbBack.Logic.B1
             {
                 company.GetLastError(out errorCode, out errorMessage);
             }
-            var _context = new ApplicationDbContext();
-//            var yo = _context.Person.FirstOrDefault(xx => xx.CUNI == "RFA940908");
-            var yo = new People();
-            yo.CUNI = "QWE123456";
-            yo.Document = "1234567";
-            yo.FirstSurName = "Valdes";
-            yo.FirstSurName = "Juan";
-            if (yo == null)
-                return -1;
-            var  res = personToBP(yo);
             return connectionResult;
         }  
 
@@ -167,10 +157,11 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
 
-                    oEmployeesInfo.FirstName = person.Names;
+                    oEmployeesInfo.FirstName = person.Names + "-2";
                     oEmployeesInfo.LastName = person.FirstSurName;
                     oEmployeesInfo.Gender = person.Gender == "M" ? BoGenderTypes.gt_Male : BoGenderTypes.gt_Female;
                     oEmployeesInfo.DateOfBirth = person.BirthDate;
+                    oEmployeesInfo.ExternalEmployeeNumber = person.CUNI;
 
                     oEmployeesInfo.Add();
                     string newKey = company.GetNewObjectKey();
@@ -210,11 +201,16 @@ namespace UcbBack.Logic.B1
 
                     businessObject.CardName = person.FirstSurName + " " + person.Names;
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                    businessObject.CardCode = "R" + "123456";
-                    var lis = businessObject.UserFields.Fields;
-                    businessObject.UserFields.Fields.Item("").Value = 1234567;
-
+                    businessObject.CardCode = "R" + person.CUNI;
+                    businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                    // set Branch Code
+                    //businessObject.BPBranchAssignment.DisabledForBP=SAPbobsCOM.BoYesNoEnum.tNO;
+                    //businessObject.BPBranchAssignment.BPLID =
+                    //    Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
+                    //businessObject.BPBranchAssignment.Add();
+                    // save new business partner
                     businessObject.Add();
+                    // get the new code
                     string newKey = company.GetNewObjectKey();
                     company.GetLastError(out errorCode, out errorMessage);
                     if (errorCode != 0)

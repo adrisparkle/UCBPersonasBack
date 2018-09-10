@@ -23,8 +23,10 @@ namespace UcbBack.Controllers
         public IHttpActionResult Get()
         {
             var B1con = B1Connection.Instance;
-
-            return Ok(B1con.ConnectB1()+"  ****  "+B1con.getLastError());
+            B1con.ConnectB1();
+            // General error;258 insufficient privilege: Not authorized
+            var  id = B1con.addPersonToB1(_context.Person.FirstOrDefault(x => x.CUNI == "RFA940908"));
+            return Ok("  ****  "+B1con.getLastError());
         }
 
         [HttpGet]
