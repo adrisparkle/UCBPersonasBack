@@ -101,7 +101,7 @@ namespace UcbBack.Controllers
             var similarities = validator.VerifyExisting(person,0.9f);
             var s = similarities.Count();
             //si existe alguna similitud pedir confirmacion
-            if (s > 0)
+            /*if (s > 0)
             {
                 string calconftoken = validator.GetConfirmationToken(similarities);
                 IEnumerable<string> confirmationToken = new List<string>();
@@ -117,14 +117,14 @@ namespace UcbBack.Controllers
                         return Ok(response);
                 //enviar confirmacion
                 else return Ok(response);
-            }
+            }*/
             
             //si pasa la confirmacion anterior se le asigna un id y se guarda la nueva persona en la BDD
             person.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
             
             _context.Person.Add(person);
             _context.SaveChanges();
-            activeDirectory.addUser(person);
+            // activeDirectory.addUser(person);
 
             return Created(new Uri(Request.RequestUri + "/" + person.Id), person);
         }

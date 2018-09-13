@@ -16,7 +16,7 @@ namespace UcbBack.Controllers
         private B1Connection B1conn;
         public CostCentersController()
         {
-            B1conn = B1Connection.Instance;
+            B1conn = B1Connection.Instance();
             _context = new ApplicationDbContext();
         }
 

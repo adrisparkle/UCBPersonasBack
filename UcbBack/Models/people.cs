@@ -12,6 +12,8 @@ namespace UcbBack.Models
     [Table("ADMNALRRHH.People")]
     public class People
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
         [MaxLength(10, ErrorMessage = "Cadena de texto muy grande")]
@@ -112,9 +114,10 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
-                    .FirstOrDefault(x => x.CUNI == this.CUNI
+                    .Include(x=>x.People)
+                    .Where(x => x.CUNI == this.CUNI
                                          && x.StartDate <= date
-                                         && (x.EndDate == null || x.EndDate >= date));
+                                         && (x.EndDate == null || x.EndDate >= date)).OrderBy(x=>x.Positions.LevelId).FirstOrDefault();
             }
             else
             {
@@ -122,8 +125,9 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI)
-                    .OrderByDescending(x => x.StartDate).FirstOrDefault();
+                    .OrderByDescending(x => x.EndDate == null ? 1 : 0).ThenByDescending(x => x.EndDate).ThenBy(x=>x.Positions.LevelId).FirstOrDefault();
             }
             return contract;
         }

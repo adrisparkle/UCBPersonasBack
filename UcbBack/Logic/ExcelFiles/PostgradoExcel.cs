@@ -60,7 +60,7 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            var connB1 = B1Connection.Instance;
+            var connB1 = B1Connection.Instance();
 
             //bool v1 = VerifyColumnValueIn(6, connB1.getProjects(col: "PrjName").ToList(), comment: "Este Proyecto no existe en SAP.");
             bool v2 = VerifyColumnValueIn(9, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
@@ -77,7 +77,7 @@ namespace UcbBack.Logic.ExcelFiles
         private bool verifyproject(int sheet = 1)
         {
             string commnet = "Este proyecto no existe en SAP.";
-            var connB1 = B1Connection.Instance;
+            var connB1 = B1Connection.Instance();
             List<string> list = connB1.getProjects();
             int index = 15;
             int tipoproy = 11;

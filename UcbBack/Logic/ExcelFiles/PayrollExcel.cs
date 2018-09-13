@@ -75,7 +75,7 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            var connB1 = B1Connection.Instance;
+            var connB1 = B1Connection.Instance();
 
             if (!connB1.connectedtoHana)
             {

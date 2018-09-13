@@ -15,6 +15,7 @@ namespace UcbBack.Logic.B1
 {
     public class B1Connection
     {
+        private static object Lock = new Object();
         private static B1Connection instance=null;
 
 
@@ -49,7 +50,7 @@ namespace UcbBack.Logic.B1
                                           ";UserID=" + ConfigurationManager.AppSettings["HanaBDUser"] +
                                             ";Password=" + ConfigurationManager.AppSettings["HanaPassword"] +
                                             ";Current Schema=" + ConfigurationManager.AppSettings["HanaBD"];
-                //ConnectB1();
+                ConnectB1();
                 HanaConn = new HanaConnection(cadenadeconexion);
                 HanaConn.Open();
             }
@@ -59,14 +60,24 @@ namespace UcbBack.Logic.B1
             }
         }
 
-        public static B1Connection Instance
+        // Double Check locking implementation for thread safe singleton
+        public static B1Connection Instance()
         {
-            // get { return instance ?? (instance = new B1Connection("UCATOLICA")); }
-            get { return instance ?? (instance = new B1Connection()); }
+            if(instance == null) // 1st check
+            {
+                lock (Lock) // locked
+                {
+                    if (instance == null) // second check
+                    {
+                        instance = new B1Connection(); // instantiate a new (and the only one) instance
+                    }
+                }
+            }
+
+            return instance; // return the instance 
         }
 
-
-        public bool DisconnectB1()
+        private bool DisconnectB1()
         {
             bool conectado = true;
             try
@@ -85,11 +96,11 @@ namespace UcbBack.Logic.B1
             return conectado;
         }
 
-        public int ConnectB1()
+        private int ConnectB1()
         {
             company = new SAPbobsCOM.Company();
 
-            company.Server = "SAPHANA01:30015";
+            /*company.Server = "SAPHANA01:30015";
             company.CompanyDB = "UCBTEST";
             company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
             company.DbUserName = "DESARROLLO1";
@@ -99,9 +110,9 @@ namespace UcbBack.Logic.B1
             company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
             company.UseTrusted = true;
             company.LicenseServer = "SAPHANA01:30015";
-            company.SLDServer = "SAPHANA01:40000";
+            company.SLDServer = "SAPHANA01:40000";*/
 
-            /*company.Server = ConfigurationManager.AppSettings["B1Server"];
+            company.Server = ConfigurationManager.AppSettings["B1Server"];
             company.CompanyDB = ConfigurationManager.AppSettings["B1CompanyDB"];
             company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
             company.DbUserName = ConfigurationManager.AppSettings["B1DbUserName"];
@@ -111,7 +122,7 @@ namespace UcbBack.Logic.B1
             company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
             company.UseTrusted = true;
             company.LicenseServer = ConfigurationManager.AppSettings["B1LicenseServer"];
-            company.SLDServer = ConfigurationManager.AppSettings["B1SLDServer"];*/
+            company.SLDServer = ConfigurationManager.AppSettings["B1SLDServer"];
 
 
 
@@ -157,7 +168,7 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
 
-                    oEmployeesInfo.FirstName = person.Names + "-2";
+                    oEmployeesInfo.FirstName = person.Names + "-4";
                     oEmployeesInfo.LastName = person.FirstSurName;
                     oEmployeesInfo.Gender = person.Gender == "M" ? BoGenderTypes.gt_Male : BoGenderTypes.gt_Female;
                     oEmployeesInfo.DateOfBirth = person.BirthDate;
@@ -189,6 +200,63 @@ namespace UcbBack.Logic.B1
             return message;     
         }
 
+        public string updatePersonInBP(People person)
+        {
+            string message = "";
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject =
+                        (SAPbobsCOM.BusinessPartners) company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                            .oBusinessPartners);
+                    //if person exist as BusinesPartner
+                    if (businessObject.GetByKey("R" + person.CUNI))
+                    {
+                        businessObject.CardName = person.FirstSurName + " " + person.Names;
+                        businessObject.CardForeignName = person.FirstSurName + " " + person.Names;
+                        businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
+                        businessObject.CardCode = "R" + person.CUNI;
+                        businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                        businessObject.GroupCode = 102;
+
+
+                        // set Branch Code
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.BPLID =
+                            Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
+                        businessObject.BPBranchAssignment.Add();
+                        // save new business partner
+                        businessObject.Update();
+                        // get the new code
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            message = "Error - " + errorCode + ": " + errorMessage;
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                newKey = newKey.Replace("\t1", "");
+                                message = newKey + "- successful!";
+                            }
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                message = message + " - Error: " + ex.Message;
+                DisconnectB1();
+            }
+            return message;  
+        }
+
         public string personToBP(People person)
         {
             string message = "";
@@ -199,15 +267,19 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
 
-                    businessObject.CardName = person.FirstSurName + " " + person.Names;
+                    businessObject.CardName = person.FirstSurName+ " " + person.Names;
+                    businessObject.CardForeignName = person.FirstSurName+ " " + person.Names;
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                    businessObject.CardCode = "R" + person.CUNI;
+                    businessObject.CardCode = "R"+person.CUNI;
                     businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                    businessObject.GroupCode = 102;
+                    
+                    
                     // set Branch Code
-                    //businessObject.BPBranchAssignment.DisabledForBP=SAPbobsCOM.BoYesNoEnum.tNO;
-                    //businessObject.BPBranchAssignment.BPLID =
-                    //    Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
-                    //businessObject.BPBranchAssignment.Add();
+                    businessObject.BPBranchAssignment.DisabledForBP=SAPbobsCOM.BoYesNoEnum.tNO;
+                    businessObject.BPBranchAssignment.BPLID =
+                        Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
+                    businessObject.BPBranchAssignment.Add();
                     // save new business partner
                     businessObject.Add();
                     // get the new code
@@ -236,7 +308,7 @@ namespace UcbBack.Logic.B1
             return message;     
         }
 
-        public string addVoucher(IEnumerable<SapVoucher> lines, Dist_Process process)
+        public string addVoucher()//IEnumerable<SapVoucher> lines), Dist_Process process)
         {
             string message = "";
             try
@@ -246,6 +318,29 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
 
+                    // add header
+                    businessObject.JournalEntries.ReferenceDate = new DateTime(2018,05,31);
+                    businessObject.JournalEntries.Memo = "Planilla prueba SDK";
+                    businessObject.JournalEntries.TaxDate = new DateTime(2018, 05, 31);
+                    businessObject.JournalEntries.Series = 230;
+                    businessObject.JournalEntries.DueDate = new DateTime(2018, 05, 31);
+
+                    // add lines
+                    businessObject.JournalEntries.Lines.SetCurrentLine(0);
+                    businessObject.JournalEntries.Lines.AccountCode = "_SYS00000002909";
+                    businessObject.JournalEntries.Lines.Credit = 129568.27;
+                    businessObject.JournalEntries.Lines.ShortName = "PN000005";
+                    businessObject.JournalEntries.Lines.BPLID = 3;
+                    businessObject.JournalEntries.Lines.Add();
+                    
+                    businessObject.JournalEntries.Lines.AccountCode = "_SYS00000003553";
+                    businessObject.JournalEntries.Lines.Debit = 129568.27;
+                    businessObject.JournalEntries.Lines.CostingCode = "5305";
+                    businessObject.JournalEntries.Lines.CostingCode2 = "18.01";
+                    businessObject.JournalEntries.Lines.BPLID = 3;
+                    businessObject.JournalEntries.Lines.Add();
+
+                    businessObject.Add();
                     
                     string newKey = company.GetNewObjectKey();
                     company.GetLastError(out errorCode, out errorMessage);

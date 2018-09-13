@@ -476,7 +476,7 @@ namespace UcbBack.Logic
 
         public bool VerifyParalel(int cod,int periodo, int sigla, int paralelo, int sheet =1)
         {
-            var B1conn = B1Connection.Instance;
+            var B1conn = B1Connection.Instance();
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var c = new ApplicationDbContext();

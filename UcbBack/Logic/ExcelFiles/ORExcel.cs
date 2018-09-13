@@ -59,7 +59,7 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            var connB1 = B1Connection.Instance;
+            var connB1 = B1Connection.Instance();
             bool v1 = VerifyColumnValueIn(6,_context.Branch.Select(x=>x.Abr).ToList(),comment:"Esta Regional No existe");
             bool v2 = VerifyPerson(ci: 1, CUNI: 8, fullname: 2, personActive: false);
             //Dim1

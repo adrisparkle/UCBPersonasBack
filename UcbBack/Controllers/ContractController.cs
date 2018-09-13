@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UcbBack.Logic;
 using UcbBack.Logic.ExcelFiles;
+using System.Data.Entity;
 
 
 namespace UcbBack.Controllers
@@ -59,6 +60,39 @@ namespace UcbBack.Controllers
                 return NotFound();
 
             return Ok(contractInDB);
+        }
+        [HttpGet]
+        [Route("api/Contract/GetContractsBranch/{id}")]
+        public IHttpActionResult GetContractsBranch(int id)
+        {
+            List<ContractDetail> contractInDB = null;
+
+            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.BranchesId == 17 || x.BranchesId ==6).Select(x=>x.People).Distinct();
+            int i = people.Count();
+            string res = "";
+
+            foreach (var person in people)
+            {
+                var contract = person.GetLastContract();
+                res += contract.People.CUNI + ";";
+                res += contract.People.Document + ";";
+                res += contract.People.FirstSurName + ";";
+                res += contract.People.SecondSurName + ";";
+                res += contract.People.MariedSurName + ";";
+                res += contract.People.Names + ";";
+                res += contract.People.BirthDate + ";";
+
+                res += contract.Dependency.Cod + ";";
+                res += contract.Dependency.Name + ";";
+
+                res += contract.Branches.Abr + ";";
+                res += contract.Branches.Name;
+
+                res += "\n";
+            }
+
+
+            return Ok(res);
         }
 
         [NonAction]
@@ -133,7 +167,14 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
+            People person = _context.Person.FirstOrDefault(x => x.Document == contract.PeopleId.ToString());
+
+            contract.PeopleId = person.Id;
+            contract.CUNI = person.CUNI;
+
+
             contract.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+
             _context.ContractDetails.Add(contract);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);

@@ -167,7 +167,7 @@ namespace UcbBack.Logic
             
             var similarities = hanaValidator.Similarities(fullname, colToCompare, table, colId, 0.9f);
 
-            var sim = _context.Person.Where(
+            var sim = _context.Person.ToList().Where(
                 i => similarities.Contains(i.CUNI)
             ).ToList();
             return sim;

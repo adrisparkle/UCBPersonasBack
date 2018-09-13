@@ -16,12 +16,12 @@ namespace UcbBack.Logic
         }
         public string CleanText(string value)
         {
-            return _context.Database.SqlQuery<string>("select clean_text('" + value + "') from dummy;").ToList()[0];
+            return _context.Database.SqlQuery<string>("select admnalrrhh.clean_text('" + value + "') from dummy;").ToList()[0];
         }
 
         public float JaroWinklerSimilarity(string a, string b)
         {
-            return _context.Database.SqlQuery<float>("select jaro_winkler_similarity(clean_text('" + a + "'),clean_text('" + b + "')) from dummy;").ToList()[0];
+            return _context.Database.SqlQuery<float>("select admnalrrhh.jaro_winkler_similarity(admnalrrhh.clean_text('" + a + "'),admnalrrhh.clean_text('" + b + "')) from dummy;").ToList()[0];
         }
 
         //returns a list of strings containing the first 5 similarities
@@ -32,7 +32,7 @@ namespace UcbBack.Logic
         //  n               =   the probability od similarity
         public List<string> Similarities(string a, string colToCompare,string table,string colId, float n)
         {
-            string query = "call SIMILARITIES_TP('" + a + "', " + n.ToString().Replace(",", ".") + ", '" + table + "'," + colToCompare + ",'" + colId + "');";
+            string query = "call admnalrrhh.SIMILARITIES_TP('" + a + "', " + n.ToString().Replace(",", ".") + ", '" + table + "','" + colToCompare + "','" + colId + "');";
             return _context.Database.SqlQuery<string>(query).ToList();
         }
 

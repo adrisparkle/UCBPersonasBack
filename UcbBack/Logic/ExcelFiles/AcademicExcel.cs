@@ -65,7 +65,7 @@ namespace UcbBack.Logic.ExcelFiles
 
         public override bool ValidateFile()
         {
-            var connB1 = B1Connection.Instance;
+            var connB1 = B1Connection.Instance();
             if (!connB1.connectedtoHana)
             {
                 addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");

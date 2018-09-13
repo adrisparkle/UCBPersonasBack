@@ -218,6 +218,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccessController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AltasContratosController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
@@ -246,6 +247,7 @@
     <Compile Include="Logic\ADClass.cs" />
     <Compile Include="Logic\B1\B1Connection.cs" />
     <Compile Include="Logic\ExcelFiles\AcademicExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\AltasPersonalExcel.cs" />
     <Compile Include="Logic\ExcelFiles\ContractExcel.cs" />
     <Compile Include="Logic\ExcelFiles\DiscountExcel.cs" />
     <Compile Include="Logic\ExcelFiles\ORExcel.cs" />
