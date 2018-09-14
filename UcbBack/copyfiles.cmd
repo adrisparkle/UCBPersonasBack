@@ -6,6 +6,8 @@ set rootpath=%~dp0
 set destination="C:\inetpub\wwwroot\RRHH"
 set destinationdev="C:\Users\Adrian\Desktop\www"
 
+%systemroot%\system32\inetsrv\appcmd set apppool /apppool.name:ucbback01 /enable32BitAppOnWin64:true
+
 mkdir "%destination%\Areas"
 robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /is
 

@@ -38,7 +38,7 @@ namespace UcbBack.Controllers
         }
 
         [HttpPost]
-        [Route("api/payroll/PayrollExcel")]
+        [Route("api/Contratos/AltasExcel")]
         public async Task<HttpResponseMessage> UploadPayrollExcel()
         {
             var response = new HttpResponseMessage();

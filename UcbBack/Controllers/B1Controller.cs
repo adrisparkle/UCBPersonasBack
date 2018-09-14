@@ -25,10 +25,10 @@ namespace UcbBack.Controllers
             var B1con = B1Connection.Instance();
             // B1con.ConnectB1();
             // General error;258 insufficient privilege: Not authorized
-            var  id = B1con.addVoucher();
+            // var  id = B1con.addVoucher();
             // var  id = B1con.updatePersonInBP(_context.Person.FirstOrDefault(x => x.CUNI == "RFA940908"));
             // var  id = B1con.addPersonToB1(_context.Person.FirstOrDefault(x => x.CUNI == "RFA940908"));
-            return Ok(id +"  ****  "+B1con.getLastError());
+            return Ok("  ****  "+B1con.getLastError());
         }
 
         [HttpGet]

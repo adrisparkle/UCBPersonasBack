@@ -98,7 +98,7 @@ namespace UcbBack.Controllers
                 return BadRequest("El Documento de identidad ya existe.");
 
             // verificar si existen personas existentes con una similitud mayor al 90%
-            var similarities = validator.VerifyExisting(person,0.9f);
+            var similarities = validator.VerifyExisting(person,0.95f);
             var s = similarities.Count();
             //si existe alguna similitud pedir confirmacion
             /*if (s > 0)
