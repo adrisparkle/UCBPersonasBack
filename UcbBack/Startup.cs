@@ -17,7 +17,7 @@ namespace UcbBack
 
         public void Configuration(IAppBuilder app)
         {
-            bool debugmode = true;
+            bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
                     var req = environment.Request;
