@@ -93,7 +93,7 @@ namespace UcbBack.Logic
             return access == null ? false : access.NedAuth;
         }
 
-        public bool shallYouPass(int id, string token, string path, string method)
+        public bool shallYouPass(int id, string token, string path, string method,out long logId)
         {
             
             bool pass = true;
@@ -107,7 +107,7 @@ namespace UcbBack.Logic
             bool hasaccess = hasAccess(id,path,method);
 
             if (nedauth && !isauthenticated) pass = false;
-            if (!ispublic && !hasaccess) pass = false;
+            if (!ispublic && !hasaccess && !isauthenticated) pass = false;
 
             Access access = _context.Accesses.FirstOrDefault(a =>
                 string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
@@ -122,6 +122,7 @@ namespace UcbBack.Logic
             _context.AccessLogses.Add(log);
             _context.SaveChanges();
 
+            logId = log.Id;
             return pass; 
         }
 

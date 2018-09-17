@@ -7,6 +7,8 @@ using System.Web.WebPages.Scope;
 using Microsoft.Owin;
 using Owin;
 using UcbBack.Logic;
+using UcbBack.Models;
+using UcbBack.Models.Auth;
 
 [assembly: OwinStartup(typeof(UcbBack.Startup))]
 
@@ -20,6 +22,9 @@ namespace UcbBack
             bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
+                    long logId=0;
+                    AccessLogs log=null;
+                    ApplicationDbContext _context = new ApplicationDbContext();
                     var req = environment.Request;
                     string endpoint = environment.Request.Path.ToString();
                     Uri uri = req.Uri;
@@ -42,7 +47,8 @@ namespace UcbBack
                         }
                     }
 
-                    if (!debugmode && !validator.shallYouPass(userid, token, endpoint, verb))
+                    bool sup = validator.shallYouPass(userid, token, endpoint, verb, out logId);
+                    if (!debugmode && !sup)
                     {
                         environment.Response.StatusCode = 401;
                         environment.Response.Body = new MemoryStream();
@@ -55,9 +61,21 @@ namespace UcbBack
 
                         environment.Response.Body = newBody;
                         environment.Response.Write(newContent);
+                        log = _context.AccessLogses.FirstOrDefault(x => x.Id == logId);
+                        if (log != null)
+                        {
+                            log.ResponseCode = environment.Response.StatusCode.ToString();
+                            _context.SaveChanges();
+                        }
                     }
                     else
                     await next();
+                    log = _context.AccessLogses.FirstOrDefault(x => x.Id == logId);
+                    if (log != null)
+                    {
+                        log.ResponseCode = environment.Response.StatusCode.ToString();
+                        _context.SaveChanges();
+                    }
                 }
             );
             //app.UseStaticFiles();
