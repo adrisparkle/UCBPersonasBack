@@ -16,7 +16,8 @@ namespace UcbBack.Logic
         //Install-Package System.DirectoryServices -Version 4.5.0
         //Install-Package System.DirectoryServices.AccountManagement -Version 4.5.0
 
-        public string Domain = "UCB.BO";
+        public string sDomain = "UCB.BO";
+        public string Domain = "192.168.18.62";
         public void addUser(People person)
         {
             try
