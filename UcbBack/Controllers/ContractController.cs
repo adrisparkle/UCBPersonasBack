@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using UcbBack.Logic;
 using UcbBack.Logic.ExcelFiles;
 using System.Data.Entity;
+using System.Globalization;
 
 
 namespace UcbBack.Controllers
@@ -23,17 +24,50 @@ namespace UcbBack.Controllers
     public class ContractController : ApiController
     {
          private ApplicationDbContext _context;
+        private ValidateAuth auth;
 
         public ContractController()
         {
+
             _context = new ApplicationDbContext();
+            auth = new ValidateAuth();
+
         }
 
         // GET api/Contract
+        [Route("api/Contract/List")]
         public IHttpActionResult Get()
         {
-            var contplist = _context.ContractDetails.Include(p => p.Branches).Include(p => p.Dependency).Include(p => p.Positions).Include(p => p.People).ToList().Select(x => new { x.Id, x.People.CUNI, x.People.Document, x.People.FirstSurName, x.People.SecondSurName, x.People.Names, Dependency = x.Dependency.Name, Branches = x.Branches.Abr, Positions=x.Positions.Name, x.Dedication,x.Linkage,x.StartDate,x.EndDate }).OrderBy(x => x.Id);
-            return Ok(contplist);
+            DateTime date = DateTime.Now;
+            var contplist = _context.ContractDetails
+                .Include(p => p.Branches)
+                .Include(p => p.Dependency)
+                .Include(p => p.Positions)
+                .Include(p => p.People)
+                .Where(x => x.StartDate <= date
+                            && (x.EndDate == null || x.EndDate >= date))
+                .OrderByDescending(x=>x.StartDate)
+                .ToList()
+                .Select(x => new
+                {
+                    x.Id, 
+                    x.People.CUNI, 
+                    x.People.Document, 
+                    FullName= x.People.GetFullName(),
+                    Dependency = x.Dependency.Name, 
+                    Branches = x.Branches.Abr, 
+                    BranchesId = x.Branches.Id, 
+                    Positions=x.Positions.Name, 
+                    x.Dedication,
+                    x.Linkage,
+                    StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
+                    EndDate = x.EndDate == null?null:x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
+                }).ToList();
+            var user = auth.getUser(Request);
+
+            var res = auth.filerByRegional(contplist.AsQueryable(), user);
+
+            return Ok(res);
         }
 
         // GET api/Contract/5
@@ -49,7 +83,7 @@ namespace UcbBack.Controllers
             return Ok(contractInDB);
         }
         [HttpGet]
-        [Route("api/Contract/GetPersonContract")]
+        [Route("api/Contract/GetPersonContract/{id}")]
         public IHttpActionResult GetPersonContract(int id)
         {
             List<ContractDetail> contractInDB = null;
@@ -67,7 +101,7 @@ namespace UcbBack.Controllers
         {
             List<ContractDetail> contractInDB = null;
 
-            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.BranchesId == 17 || x.BranchesId ==6).Select(x=>x.People).Distinct();
+            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.BranchesId == id).Select(x=>x.People).Distinct();
             int i = people.Count();
             string res = "";
 
