@@ -37,7 +37,7 @@ namespace UcbBack.Controllers
             if (!Request.Headers.TryGetValues("id", out headerId))
                 return BadRequest();
             if (!Int32.TryParse(headerId.FirstOrDefault(), out userid))
-                return Unauthorized();
+                return BadRequest();
 
             var user = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(cu => cu.Id == userid);
             if (user == null)

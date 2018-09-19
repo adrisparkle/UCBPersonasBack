@@ -270,7 +270,7 @@ namespace UcbBack.Logic
                         }
                         
                     }  
-                    if (personActive && p!=null && !personValidator.IsActive(p, date, format, branchId: branchesId))
+                    if (personActive && p!=null && !personValidator.IsActive(p, date, format))
                     {
                         res = false;
                         if (fullname != -1)

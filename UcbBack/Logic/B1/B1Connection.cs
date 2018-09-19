@@ -5,11 +5,13 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Web;
+using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json.Linq;
 using Sap.Data.Hana;
 using SAPbobsCOM;
 using UcbBack.Models;
 using UcbBack.Models.Not_Mapped;
+using Resource = SAPbobsCOM.Resource;
 
 namespace UcbBack.Logic.B1
 {
@@ -17,7 +19,12 @@ namespace UcbBack.Logic.B1
     {
         private static object Lock = new Object();
         private static B1Connection instance=null;
-
+        private struct BusinessObjectType
+        {
+            public static string BussinesPartner = "BUSINESSPARTNER";
+            public static string Voucher = "VOUCHER";
+            public static string Employee = "EMPLOYEE";
+        }
 
         private SAPbobsCOM.Company company;
         private HanaConnection HanaConn;
@@ -26,6 +33,8 @@ namespace UcbBack.Logic.B1
         private string errorMessage = "";
         private string DatabaseName;
         public bool connectedtoHana=false;
+        public bool connectedtoB1=false;
+        private ApplicationDbContext _context;
 
         public enum Dimension
         {
@@ -40,24 +49,36 @@ namespace UcbBack.Logic.B1
 
         private B1Connection()
         {
-            connectedtoHana = TestHanaConection();
-            if (connectedtoHana)
+            try
             {
                 DatabaseName = ConfigurationManager.AppSettings["HanaBD"];
                 //string cadenadeconexion = "Server=192.168.18.180:30015;UserID=admnalrrhh;Password=Rrhh12345;Current Schema="+DatabaseName;
                 //string cadenadeconexion = "Server=SAPHANA01:30015;UserID=SDKRRHH;Password=Rrhh1234;Current Schema=UCBTEST"+DatabaseName;
                 string cadenadeconexion = "Server=" + ConfigurationManager.AppSettings["B1Server"] +
                                           ";UserID=" + ConfigurationManager.AppSettings["HanaBDUser"] +
-                                            ";Password=" + ConfigurationManager.AppSettings["HanaPassword"] +
-                                            ";Current Schema=" + ConfigurationManager.AppSettings["HanaBD"];
-                ConnectB1();
+                                          ";Password=" + ConfigurationManager.AppSettings["HanaPassword"] +
+                                          ";Current Schema=" + ConfigurationManager.AppSettings["HanaBD"];
                 HanaConn = new HanaConnection(cadenadeconexion);
                 HanaConn.Open();
+                connectedtoHana = true;
             }
-            else
+            catch (Exception e)
             {
-                instance = null;
+                connectedtoHana = false;
             }
+
+            try
+            {
+                ConnectB1();
+                connectedtoB1 = true;
+            }
+            catch (Exception e)
+            {
+                connectedtoB1 = false;
+            }
+            _context = new ApplicationDbContext();
+            if (!connectedtoB1 && !connectedtoHana)
+                instance = null;
         }
 
         // Double Check locking implementation for thread safe singleton
@@ -158,9 +179,19 @@ namespace UcbBack.Logic.B1
             return resultado;
         }
 
-        public string addPersonToB1(People person)
+        private B1SDKLog initLog(int userId,string type,string ObjectId)
         {
-            string message="";
+            B1SDKLog log = new B1SDKLog();
+            log.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_B1SDKLog_sqs\".nextval FROM DUMMY;").ToList()[0];
+            log.ObjectId = ObjectId;
+            log.BusinessObject = type;
+            log.Success = true;
+            return log;
+        }
+
+        public string addPersonToEmployeeMasterData(int UserId,People person)
+        {
+            var log = initLog(UserId,BusinessObjectType.Employee,person.Id.ToString());
             try
             {
                 if (company.Connected)
@@ -179,7 +210,12 @@ namespace UcbBack.Logic.B1
                     company.GetLastError(out errorCode, out errorMessage);
                     if (errorCode != 0)
                     {
-                        message = "Error - "+errorCode+": "+errorMessage;
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
                     }
                     else
                     {
@@ -187,22 +223,31 @@ namespace UcbBack.Logic.B1
                         {
                             company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                             newKey = newKey.Replace("\t1", "");
-                            message = newKey + "- successful!";
                         }
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return newKey;
                     }  
                 }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
             catch (Exception ex)
             {
-                message = message + " - Error: " + ex.Message;
-                DisconnectB1();
+                log.Success = false;
+                log.ErrorMessage = "Catch: "+ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
-            return message;     
         }
 
-        public string updatePersonInBP(People person)
+        public string updatePersonInBussinesPartner(int UserId, People person)
         {
-            string message = "";
+            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
             try
             {
                 if (company.Connected)
@@ -234,7 +279,12 @@ namespace UcbBack.Logic.B1
                         company.GetLastError(out errorCode, out errorMessage);
                         if (errorCode != 0)
                         {
-                            message = "Error - " + errorCode + ": " + errorMessage;
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return "ERROR";
                         }
                         else
                         {
@@ -242,24 +292,37 @@ namespace UcbBack.Logic.B1
                             {
                                 company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                                 newKey = newKey.Replace("\t1", "");
-                                message = newKey + "- successful!";
+                                _context.SdkErrorLogs.Add(log);
+                                _context.SaveChanges();
+                                return newKey;
                             }
                         }
                     }
-
+                    log.Success = false;
+                    log.ErrorMessage = "SDK: Not Found";
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                    return "ERROR";
                 }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
             catch (Exception ex)
             {
-                message = message + " - Error: " + ex.Message;
-                DisconnectB1();
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
-            return message;  
         }
 
-        public string personToBP(People person)
+        public string addpersonToBussinesPartner(int UserId, People person)
         {
-            string message = "";
+            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
             try
             {
                 if (company.Connected)
@@ -271,7 +334,10 @@ namespace UcbBack.Logic.B1
                     businessObject.CardForeignName = person.FirstSurName+ " " + person.Names;
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
                     businessObject.CardCode = "R"+person.CUNI;
+
+                    // set NIT
                     businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                    // Set Group RRHH
                     businessObject.GroupCode = 102;
                     
                     
@@ -287,7 +353,12 @@ namespace UcbBack.Logic.B1
                     company.GetLastError(out errorCode, out errorMessage);
                     if (errorCode != 0)
                     {
-                        message = "Error - " + errorCode + ": " + errorMessage;
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
                     }
                     else
                     {
@@ -295,76 +366,354 @@ namespace UcbBack.Logic.B1
                         {
                             company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                             newKey = newKey.Replace("\t1", "");
-                            message = newKey + "- successful!";
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return newKey;
                         }
                     }
                 }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
             catch (Exception ex)
             {
-                message = message + " - Error: " + ex.Message;
-                DisconnectB1();
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
-            return message;     
         }
 
-        public string addVoucher()//IEnumerable<SapVoucher> lines), Dist_Process process)
+        public string addVoucher(int UserId, Dist_Process process)
         {
-            string message = "";
+            var log = initLog(UserId, BusinessObjectType.Voucher, process.Id.ToString());
+            bool approved = false;
             try
             {
-                if (company.Connected)
+                IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",sum(\"Debit\") \"Debit\",sum(\"Credit\") \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
+                                                                                        " FROM (" +
+                                                                                        " select x.\"Id\" \"ParentKey\"," +
+                                                                                        "  null \"LineNum\"," +
+                                                                                        "  coalesce(b.\"AcctCode\",x.\"CUENTASCONTABLES\") \"AccountCode\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='D' then x.\"MontoDividido\" else 0 end as \"Debit\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='H' then x.\"MontoDividido\"else 0 end as \"Credit\"," +
+                                                                                        "  x.\"BussinesPartner\" \"ShortName\"," +
+                                                                                        "  x.\"Concept\" \"LineMemo\"," +
+                                                                                        "  x.\"Project\" \"ProjectCode\"," +
+                                                                                        "  f.\"Cod\" \"CostingCode\"," +
+                                                                                        "  x.\"PEI\" \"CostingCode2\"," +
+                                                                                        "  x.\"PlanEstudios\" \"CostingCode3\"," +
+                                                                                        "  x.\"Paralelo\" \"CostingCode4\"," +
+                                                                                        "  x.\"Periodo\" \"CostingCode5\"," +
+                                                                                        "  x.\"CodigoSAP\" \"BPLId\"" +
+                                                                                        " from  (SELECT a.\"Id\",  a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
+                                                                                        "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
+                                                                                        "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
+                                                                                        "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
+                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "               on a.\"DistProcessId\"=b.\"Id\" " +
+                                                                                        "           AND a.\"DistProcessId\"= " + process.Id +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "                on a.\"TipoEmpleado\"=c.\"Name\" " +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
+                                                                                        "           and b.\"BranchesId\" = d.\"BranchesId\" " +
+                                                                                        "           and a.\"Columna\" = d.\"Concept\" " +
+                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "              on b.\"BranchesId\" = e.\"Id\") x" +
+                                                                                        " left join ucatolica.oact b" +
+                                                                                        " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
+                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " on x.\"Dependency\"=d.\"Cod\"" +
+                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
+                                                                                        ") V " +
+                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
+
+                if (company.Connected && dist.Count()>0 && verifyAccounts(UserId,process.Id.ToString(),dist))
                 {
                     company.StartTransaction();
-                    SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
+                    var dist1 = dist.GroupBy(g => new
+                        {
+                            g.AccountCode,
+                            g.ShortName,
+                            g.CostingCode,
+                            g.CostingCode2,
+                            g.CostingCode3,
+                            g.CostingCode4,
+                            g.CostingCode5,
+                            g.ProjectCode,
+                            g.BPLId
+                        })
+                        .Select(g => new
+                        {
+                            g.Key.AccountCode,
+                            g.Key.ShortName,
+                            g.Key.CostingCode,
+                            g.Key.CostingCode2,
+                            g.Key.CostingCode3,
+                            g.Key.CostingCode4,
+                            g.Key.CostingCode5,
+                            g.Key.ProjectCode,
+                            g.Key.BPLId,
+                            Credit = g.Sum(s => Double.Parse(s.Credit)),
+                            Debit = g.Sum(s => Double.Parse(s.Debit))
+                        }).OrderBy(z => z.Debit == 0.00d ? 1 : 0).ThenBy(z => z.AccountCode);
 
-                    // add header
-                    businessObject.JournalEntries.ReferenceDate = new DateTime(2018,05,31);
-                    businessObject.JournalEntries.Memo = "Planilla prueba SDK";
-                    businessObject.JournalEntries.TaxDate = new DateTime(2018, 05, 31);
-                    businessObject.JournalEntries.Series = 230;
-                    businessObject.JournalEntries.DueDate = new DateTime(2018, 05, 31);
-
-                    // add lines
-                    businessObject.JournalEntries.Lines.SetCurrentLine(0);
-                    businessObject.JournalEntries.Lines.AccountCode = "_SYS00000002909";
-                    businessObject.JournalEntries.Lines.Credit = 129568.27;
-                    businessObject.JournalEntries.Lines.ShortName = "PN000005";
-                    businessObject.JournalEntries.Lines.BPLID = 3;
-                    businessObject.JournalEntries.Lines.Add();
-                    
-                    businessObject.JournalEntries.Lines.AccountCode = "_SYS00000003553";
-                    businessObject.JournalEntries.Lines.Debit = 129568.27;
-                    businessObject.JournalEntries.Lines.CostingCode = "5305";
-                    businessObject.JournalEntries.Lines.CostingCode2 = "18.01";
-                    businessObject.JournalEntries.Lines.BPLID = 3;
-                    businessObject.JournalEntries.Lines.Add();
-
-                    businessObject.Add();
-                    
-                    string newKey = company.GetNewObjectKey();
-                    company.GetLastError(out errorCode, out errorMessage);
-                    if (errorCode != 0)
+                    if (approved)
                     {
-                        message = "Error - " + errorCode + ": " + errorMessage;
+                        SAPbobsCOM.JournalEntries businessObject = (SAPbobsCOM.JournalEntries)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalEntries);
+
+                        // add header Journal Entrie Approved:
+                        businessObject.ReferenceDate = DateTime.Today;
+                        businessObject.Memo = "Planilla prueba SDK Aprobado " + process.Branches.Abr;
+                        businessObject.TaxDate = DateTime.Today;
+                        businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
+                        businessObject.DueDate = DateTime.Today;
+
+                        // add lines Journal Entrie Approved:
+                        businessObject.Lines.SetCurrentLine(0);
+                        foreach (var line in dist1)
+                        {
+                            businessObject.Lines.AccountCode = line.AccountCode;
+                            businessObject.Lines.Credit = line.Credit;
+                            businessObject.Lines.Debit = line.Debit;
+                            if (line.ShortName != null)
+                                businessObject.Lines.ShortName = line.ShortName;
+                            businessObject.Lines.CostingCode = line.CostingCode;
+                            businessObject.Lines.CostingCode2 = line.CostingCode2;
+                            businessObject.Lines.CostingCode3 = line.CostingCode3;
+                            businessObject.Lines.CostingCode4 = line.CostingCode4;
+                            businessObject.Lines.CostingCode5 = line.CostingCode5;
+                            businessObject.Lines.ProjectCode = line.ProjectCode;
+                            businessObject.Lines.BPLID = Int32.Parse(line.BPLId);
+                            businessObject.Lines.Add();
+                        }
+
+                        businessObject.Add();
+
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return "ERROR";
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                newKey = newKey.Replace("\t1", "");
+                                _context.SdkErrorLogs.Add(log);
+                                _context.SaveChanges();
+                                return newKey;
+                            }
+                        }
                     }
                     else
                     {
-                        if (company.InTransaction)
+                        SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
+                        // add header Vouvher:
+
+                        businessObject.JournalEntries.ReferenceDate = new DateTime(Int32.Parse(process.gestion), Int32.Parse(process.mes), 31);
+                        businessObject.JournalEntries.ReferenceDate = DateTime.Today;
+                        businessObject.JournalEntries.Memo = "Planilla prueba SDK SALOMON " + process.Branches.Abr;
+                        businessObject.JournalEntries.TaxDate = DateTime.Today;
+                        businessObject.JournalEntries.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
+                        businessObject.JournalEntries.DueDate = DateTime.Today;
+
+                        // add lines Voucher
+                        businessObject.JournalEntries.Lines.SetCurrentLine(0);
+                        foreach (var line in dist1)
                         {
-                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
-                            newKey = newKey.Replace("\t1", "");
-                            message = newKey + "- successful!";
+                            businessObject.JournalEntries.Lines.AccountCode = line.AccountCode;
+                            businessObject.JournalEntries.Lines.Credit = line.Credit;
+                            businessObject.JournalEntries.Lines.Debit = line.Debit;
+                            if (line.ShortName != null)
+                                businessObject.JournalEntries.Lines.ShortName = line.ShortName;
+                            businessObject.JournalEntries.Lines.CostingCode = line.CostingCode;
+                            businessObject.JournalEntries.Lines.CostingCode2 = line.CostingCode2;
+                            businessObject.JournalEntries.Lines.CostingCode3 = line.CostingCode3;
+                            businessObject.JournalEntries.Lines.CostingCode4 = line.CostingCode4;
+                            businessObject.JournalEntries.Lines.CostingCode5 = line.CostingCode5;
+                            businessObject.JournalEntries.Lines.ProjectCode = line.ProjectCode;
+                            businessObject.JournalEntries.Lines.BPLID = Int32.Parse(line.BPLId);
+                            businessObject.JournalEntries.Lines.Add();
+                        }
+
+                        businessObject.Add();
+
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return "ERROR";
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                newKey = newKey.Replace("\t1", "");
+                                _context.SdkErrorLogs.Add(log);
+                                _context.SaveChanges();
+                                return newKey;
+                            }
                         }
                     }
                 }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected or Voucher/Journal Entrie Data Error";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
+
             catch (Exception ex)
             {
-                message = message + " - Error: " + ex.Message;
-                DisconnectB1();
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
             }
-            return message;
+        }
+
+        public bool verifyAccounts(int UserId, string processId,IEnumerable<SapVoucher> lines)
+        {
+            foreach (var line in lines)
+            {
+                if (!checkVoucherAccount(UserId,processId,line,addErrorLog:true))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool checkVoucherAccount(int UserId,string processId, SapVoucher line,List<OACT> oact=null, bool addErrorLog=false)
+        {
+            bool res = true;
+            OACT Uoact = null;
+            if (oact == null)
+            {
+                Uoact = _context.Database.SqlQuery<OACT>("select \"AcctCode\",\"AcctName\",\"FormatCode\"," +
+                                                             "\"Dim1Relvnt\",\"Dim2Relvnt\",\"Dim3Relvnt\",\"Dim4Relvnt\"," +
+                                                             "\"Dim5Relvnt\",\"LocManTran\" from ucatolica.oact" +
+                                                             " where \"AcctCode\"='" + line.AccountCode + "';")
+                    .FirstOrDefault();
+            }
+            else
+            {
+                Uoact = oact.FirstOrDefault(x => x.AcctCode == line.AccountCode);
+            }
+
+            if (Uoact == null)
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "AccountCode not Found in SAP: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Dim1
+            if(Uoact.Dim1Relvnt=="Y" && line.CostingCode.IsNullOrWhiteSpace())
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Dim 1 Required: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Dim2
+            if(Uoact.Dim2Relvnt=="Y" && line.CostingCode2.IsNullOrWhiteSpace())
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Dim 2 Required: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Dim3
+            if(Uoact.Dim3Relvnt=="Y" && line.CostingCode3.IsNullOrWhiteSpace())
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Dim 3 Required: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Dim4
+            if(Uoact.Dim4Relvnt=="Y" && line.CostingCode4.IsNullOrWhiteSpace())
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Dim 4 Required: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Dim5
+            if(Uoact.Dim5Relvnt=="Y" && line.CostingCode5.IsNullOrWhiteSpace())
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Dim 5 Required: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+            //check Associate Account
+            if((Uoact.LocManTran=="Y" && line.ShortName.IsNullOrWhiteSpace())
+               || (Uoact.LocManTran == "N" && !line.ShortName.IsNullOrWhiteSpace()))
+            {
+                res = false;
+                if (addErrorLog)
+                {
+                    var log = initLog(UserId, BusinessObjectType.Voucher, processId);
+                    log.Success = false;
+                    log.ErrorMessage = "Associate Account: Dist_Cost Id ->" + line.ParentKey;
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                }
+            }
+
+            return res;
         }
 
         public List<string> getBusinessPartners(string col = "CardCode")

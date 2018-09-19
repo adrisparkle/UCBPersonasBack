@@ -49,6 +49,7 @@ namespace UcbBack.Models
         public DbSet<Module> Modules  { get; set; }
         public DbSet<Resource> Resources  { get; set; }
         public DbSet<AccessLogs> AccessLogses  { get; set; }
+        public DbSet<B1SDKLog> SdkErrorLogs  { get; set; }
         
 
         //auth models

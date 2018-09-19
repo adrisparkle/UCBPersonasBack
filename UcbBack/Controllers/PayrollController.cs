@@ -20,7 +20,9 @@ using System.Linq;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNet.Identity;
 using UcbBack.Logic;
+using UcbBack.Logic.B1;
 using UcbBack.Models.Not_Mapped;
 
 namespace UcbBack.Controllers
@@ -1200,6 +1202,10 @@ namespace UcbBack.Controllers
         [Route("api/payroll/GetSAPResume/{id}")]
         public HttpResponseMessage GetSAPResume(int id)
         {
+            ValidateAuth authval = new ValidateAuth();
+            var user = authval.getUser(Request);
+            bool sendToSAP = true;
+            B1Connection b1conn = B1Connection.Instance();
             HttpResponseMessage response = new HttpResponseMessage();
             
             var pro = _context.DistProcesses.Include(x=>x.Branches).FirstOrDefault(x => x.Id == id);
@@ -1209,9 +1215,11 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\",'Cuentas' \"AccountCode\",'Debe BS' \"Debit\",'Credito BS' \"Credit\",'ShortName' \"ShortName\", 'Glosa de linea' as \"LineMemo\",'Project' \"ProjectCode\",'ProfitCode' \"CostingCode\",'OcrCode2' \"CostingCode2\",'OcrCode3' \"CostingCode3\",'OcrCode4' \"CostingCode4\",'OcrCode5' \"CostingCode5\",'BPLId' \"BPLId\" from dummy " +
+            if (!sendToSAP || !b1conn.connectedtoB1)
+            {
+                IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\",'Cuentas' \"AccountCode\",'Debe BS' \"Debit\",'Credito BS' \"Credit\",'ShortName' \"ShortName\", 'Glosa de linea' as \"LineMemo\",'Project' \"ProjectCode\",'ProfitCode' \"CostingCode\",'OcrCode2' \"CostingCode2\",'OcrCode3' \"CostingCode3\",'OcrCode4' \"CostingCode4\",'OcrCode5' \"CostingCode5\",'BPLId' \"BPLId\" from dummy " +
                                                                                   " union  SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",case when replace(sum(\"Debit\"),',','.')='0.00' then null else replace(sum(\"Debit\"),',','.') end \"Debit\",case when replace(sum(\"Credit\"),',','.')='0.00' then null else replace(sum(\"Credit\"),',','.') end \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
-                                                                                        " FROM ("+
+                                                                                        " FROM (" +
                                                                                         " select '1' \"ParentKey\"," +
                                                                                         "  null \"LineNum\"," +
                                                                                         "  coalesce(b.\"AcctCode\",x.\"CUENTASCONTABLES\") \"AccountCode\"," +
@@ -1226,60 +1234,67 @@ namespace UcbBack.Controllers
                                                                                         "  x.\"Paralelo\" \"CostingCode4\"," +
                                                                                         "  x.\"Periodo\" \"CostingCode5\"," +
                                                                                         "  x.\"CodigoSAP\" \"BPLId\"" +
-                                                                                        " from  (SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\","+
-                                                                                        "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\","+
-                                                                                        "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\","+
+                                                                                        " from  (SELECT a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
+                                                                                        "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
+                                                                                        "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
                                                                                         "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
-                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a "+
-                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b "+
-                                                                                        "               on a.\"DistProcessId\"=b.\"Id\" "+
+                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "               on a.\"DistProcessId\"=b.\"Id\" " +
                                                                                         "           AND a.\"DistProcessId\"= " + id +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c "+
-                                                                                        "                on a.\"TipoEmpleado\"=c.\"Name\" "+
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d "+
-                                                                                        "              on c.\"GrupoContableId\" = d.\"GrupoContableId\""+
-                                                                                        "           and b.\"BranchesId\" = d.\"BranchesId\" "+
-                                                                                        "           and a.\"Columna\" = d.\"Concept\" "+
-                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e "+
-                                                                                        "              on b.\"BranchesId\" = e.\"Id\") x"+
-                                                                                        " left join ucatolica.oact b"+
-                                                                                        " on x.CUENTASCONTABLES=b.\"FormatCode\""+
-                                                                                        " left join admnalrrhh.\"Dependency\" d"+
-                                                                                        " on x.\"Dependency\"=d.\"Cod\""+
-                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f"+
-                                                                                        " on d.\"OrganizationalUnitId\"=f.\"Id\""+
-                                                                                        ") V "+
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "                on a.\"TipoEmpleado\"=c.\"Name\" " +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
+                                                                                        "           and b.\"BranchesId\" = d.\"BranchesId\" " +
+                                                                                        "           and a.\"Columna\" = d.\"Concept\" " +
+                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "              on b.\"BranchesId\" = e.\"Id\") x" +
+                                                                                        " left join ucatolica.oact b" +
+                                                                                        " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
+                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " on x.\"Dependency\"=d.\"Cod\"" +
+                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
+                                                                                        ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
 
-            var ex = new XLWorkbook();
-            var d = new Distribution();
+                var ex = new XLWorkbook();
+                var d = new Distribution();
 
-            var lastday = pro.gestion + pro.mes + DateTime.DaysInMonth(Int32.Parse(pro.gestion), Int32.Parse(pro.mes)).ToString();
+                var lastday = pro.gestion + pro.mes + DateTime.DaysInMonth(Int32.Parse(pro.gestion), Int32.Parse(pro.mes)).ToString();
 
-            IEnumerable<VoucherHeader> dist1 = _context.Database.SqlQuery<VoucherHeader>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\", 'Fecha Contabilización' \"ReferenceDate\",'Glosa del asiento' \"Memo\",'Ref1' \"Reference\",'Ref2' \"Reference2\",'TransCode' \"TransactionCode\",'Project' \"ProjectCode\",'Fecha Documento' \"TaxDate\",'Indicator' \"Indicator\",'AutoStorno' \"UseAutoStorno\",'StornoDate' \"StornoDate\",'VatDate' \"VatDate\",'Series' \"Series\",'StampTax' \"StampTax\",'DueDate' \"DueDate\",'AutoVAT' \"AutoVAT\",'ReportEU' \"ReportEU\",'Report347' \"Report347\",'Location' \"LocationCode\",'BlockDunn' \"BlockDunningLetter\",'AutoWT' \"AutomaticWT\",'Corisptivi' \"Corisptivi\" FROM DUMMY " +
-                                                                                         "union SELECT '1' \"ParentKey\", null \"LineNum\", '" + lastday + "' \"ReferenceDate\",'Planilla Menusal " + pro.Branches.Abr + "-" + pro.mes + "-" + pro.gestion + "' \"Memo\",null \"Reference\",null \"Reference2\",null \"TransactionCode\",null \"ProjectCode\",'" + lastday + "' \"TaxDate\",null \"Indicator\",null \"UseAutoStorno\",null \"StornoDate\",null \"VatDate\",'" + pro.Branches.SerieComprobanteContalbeSAP + "' \"Series\",null \"StampTax\",'" + lastday + "' \"DueDate\",null \"AutoVAT\",null \"ReportEU\",null \"Report347\",null \"LocationCode\",null \"BlockDunningLetter\",null \"AutomaticWT\",null \"Corisptivi\" FROM DUMMY;");
-            var n = d.CreateDataTable(dist1);
-            int desiredSize = 1;
+                IEnumerable<VoucherHeader> dist1 = _context.Database.SqlQuery<VoucherHeader>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\", 'Fecha Contabilización' \"ReferenceDate\",'Glosa del asiento' \"Memo\",'Ref1' \"Reference\",'Ref2' \"Reference2\",'TransCode' \"TransactionCode\",'Project' \"ProjectCode\",'Fecha Documento' \"TaxDate\",'Indicator' \"Indicator\",'AutoStorno' \"UseAutoStorno\",'StornoDate' \"StornoDate\",'VatDate' \"VatDate\",'Series' \"Series\",'StampTax' \"StampTax\",'DueDate' \"DueDate\",'AutoVAT' \"AutoVAT\",'ReportEU' \"ReportEU\",'Report347' \"Report347\",'Location' \"LocationCode\",'BlockDunn' \"BlockDunningLetter\",'AutoWT' \"AutomaticWT\",'Corisptivi' \"Corisptivi\" FROM DUMMY " +
+                                                                                             "union SELECT '1' \"ParentKey\", null \"LineNum\", '" + lastday + "' \"ReferenceDate\",'Planilla Menusal " + pro.Branches.Abr + "-" + pro.mes + "-" + pro.gestion + "' \"Memo\",null \"Reference\",null \"Reference2\",null \"TransactionCode\",null \"ProjectCode\",'" + lastday + "' \"TaxDate\",null \"Indicator\",null \"UseAutoStorno\",null \"StornoDate\",null \"VatDate\",'" + pro.Branches.SerieComprobanteContalbeSAP + "' \"Series\",null \"StampTax\",'" + lastday + "' \"DueDate\",null \"AutoVAT\",null \"ReportEU\",null \"Report347\",null \"LocationCode\",null \"BlockDunningLetter\",null \"AutomaticWT\",null \"Corisptivi\" FROM DUMMY;");
+                var n = d.CreateDataTable(dist1);
+                int desiredSize = 1;
 
-            while (n.Columns.Count > desiredSize)
-            {
-                n.Columns.RemoveAt(desiredSize);
+                while (n.Columns.Count > desiredSize)
+                {
+                    n.Columns.RemoveAt(desiredSize);
+                }
+                ex.Worksheets.Add(n, "Voucher");
+
+                ex.Worksheets.Add(d.CreateDataTable(dist1), "Cabecera");
+
+                ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
+
+                var ms = new MemoryStream();
+                ex.SaveAs(ms);
+                response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StreamContent(ms);
+                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                response.Content.Headers.ContentDisposition.FileName = "SAP_Voucher_Lines-" + pro.Branches.Abr + "-" + pro.mes + pro.gestion + ".xlsx";
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                response.Content.Headers.ContentLength = ms.Length;
+                ms.Seek(0, SeekOrigin.Begin); 
             }
-            ex.Worksheets.Add(n,"Voucher");
-
-            ex.Worksheets.Add(d.CreateDataTable(dist1), "Cabecera");
+            else
+            {
+                b1conn.addVoucher(user.Id,pro);
+                response.StatusCode = HttpStatusCode.OK;
+            }
             
-            ex.Worksheets.Add(d.CreateDataTable(dist), "Detalle");
-
-            var ms = new MemoryStream();
-            ex.SaveAs(ms);
-            response.StatusCode = HttpStatusCode.OK;
-            response.Content = new StreamContent(ms);
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "SAP_Voucher_Lines-"+pro.Branches.Abr+"-"+pro.mes+pro.gestion+".xlsx";
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.Content.Headers.ContentLength = ms.Length;
-            ms.Seek(0, SeekOrigin.Begin); 
             return response;
         }
 
