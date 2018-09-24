@@ -83,7 +83,7 @@ namespace UcbBack.Logic.ExcelFiles
             periodo.Add("");
             bool v6 = VerifyColumnValueIn(13, periodo, comment: "Este periodo no existe en SAP.");
             //proyectos
-            var projects = connB1.getProjects().ToList();
+            var projects = connB1.getProjects().Cast<String>().ToList();
             projects.Add("");
             bool v7 = VerifyColumnValueIn(14, projects, comment: "Este proyecto no existe en SAP.");
 

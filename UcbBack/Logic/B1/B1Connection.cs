@@ -525,12 +525,19 @@ namespace UcbBack.Logic.B1
                         SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
                         // add header Vouvher:
 
-                        businessObject.JournalEntries.ReferenceDate = new DateTime(Int32.Parse(process.gestion), Int32.Parse(process.mes), 31);
-                        businessObject.JournalEntries.ReferenceDate = DateTime.Today;
+                        // var date = DateTime.Today;
+                        //var date = new DateTime(2018,06,29);
+                        var date = new DateTime (
+                            Int32.Parse(process.gestion), 
+                            Int32.Parse(process.mes),
+                            DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes))
+                            );
+
+                        businessObject.JournalEntries.ReferenceDate = date;
                         businessObject.JournalEntries.Memo = "Planilla prueba SDK SALOMON " + process.Branches.Abr;
-                        businessObject.JournalEntries.TaxDate = DateTime.Today;
+                        businessObject.JournalEntries.TaxDate = date;
                         businessObject.JournalEntries.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
-                        businessObject.JournalEntries.DueDate = DateTime.Today;
+                        businessObject.JournalEntries.DueDate = date;
 
                         // add lines Voucher
                         businessObject.JournalEntries.Lines.SetCurrentLine(0);
@@ -738,9 +745,9 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<string> getProjects(string col="PrjCode")
+        public List<dynamic> getProjects(string col = "PrjCode")
         {
-            List<string> res = new List<string>();
+            List<dynamic> res = new List<dynamic>();
             string[] dim1cols = new string[]
             {
                 "\"PrjCode\"", "\"PrjName\"", "\"Locked\"", "\"DataSource\"", "\"ValidFrom\"",

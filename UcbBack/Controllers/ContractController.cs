@@ -255,8 +255,8 @@ namespace UcbBack.Controllers
             var contractInDB = _context.Contracts.FirstOrDefault(d => d.Id == id);
             if (contractInDB == null)
                 return NotFound();
-            _context.Contracts.Remove(contractInDB);
-            _context.SaveChanges();
+            //_context.Contracts.Remove(contractInDB);
+            //_context.SaveChanges();
             return Ok();
         }
     }

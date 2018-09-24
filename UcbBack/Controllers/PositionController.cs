@@ -21,7 +21,7 @@ namespace UcbBack.Controllers
         // GET api/Positions
         public IHttpActionResult Get()
         {
-            var poslist = _context.Position.Include(p=>p.Level).Include(i=>i.Branches).ToList().Select(x=>new{x.Id,x.Name,x.Level.Cod,x.Level.Category,Branch = x.Branches.Name});
+            var poslist = _context.Position.Include(p=>p.Level).ToList().Select(x=>new{x.Id,x.Name,x.Level.Cod,x.Level.Category});
             return Ok(poslist); 
         }
 

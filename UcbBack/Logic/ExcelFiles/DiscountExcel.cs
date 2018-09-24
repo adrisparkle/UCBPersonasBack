@@ -50,9 +50,9 @@ namespace UcbBack.Logic.ExcelFiles
         {
             var connB1 = B1Connection.Instance();
             bool v1 = VerifyColumnValueIn(1, connB1.getBusinessPartners().ToList(), comment: "Este Codigo de Socio de Negocio no existe en SAP.");
-            // bool v2 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
+            bool v2 = VerifyColumnValueIn(2, connB1.getBusinessPartners(col: "CardName").ToList(), comment: "Este nombre de Socio de Negocio no existe en SAP.");
             bool v3 = VerifyColumnValueIn(3, new List<string> { "D_ANTI", "D_REND", "D_OTR", "D_PCOB", "D_RCIVA" }, comment: "Tipo de deducción no valido");
-            return isValid() && v1 /*&& v2*/ && v3;
+            return isValid() && v1 && v2 && v3;
         }
 
         public Dist_Discounts ToDistDiscounts(int row, int sheet = 1)

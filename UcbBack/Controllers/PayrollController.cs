@@ -1197,6 +1197,87 @@ namespace UcbBack.Controllers
             return response;
         }
 
+        [HttpGet]
+        [Route("api/payroll/processRows/{id}")]
+        public IHttpActionResult GetSAPResumeRows(int id)
+        {
+            var pro = _context.DistProcesses.Include(x=>x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                return NotFound();
+            }
+            IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",sum(\"Debit\") \"Debit\",sum(\"Credit\") \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
+                                                                                        " FROM (" +
+                                                                                        " select x.\"Id\" \"ParentKey\"," +
+                                                                                        "  null \"LineNum\"," +
+                                                                                        "  coalesce(b.\"AcctCode\",x.\"CUENTASCONTABLES\") \"AccountCode\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='D' then x.\"MontoDividido\" else 0 end as \"Debit\"," +
+                                                                                        "  CASE WHEN x.\"Indicator\"='H' then x.\"MontoDividido\"else 0 end as \"Credit\"," +
+                                                                                        "  x.\"BussinesPartner\" \"ShortName\"," +
+                                                                                        "  x.\"Concept\" \"LineMemo\"," +
+                                                                                        "  x.\"Project\" \"ProjectCode\"," +
+                                                                                        "  f.\"Cod\" \"CostingCode\"," +
+                                                                                        "  x.\"PEI\" \"CostingCode2\"," +
+                                                                                        "  x.\"PlanEstudios\" \"CostingCode3\"," +
+                                                                                        "  x.\"Paralelo\" \"CostingCode4\"," +
+                                                                                        "  x.\"Periodo\" \"CostingCode5\"," +
+                                                                                        "  x.\"CodigoSAP\" \"BPLId\"" +
+                                                                                        " from  (SELECT a.\"Id\",  a.\"Document\",a.\"TipoEmpleado\",a.\"Dependency\",a.\"PEI\"," +
+                                                                                        "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
+                                                                                        "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
+                                                                                        "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
+                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "               on a.\"DistProcessId\"=b.\"Id\" " +
+                                                                                        "           AND a.\"DistProcessId\"= " + id +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "                on a.\"TipoEmpleado\"=c.\"Name\" " +
+                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
+                                                                                        "           and b.\"BranchesId\" = d.\"BranchesId\" " +
+                                                                                        "           and a.\"Columna\" = d.\"Concept\" " +
+                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "              on b.\"BranchesId\" = e.\"Id\") x" +
+                                                                                        " left join ucatolica.oact b" +
+                                                                                        " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
+                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " on x.\"Dependency\"=d.\"Cod\"" +
+                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
+                                                                                        ") V " +
+                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
+            var dist1 = dist.GroupBy(g => new
+                {
+                    g.AccountCode,
+                    g.ShortName,
+                    g.CostingCode,
+                    g.CostingCode2,
+                    g.CostingCode3,
+                    g.CostingCode4,
+                    g.CostingCode5,
+                    g.ProjectCode,
+                    g.BPLId
+                })
+                .Select(g => new
+                {
+                    g.Key.AccountCode,
+                    g.Key.ShortName,
+                    g.Key.CostingCode,
+                    g.Key.CostingCode2,
+                    g.Key.CostingCode3,
+                    g.Key.CostingCode4,
+                    g.Key.CostingCode5,
+                    g.Key.ProjectCode,
+                    g.Key.BPLId,
+                    Credit = g.Sum(s => Double.Parse(s.Credit)),
+                    Debit = g.Sum(s => Double.Parse(s.Debit))
+                }).OrderBy(z => z.Debit == 0.00d ? 1 : 0).ThenBy(z => z.AccountCode);
+            
+            dynamic res = new JObject();
+
+            res.rowCount = dist1.Count();
+            return Ok(res);
+        }
 
         [HttpGet]
         [Route("api/payroll/GetSAPResume/{id}")]
@@ -1205,6 +1286,8 @@ namespace UcbBack.Controllers
             ValidateAuth authval = new ValidateAuth();
             var user = authval.getUser(Request);
             bool sendToSAP = true;
+            bool uploadedToSAP = false;
+            bool dowloadDataTransfer = false;
             B1Connection b1conn = B1Connection.Instance();
             HttpResponseMessage response = new HttpResponseMessage();
             
@@ -1214,8 +1297,12 @@ namespace UcbBack.Controllers
                 response.StatusCode = HttpStatusCode.NotFound;
                 return response;
             }
-
-            if (!sendToSAP || !b1conn.connectedtoB1)
+            if (sendToSAP && b1conn.connectedtoB1)
+            {
+                uploadedToSAP = b1conn.addVoucher(user.Id, pro) != "ERROR";
+                response.StatusCode = HttpStatusCode.OK;
+            }
+            if(dowloadDataTransfer && (!uploadedToSAP || !sendToSAP)) 
             {
                 IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT 'BatchNum' \"ParentKey\",'LineNum' \"LineNum\",'Cuentas' \"AccountCode\",'Debe BS' \"Debit\",'Credito BS' \"Credit\",'ShortName' \"ShortName\", 'Glosa de linea' as \"LineMemo\",'Project' \"ProjectCode\",'ProfitCode' \"CostingCode\",'OcrCode2' \"CostingCode2\",'OcrCode3' \"CostingCode3\",'OcrCode4' \"CostingCode4\",'OcrCode5' \"CostingCode5\",'BPLId' \"BPLId\" from dummy " +
                                                                                   " union  SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",case when replace(sum(\"Debit\"),',','.')='0.00' then null else replace(sum(\"Debit\"),',','.') end \"Debit\",case when replace(sum(\"Credit\"),',','.')='0.00' then null else replace(sum(\"Credit\"),',','.') end \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
@@ -1289,10 +1376,9 @@ namespace UcbBack.Controllers
                 response.Content.Headers.ContentLength = ms.Length;
                 ms.Seek(0, SeekOrigin.Begin); 
             }
-            else
+            if(!uploadedToSAP)
             {
-                b1conn.addVoucher(user.Id,pro);
-                response.StatusCode = HttpStatusCode.OK;
+                response.StatusCode = HttpStatusCode.GatewayTimeout;
             }
             
             return response;
