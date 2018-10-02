@@ -1279,17 +1279,23 @@ namespace UcbBack.Controllers
             return Ok(res);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("api/payroll/GetSAPResume/{id}")]
-        public HttpResponseMessage GetSAPResume(int id)
+        public HttpResponseMessage GetSAPResume(int id,JObject data)
         {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            if (data == null || data["date"] == null)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return response;
+            }
             ValidateAuth authval = new ValidateAuth();
             var user = authval.getUser(Request);
             bool sendToSAP = true;
             bool uploadedToSAP = false;
             bool dowloadDataTransfer = false;
             B1Connection b1conn = B1Connection.Instance();
-            HttpResponseMessage response = new HttpResponseMessage();
             
             var pro = _context.DistProcesses.Include(x=>x.Branches).FirstOrDefault(x => x.Id == id);
             if (pro == null)
@@ -1297,6 +1303,10 @@ namespace UcbBack.Controllers
                 response.StatusCode = HttpStatusCode.NotFound;
                 return response;
             }
+
+            DateTime date = DateTime.Parse(data["date"].ToString());
+            pro.RegisterDate = date;
+            _context.SaveChanges();
             if (sendToSAP && b1conn.connectedtoB1)
             {
                 uploadedToSAP = b1conn.addVoucher(user.Id, pro) != "ERROR";

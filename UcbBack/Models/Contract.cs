@@ -20,5 +20,6 @@ namespace UcbBack.Models
         public DateTime StartDate { get; set; }
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
+
     }
 }

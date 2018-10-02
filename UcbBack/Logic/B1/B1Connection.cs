@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Web;
 using Microsoft.Ajax.Utilities;
@@ -64,6 +65,7 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 connectedtoHana = false;
             }
 
@@ -74,6 +76,7 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 connectedtoB1 = false;
             }
             _context = new ApplicationDbContext();
@@ -434,6 +437,14 @@ namespace UcbBack.Logic.B1
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
                                                                                         ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
+                 var Auxdate = new DateTime(
+                    Int32.Parse(process.gestion),
+                    Int32.Parse(process.mes),
+                    DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes))
+                );
+
+                // If process Date is null set last day of the month in proccess
+                DateTime date = process.RegisterDate == null ? Auxdate : process.RegisterDate.Value;
 
                 if (company.Connected && dist.Count()>0 && verifyAccounts(UserId,process.Id.ToString(),dist))
                 {
@@ -470,11 +481,11 @@ namespace UcbBack.Logic.B1
                         SAPbobsCOM.JournalEntries businessObject = (SAPbobsCOM.JournalEntries)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalEntries);
 
                         // add header Journal Entrie Approved:
-                        businessObject.ReferenceDate = DateTime.Today;
+                        businessObject.ReferenceDate = date;
                         businessObject.Memo = "Planilla prueba SDK Aprobado " + process.Branches.Abr;
-                        businessObject.TaxDate = DateTime.Today;
+                        businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
-                        businessObject.DueDate = DateTime.Today;
+                        businessObject.DueDate = date;
 
                         // add lines Journal Entrie Approved:
                         businessObject.Lines.SetCurrentLine(0);
@@ -524,14 +535,6 @@ namespace UcbBack.Logic.B1
                     {
                         SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
                         // add header Vouvher:
-
-                        // var date = DateTime.Today;
-                        //var date = new DateTime(2018,06,29);
-                        var date = new DateTime (
-                            Int32.Parse(process.gestion), 
-                            Int32.Parse(process.mes),
-                            DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes))
-                            );
 
                         businessObject.JournalEntries.ReferenceDate = date;
                         businessObject.JournalEntries.Memo = "Planilla prueba SDK SALOMON " + process.Branches.Abr;
@@ -723,9 +726,23 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<string> getBusinessPartners(string col = "CardCode")
+        public List<dynamic> getBusinessPartners(string col = "CardCode")
         {
-            List<string> res = new List<string>();
+            List<dynamic> res = new List<dynamic>();
+            string[] cols = new string[]
+            {
+                "\"CardCode\"", "\"CardName\"", "\"LicTradNum\"", "\"CardType\"", "\"GroupCode\"", "\"Series\""
+            };
+
+            string strcol = "";
+            bool first = true;
+
+            foreach (var column in cols)
+            {
+                strcol += (first ? "" : ",") + column;
+                first = false;
+            }
+
             if (connectedtoHana)
             {
                 string cl = col == "*" ? col : "\"" + col + "\"";
@@ -737,7 +754,17 @@ namespace UcbBack.Logic.B1
                 {
                     while (dataReader.Read())
                     {
-                        res.Add(dataReader[col].ToString());
+                        if (col == "*")
+                        {
+                            dynamic x = new JObject();
+                            foreach (var column in cols)
+                            {
+                                x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                            }
+                            res.Add(x);
+                        }
+                        else
+                            res.Add(dataReader[col].ToString());
                     }
                 }
             }

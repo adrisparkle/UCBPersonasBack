@@ -62,5 +62,12 @@ namespace UcbBack.Controllers
             var y = B1conn.getProjects("*");
             return Ok(y);
         }
+        [HttpGet]
+        [Route("api/CostCenters/BusinessPartners")]
+        public IHttpActionResult BP()
+        {
+            var y = B1conn.getBusinessPartners("*");
+            return Ok(y);
+        }
     }
 }

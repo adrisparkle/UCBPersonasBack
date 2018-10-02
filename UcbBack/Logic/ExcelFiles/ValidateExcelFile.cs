@@ -226,7 +226,7 @@ namespace UcbBack.Logic
             return res==null?null:res.EndsWith(" ")?res.Substring(0, res.Length - 1):res;
         }
 
-        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, int dependency = -1, bool paintdep=false, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontro este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1,int tipo =-1)
+        public bool VerifyPerson(int ci = -1, int CUNI = -1, int fullname = -1, int sheet = 1, int dependency = -1, bool paintdep=false, bool paintcolci = true, bool paintcolcuni = true, bool paintcolnombre = true, bool jaro = true, string comment = "No se encontró este valor en la Base de Datos Nacional.", bool personActive = true, string date = null, string format = "yyyy-MM-dd", int branchesId =-1,int tipo =-1)
         {
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
@@ -424,7 +424,7 @@ namespace UcbBack.Logic
                             string aux = "";
                             if (strname != null && jaro)
                             {
-                                var similarities = hanaValidator.Similarities(strfsn + " " + strssn + " " + strname, "'concat(a.\"FirstSurName\"," + "concat('' ''," + "concat(a.\"SecondSurName\"," + "concat('' '',a.\"Names\")" + ")" + ")" + ")'", "People", "\"CUNI\"", 0.9f);
+                                var similarities = hanaValidator.Similarities(strfsn + " " + strssn + " " + strname, "concat(\"FirstSurName\"," + "concat('' ''," + "concat(\"SecondSurName\"," + "concat('' '',\"Names\")" + ")" + ")" + ")", "People", "\"CUNI\"", 0.9f);
                                 if (similarities.Count > 0)
                                 {
                                     string si = similarities[0];
@@ -524,6 +524,8 @@ namespace UcbBack.Logic
             }
 
             valid = valid && res;
+            if (!res)
+                addError("Datos Paralelos", "Algunos datos de paralelos no coinciden o no existen en SAP B1.");
             return res;
         }
 
@@ -539,7 +541,7 @@ namespace UcbBack.Logic
         public void paintXY(int x, int y,XLColor color,string comment = null)
         {
             wb.Worksheet(1).Cell(y, x).Style.Fill.BackgroundColor = color;
-            if (comment != null)
+            if (!string.IsNullOrEmpty(comment))
             {
                 wb.Worksheet(1).Cell(y, x).Comment.Style.Alignment.SetAutomaticSize();
                 wb.Worksheet(1).Cell(y, x).Comment.AddText(comment);

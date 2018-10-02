@@ -41,16 +41,39 @@ namespace UcbBack.Logic
                 bool xw;
                 if(branchId==-1)
                 {
-                    xw = _context.ContractDetails.ToList().Any(x =>
-                    (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate)));
+                    xw = _context.ContractDetails.Where(x => x.CUNI == person.CUNI).ToList()
+                        .Any(x =>
+                            (
+                                x.StartDate.Year * 100 + x.StartDate.Month <= toDate.Year * 100 + toDate.Month
+
+                                && 
+                                (
+                                    x.EndDate == null
+                                    || (x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month)
+                                )
+                             )
+                        );
+                    var t = _context.ContractDetails.Where(x => x.CUNI == person.CUNI).ToList()
+                        .Where(x =>
+                            (
+                                x.StartDate.Year * 100 + x.StartDate.Month <= toDate.Year * 100 + toDate.Month
+                                &&
+                                (
+                                    x.EndDate == null
+                                    || x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month
+                                )
+                            )
+                        );
                 }
                 else
                 {
-                    var xa = _context.ContractDetails.Where(x =>
-                        (x.CUNI == person.CUNI && x.StartDate <= toDate &&
-                         (x.EndDate == null || x.StartDate >= toDate) && x.BranchesId == branchId));
-                    xw = _context.ContractDetails.ToList().Any(x =>
-                        (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate) && x.BranchesId==branchId ));
+                    xw = _context.ContractDetails.Where(x => x.CUNI == person.CUNI).ToList().Any(x =>
+                        (x.StartDate.Month <= toDate.Month 
+                         && x.StartDate.Year <= toDate.Year 
+                         && (x.EndDate == null 
+                             || (x.EndDate.Value.Month >= toDate.Month 
+                                 && x.EndDate.Value.Year >=toDate.Year)) 
+                         && x.BranchesId == branchId));
                 }
                 return xw;
             }
@@ -66,8 +89,17 @@ namespace UcbBack.Logic
             DateTime toDate = date == null
                 ? DateTime.Now
                 : DateTime.ParseExact(date, format, System.Globalization.CultureInfo.InvariantCulture);
-            bool xw = _context.ContractDetails.Include(x=>x.Dependency).ToList().Any(x =>
-                (x.CUNI == person.CUNI && x.StartDate <= toDate && (x.EndDate == null || x.StartDate >= toDate) && x.Dependency.Cod==dependencyCod));
+            bool xw = _context.ContractDetails.Include(x=>x.Dependency).ToList()
+                .Any(x =>
+                    (
+                        x.CUNI == person.CUNI 
+                        && x.StartDate.Year * 100 + x.StartDate.Month <= toDate.Year * 100 + toDate.Month 
+                        && 
+                        (
+                            x.EndDate == null
+                            || x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month) 
+                        && x.Dependency.Cod == dependencyCod)
+                );
             return xw;
         }
 

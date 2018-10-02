@@ -22,5 +22,6 @@ namespace UcbBack.Models
         public string mes { get; set; }
         public string gestion { get; set; }
         public string State { get; set; }
+        public DateTime? RegisterDate { get; set; }
     }
 }

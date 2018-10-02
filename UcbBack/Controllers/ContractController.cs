@@ -35,7 +35,7 @@ namespace UcbBack.Controllers
         }
 
         // GET api/Contract
-        [Route("api/Contract/List")]
+        [Route("api/Contract")]
         public IHttpActionResult Get()
         {
             DateTime date = DateTime.Now;
@@ -44,8 +44,8 @@ namespace UcbBack.Controllers
                 .Include(p => p.Dependency)
                 .Include(p => p.Positions)
                 .Include(p => p.People)
-                .Where(x => x.StartDate <= date
-                            && (x.EndDate == null || x.EndDate >= date))
+                .Where(x => /*x.StartDate <= date
+                            && */(x.EndDate == null || x.EndDate > date))
                 .OrderByDescending(x=>x.StartDate)
                 .ToList()
                 .Select(x => new
@@ -55,6 +55,7 @@ namespace UcbBack.Controllers
                     x.People.Document, 
                     FullName= x.People.GetFullName(),
                     Dependency = x.Dependency.Name, 
+                    DependencyCod = x.Dependency.Cod, 
                     Branches = x.Branches.Abr, 
                     BranchesId = x.Branches.Id, 
                     Positions=x.Positions.Name, 
@@ -70,18 +71,45 @@ namespace UcbBack.Controllers
             return Ok(res);
         }
 
-        // GET api/Contract/5
-        public IHttpActionResult Get(int id)
+        // GET api/Contract
+        [Route("api/Contract/{id}")]
+        public IHttpActionResult GetContract(int id)
         {
-            ContractDetail contractInDB = null;
+            DateTime date = DateTime.Now;
+            var contplist = _context.ContractDetails
+                .Include(p => p.Branches)
+                .Include(p => p.Dependency)
+                .Include(p => p.Positions)
+                .Include(p => p.People)
+                .Where(x =>/* x.StartDate <= date
+                            &&*/ (x.EndDate == null || x.EndDate > date)
+                            && x.Id == id)
+                .OrderByDescending(x => x.StartDate)
+                .ToList()
+                .Select(x => new
+                {
+                    x.Id,
+                    x.People.CUNI,
+                    x.People.Document,
+                    FullName = x.People.GetFullName(),
+                    Dependency = x.Dependency.Name,
+                    Branches = x.Branches.Abr,
+                    BranchesId = x.Branches.Id,
+                    Positions = x.Positions.Name,
+                    x.Dedication,
+                    x.Linkage,
+                    StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
+                    EndDate = x.EndDate == null ? null : x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
+                });
 
-            contractInDB = _context.ContractDetails.FirstOrDefault(d => d.Id == id);
-
-            if (contractInDB == null)
+            var user = auth.getUser(Request);
+            var res = auth.filerByRegional(contplist.AsQueryable(), user);
+            if (res.Count() == 0)
                 return NotFound();
 
-            return Ok(contractInDB);
+            return Ok(res.FirstOrDefault());
         }
+
         [HttpGet]
         [Route("api/Contract/GetPersonContract/{id}")]
         public IHttpActionResult GetPersonContract(int id)
@@ -194,14 +222,14 @@ namespace UcbBack.Controllers
         }
 
         //altas
-        // POST api/Contract
+        // POST api/Contract/alta/4
         [HttpPost]
         [Route("api/Contract/Alta")]
         public IHttpActionResult Post([FromBody]ContractDetail contract)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            People person = _context.Person.FirstOrDefault(x => x.Document == contract.PeopleId.ToString());
+            People person = _context.Person.FirstOrDefault(x => x.CUNI == contract.CUNI.ToString());
 
             contract.PeopleId = person.Id;
             contract.CUNI = person.CUNI;
@@ -214,12 +242,16 @@ namespace UcbBack.Controllers
             return Created(new Uri(Request.RequestUri + "/" + contract.Id), contract);
         }
 
+        //Bajas
+        // POST api/Contract/Baja/5
         [HttpPost]
         [Route("api/Contract/Baja/{id}")]
-        public IHttpActionResult Baja(int id)
+        public IHttpActionResult Baja(int id, ContractDetail contract)
         {
             ContractDetail contractInDB = _context.ContractDetails.FirstOrDefault(d => d.Id == id);
-            contractInDB.EndDate=DateTime.Now;
+            // contractInDB.EndDate=DateTime.Now;
+            contractInDB.EndDate = contract.EndDate;
+            contractInDB.Cause = contract.Cause;
             _context.SaveChanges();
             return Ok(contractInDB);
         }

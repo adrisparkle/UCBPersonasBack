@@ -38,5 +38,6 @@ namespace UcbBack.Models
         public DateTime? EndDate { get; set; }
         public bool AI { get; set; }
 
+        public string Cause { get; set; }
     }
 }
