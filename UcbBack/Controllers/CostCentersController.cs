@@ -7,6 +7,9 @@ using System.Web.Http;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using UcbBack.Models.Auth;
+using System.Data.Entity;
+using UcbBack.Logic;
 
 namespace UcbBack.Controllers
 {
@@ -66,7 +69,9 @@ namespace UcbBack.Controllers
         [Route("api/CostCenters/BusinessPartners")]
         public IHttpActionResult BP()
         {
-            var y = B1conn.getBusinessPartners("*");
+            ValidateAuth auth = new ValidateAuth();
+            CustomUser user = auth.getUser(Request);
+            var y = B1conn.getBusinessPartners("*",user:user);
             return Ok(y);
         }
     }

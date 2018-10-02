@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using Sap.Data.Hana;
 using SAPbobsCOM;
 using UcbBack.Models;
+using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped;
 using Resource = SAPbobsCOM.Resource;
 
@@ -726,12 +727,13 @@ namespace UcbBack.Logic.B1
             return res;
         }
 
-        public List<dynamic> getBusinessPartners(string col = "CardCode")
+        public List<dynamic> getBusinessPartners(string col = "CardCode", CustomUser user=null, Branches branch=null)
         {
             List<dynamic> res = new List<dynamic>();
             string[] cols = new string[]
             {
                 "\"CardCode\"", "\"CardName\"", "\"LicTradNum\"", "\"CardType\"", "\"GroupCode\"", "\"Series\""
+                , "\"Currency\"", "\"City\"", "\"Country\""
             };
 
             string strcol = "";
@@ -739,32 +741,107 @@ namespace UcbBack.Logic.B1
 
             foreach (var column in cols)
             {
-                strcol += (first ? "" : ",") + column;
+                strcol += (first ? "" : ",") + "a."+column;
                 first = false;
             }
 
             if (connectedtoHana)
             {
-                string cl = col == "*" ? col : "\"" + col + "\"";
-                string query = "Select " + cl + " from " + DatabaseName + ".OCRD";
-                HanaCommand command = new HanaCommand(query, HanaConn);
-                HanaDataReader dataReader = command.ExecuteReader();
-
-                if (dataReader.HasRows)
+                if (user != null)
                 {
-                    while (dataReader.Read())
-                    {
-                        if (col == "*")
+                    ADClass auth = new ADClass();
+                    var branches = auth.getUserBranches(user);
+                    string where = "where ";
+                    int f = 0;
+                    if (branches == null)
+                        where += "false";
+                    else
+                        foreach (var br in branches)
                         {
-                            dynamic x = new JObject();
-                            foreach (var column in cols)
-                            {
-                                x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
-                            }
-                            res.Add(x);
+                            if (f != 0)
+                                where += " or ";
+                            where += "b.\"BPLId\" = " + br.CodigoSAP;
+                            f++;
                         }
-                        else
-                            res.Add(dataReader[col].ToString());
+
+                    string cl = col == "*" ? strcol : "a.\"" + col + "\"";
+                    string query = "Select distinct " + cl + " from " + DatabaseName + ".OCRD a " +
+                                   "inner join " + DatabaseName + ".CRD8 b " +
+                                   " on a.\"CardCode\"=b.\"CardCode\"" + where;
+                    HanaCommand command = new HanaCommand(query, HanaConn);
+                    HanaDataReader dataReader = command.ExecuteReader();
+                    if (dataReader.HasRows)
+                    {
+                        while (dataReader.Read())
+                        {
+                            if (col == "*")
+                            {
+                                dynamic x = new JObject();
+                                foreach (var column in cols)
+                                {
+                                    x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                                }
+                                res.Add(x);
+                            }
+                            else
+                                res.Add(dataReader[col].ToString());
+                        }
+                    }
+
+                }
+                else if (branch != null)
+                {
+                    ADClass auth = new ADClass();
+                    string where = " where b.\"BPLId\" = " + branch.CodigoSAP ;
+
+                    string cl = col == "*" ? strcol : "a.\"" + col + "\"";
+
+                    string query = "Select distinct " + cl + " from " + DatabaseName + ".OCRD a " +
+                                   "inner join " + DatabaseName + ".CRD8 b " +
+                                   " on a.\"CardCode\"=b.\"CardCode\"" + where;
+                    HanaCommand command = new HanaCommand(query, HanaConn);
+                    HanaDataReader dataReader = command.ExecuteReader();
+                    if (dataReader.HasRows)
+                    {
+                        while (dataReader.Read())
+                        {
+                            if (col == "*")
+                            {
+                                dynamic x = new JObject();
+                                foreach (var column in cols)
+                                {
+                                    x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                                }
+                                res.Add(x);
+                            }
+                            else
+                                res.Add(dataReader[col].ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    string cl = col == "*" ? col : "\"" + col + "\"";
+                    string query = "Select " + cl + " from " + DatabaseName + ".OCRD";
+                    HanaCommand command = new HanaCommand(query, HanaConn);
+                    HanaDataReader dataReader = command.ExecuteReader();
+
+                    if (dataReader.HasRows)
+                    {
+                        while (dataReader.Read())
+                        {
+                            if (col == "*")
+                            {
+                                dynamic x = new JObject();
+                                foreach (var column in cols)
+                                {
+                                    x[column.Replace("\"", "")] = dataReader[column.Replace("\"", "")].ToString();
+                                }
+                                res.Add(x);
+                            }
+                            else
+                                res.Add(dataReader[col].ToString());
+                        }
                     }
                 }
             }
