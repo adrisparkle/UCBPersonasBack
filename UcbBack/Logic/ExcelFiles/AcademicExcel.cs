@@ -92,7 +92,7 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_Academic acad = new Dist_Academic();
             acad.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Academic_sqs\".nextval FROM DUMMY;").ToList()[0];
             acad.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            acad.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            acad.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             acad.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
             acad.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             acad.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();

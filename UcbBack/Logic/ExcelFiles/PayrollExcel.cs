@@ -185,7 +185,7 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_Payroll payroll = new Dist_Payroll();
             payroll.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Payroll_sqs\".nextval FROM DUMMY;").ToList()[0];
             payroll.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            payroll.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            payroll.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             payroll.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
             payroll.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             payroll.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();

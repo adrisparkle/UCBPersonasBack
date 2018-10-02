@@ -95,7 +95,7 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_OR dis = new Dist_OR();
             dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_OR_sqs\".nextval FROM DUMMY;").ToList()[0];
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            dis.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            dis.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
             dis.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             dis.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();

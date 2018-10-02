@@ -67,7 +67,7 @@ namespace UcbBack.Logic.ExcelFiles
             Dist_Pregrado dis = new Dist_Pregrado();
             dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Pregrado_sqs\".nextval FROM DUMMY;").ToList()[0];
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            dis.FirstName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            dis.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
             dis.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             dis.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();

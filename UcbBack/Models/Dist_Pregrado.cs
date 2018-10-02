@@ -15,7 +15,7 @@ namespace UcbBack.Models
         public long Id { set; get; }
 
         public string Document { get; set; }
-        public string FirstName { get; set; }
+        public string Names { get; set; }
         public string FirstSurName { get; set; }
         public string SecondSurName { get; set; }
         public string MariedSurName { get; set; }
