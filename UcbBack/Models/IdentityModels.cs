@@ -26,7 +26,6 @@ namespace UcbBack.Models
         public DbSet<People> Person { get; set; }
         public DbSet<Branches> Branch { get; set; }
         public DbSet<Positions> Position { get; set; }
-        public DbSet<Pais> Paises { get; set; }
         public DbSet<Level> Levels { get; set; }
         public DbSet<OrganizationalUnit> OrganizationalUnits { get; set; }
         public DbSet<Dependency> Dependencies { get; set; }
