@@ -22,5 +22,9 @@ namespace UcbBack.Models
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
 
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT " + CustomSchema.Schema + ".\"rrhh_Contract_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.Entity;
 using System.Diagnostics;
@@ -25,6 +26,7 @@ using UcbBack.Logic;
 using UcbBack.Logic.B1;
 using UcbBack.Models.Dist;
 using UcbBack.Models.Not_Mapped;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Controllers
 {
@@ -111,9 +113,9 @@ namespace UcbBack.Controllers
                 if (fileInDB == null)
                 {
                     processInDB.State = ProcessState.STARTED;
-                    _context.Database.ExecuteSqlCommand("UPDATE ADMNALRRHH.\"Dist_LogErrores\" set \"Inspected\" = true where \"DistProcessId\" = " + processInDB.Id);
+                    _context.Database.ExecuteSqlCommand("UPDATE \"" + CustomSchema.Schema + "\".\"Dist_LogErrores\" set \"Inspected\" = true where \"DistProcessId\" = " + processInDB.Id);
                     var file = new Dist_File();
-                    file.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+                    file.Id = Dist_File.GetNextId(_context);
                     file.UploadedDate = DateTime.Now;
                     file.DistFileTypeId = (int)FileType; 
                     file.Name = fileName;
@@ -135,7 +137,7 @@ namespace UcbBack.Controllers
             {
                 var process = new Dist_Process();
                 process.UploadedDate = DateTime.Now;
-                process.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Process_sqs\".nextval FROM DUMMY;").ToList()[0];
+                process.Id = Dist_Process.GetNextId(_context);
                 process.BranchesId = BranchesId;
                 process.mes = mes;
                 process.gestion = gestion;
@@ -144,7 +146,7 @@ namespace UcbBack.Controllers
                 _context.SaveChanges();
 
                 var file = new Dist_File();
-                file.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+                file.Id = Dist_File.GetNextId(_context);
                 file.UploadedDate = DateTime.Now;
                 file.DistFileTypeId = (int)FileType;
                 file.Name = fileName;
@@ -916,17 +918,17 @@ namespace UcbBack.Controllers
                 return NotFound();
 
             int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.FIX_ACAD(" + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \""+CustomSchema.Schema+"\".FIX_ACAD(" + process.Id + ")");
 
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_TIPOEMPLEADO(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CE(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OD(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OR(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_TIPOEMPLEADO(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_CE(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_OD(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_OR(" + userid + "," + process.Id + ")");
 
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.VALIDATE_OTHERINCOMES(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_OTHERINCOMES(" + userid + "," + process.Id + ")");
 
 
             var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected).Include(e => e.Error).Select(e => new { e.Id, e.ErrorId, e.Error.Name, e.Error.Description,e.Error.Type, e.Archivos, e.CUNI });
@@ -966,9 +968,9 @@ namespace UcbBack.Controllers
             if (process == null)
                 return NotFound();
 
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.SET_PERCENTS(" + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.DIST_PERCENTS(" + process.Id + ")");
-            _context.Database.ExecuteSqlCommand("CALL ADMNALRRHH.DIST_COSTS(" + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".SET_PERCENTS(" + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".DIST_PERCENTS(" + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".DIST_COSTS(" + process.Id + ")");
             process.State = ProcessState.PROCESSED;
             _context.SaveChanges();
 
@@ -1034,21 +1036,21 @@ namespace UcbBack.Controllers
               " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
               " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
               " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\",g.\"Cod\" \"UnidadOrganizacional\" " +
-            " FROM ADMNALRRHH.\"Dist_Cost\" a "+
-                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " + 
+            " FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " + 
                 " on a.\"DistProcessId\"=b.\"Id\" "+
             " AND a.\"DistProcessId\"= "+ id +
-            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c "+
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                 "on a.\"TipoEmpleado\"=c.\"Name\" "+
-            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d "+
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
             " and b.\"BranchesId\" = d.\"BranchesId\" "+
             " and a.\"Columna\" = d.\"Concept\" "+
-            " INNER JOIN ADMNALRRHH.\"Branches\" e "+
+            " INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                " on b.\"BranchesId\" = e.\"Id\" " +
-            " LEFT JOIN ADMNALRRHH.\"Dependency\" f " +
+            " LEFT JOIN \"" + CustomSchema.Schema + "\".\"Dependency\" f " +
                 " on f.\"Cod\" = a.\"Dependency\" " +
-            " LEFT JOIN ADMNALRRHH.\"OrganizationalUnit\" g " +
+            " LEFT JOIN \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" g " +
                 " on g.\"Id\" = f.\"OrganizationalUnitId\" ").ToList();
 
             var ex = new XLWorkbook();
@@ -1085,17 +1087,17 @@ namespace UcbBack.Controllers
                 " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
                 " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
                 " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
-            " FROM ADMNALRRHH.\"Dist_Cost\" a " +
-                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+            " FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
                 " on a.\"DistProcessId\"=b.\"Id\" " +
             " AND a.\"DistProcessId\"= " + id +
-            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                 "on a.\"TipoEmpleado\"=c.\"Name\" " +
-            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
             " and b.\"BranchesId\" = d.\"BranchesId\" " +
             " and a.\"Columna\" = d.\"Concept\" " +
-            " INNER JOIN ADMNALRRHH.\"Branches\" e " +
+            " INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                " on b.\"BranchesId\" = e.\"Id\"").ToList();
 
             var groupedD = dist.Where(x=>x.Indicador=="D").GroupBy(x => new
@@ -1157,17 +1159,17 @@ namespace UcbBack.Controllers
               " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
               " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
               " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\" " +
-            " FROM ADMNALRRHH.\"Dist_Cost\" a " +
-                " INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+            " FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
                 " on a.\"DistProcessId\"=b.\"Id\" " +
             " AND a.\"DistProcessId\"= " + id +
-            " INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                 "on a.\"TipoEmpleado\"=c.\"Name\" " +
-            " INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
             " and b.\"BranchesId\" = d.\"BranchesId\" " +
             " and a.\"Columna\" = d.\"Concept\" " +
-            " INNER JOIN ADMNALRRHH.\"Branches\" e " +
+            " INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                " on b.\"BranchesId\" = e.\"Id\"").ToList();
 
             var groupedD = dist.Where(x => x.Indicador == "D").GroupBy(x => new
@@ -1240,23 +1242,23 @@ namespace UcbBack.Controllers
                                                                                         "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
                                                                                         "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
                                                                                         "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
-                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
-                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "           FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
                                                                                         "               on a.\"DistProcessId\"=b.\"Id\" " +
                                                                                         "           AND a.\"DistProcessId\"= " + id +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                                                                                         "                on a.\"TipoEmpleado\"=c.\"Name\" " +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                                                                                         "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
                                                                                         "           and b.\"BranchesId\" = d.\"BranchesId\" " +
                                                                                         "           and a.\"Columna\" = d.\"Concept\" " +
-                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "           INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                                                                                         "              on b.\"BranchesId\" = e.\"Id\") x" +
-                                                                                        " left join ucatolica.oact b" +
+                                                                                        " left join \"" + ConfigurationManager.AppSettings["B1CompanyDB"] + "\".oact b" +
                                                                                         " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
-                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"Dependency\" d" +
                                                                                         " on x.\"Dependency\"=d.\"Cod\"" +
-                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" f" +
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
                                                                                         ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
@@ -1349,23 +1351,23 @@ namespace UcbBack.Controllers
                                                                                         "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
                                                                                         "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
                                                                                         "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
-                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
-                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "           FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
                                                                                         "               on a.\"DistProcessId\"=b.\"Id\" " +
                                                                                         "           AND a.\"DistProcessId\"= " + id +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                                                                                         "                on a.\"TipoEmpleado\"=c.\"Name\" " +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                                                                                         "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
                                                                                         "           and b.\"BranchesId\" = d.\"BranchesId\" " +
                                                                                         "           and a.\"Columna\" = d.\"Concept\" " +
-                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "           INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                                                                                         "              on b.\"BranchesId\" = e.\"Id\") x" +
-                                                                                        " left join ucatolica.oact b" +
+                                                                                        " left join \"" + ConfigurationManager.AppSettings["B1CompanyDB"] + "\".oact b" +
                                                                                         " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
-                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"Dependency\" d" +
                                                                                         " on x.\"Dependency\"=d.\"Cod\"" +
-                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" f" +
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
                                                                                         ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();

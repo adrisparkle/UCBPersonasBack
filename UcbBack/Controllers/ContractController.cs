@@ -234,7 +234,7 @@ namespace UcbBack.Controllers
             contract.CUNI = person.CUNI;
 
 
-            contract.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+            contract.Id = ContractDetail.GetNextId(_context);
 
             _context.ContractDetails.Add(contract);
             _context.SaveChanges();

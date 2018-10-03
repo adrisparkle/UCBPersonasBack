@@ -15,5 +15,10 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
         public string Name { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_PerformanceArea_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
@@ -37,6 +38,9 @@ namespace UcbBack.Models.Dist
         public CustomUser CustomUser { get; set; }
         [Required]
         public int CustomUserId { get; set; }
-
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Dist_File_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

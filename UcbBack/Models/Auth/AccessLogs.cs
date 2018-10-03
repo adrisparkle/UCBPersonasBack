@@ -20,5 +20,10 @@ namespace UcbBack.Models.Auth
         public int AccessId { get; set; }
         public bool Success { get; set; }
         public string ResponseCode { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_AccessLogs_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

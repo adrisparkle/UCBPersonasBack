@@ -34,5 +34,10 @@ namespace UcbBack.Models
         public int OrganizationalUnitId { get; set; }
 
         public OrganizationalUnit OrganizationalUnit { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Dependency_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

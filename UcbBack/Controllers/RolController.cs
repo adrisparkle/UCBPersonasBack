@@ -50,7 +50,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            rol.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Rol_sqs\".nextval FROM DUMMY;").ToList()[0];
+            rol.Id = Rol.GetNextId(_context);
             _context.Rols.Add(rol);
             _context.SaveChanges();
             activeDirectory.createGroup(rol.ADGroupName);
@@ -156,7 +156,7 @@ namespace UcbBack.Controllers
                 return Ok("El usuario ya tiene este acceso!");
 
             RolhasAccess rolhasAccess = new RolhasAccess();
-            rolhasAccess.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_RolhasAccess_sqs\".nextval FROM DUMMY;").ToList()[0];
+            rolhasAccess.Id = RolhasAccess.GetNextId(_context);
             rolhasAccess.Accessid = accessid;
             rolhasAccess.Rolid = id;
             _context.RolshaAccesses.Add(rolhasAccess);

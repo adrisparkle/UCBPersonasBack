@@ -94,7 +94,7 @@ namespace UcbBack.Logic.ExcelFiles
         public Dist_OR ToDistDiscounts(int row, int sheet = 1)
         {
             Dist_OR dis = new Dist_OR();
-            dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_OR_sqs\".nextval FROM DUMMY;").ToList()[0];
+            dis.Id = Dist_OR.GetNextId(_context);
             dis.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             dis.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

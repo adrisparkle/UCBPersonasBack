@@ -44,7 +44,7 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            tipoEmpleadoDist.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_TipoEmpleado_sqs\".nextval FROM DUMMY;").ToList()[0];
+            tipoEmpleadoDist.Id = TipoEmpleadoDist.GetNextId(_context);
             _context.TipoEmpleadoDists.Add(tipoEmpleadoDist);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + tipoEmpleadoDist.Id), tipoEmpleadoDist);

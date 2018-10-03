@@ -120,7 +120,7 @@ namespace UcbBack.Controllers
             }*/
             
             //si pasa la confirmacion anterior se le asigna un id y se guarda la nueva persona en la BDD
-            person.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
+            person.Id = People.GetNextId(_context);
             
             _context.Person.Add(person);
             _context.SaveChanges();

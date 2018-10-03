@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models.Dist
@@ -31,5 +32,10 @@ namespace UcbBack.Models.Dist
 
         public Dist_File DistFile { get; set; }
         public long DistFileId { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Dist_Pregrado_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

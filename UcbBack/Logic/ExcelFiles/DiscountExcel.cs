@@ -59,7 +59,7 @@ namespace UcbBack.Logic.ExcelFiles
         public Dist_Discounts ToDistDiscounts(int row, int sheet = 1)
         {
             Dist_Discounts dis = new Dist_Discounts();
-            dis.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Discounts_sqs\".nextval FROM DUMMY;").ToList()[0];
+            dis.Id = Dist_Discounts.GetNextId(_context);
             dis.BussinesPartner = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             dis.Name = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             dis.Type = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

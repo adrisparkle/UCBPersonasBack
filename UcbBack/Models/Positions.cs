@@ -27,6 +27,10 @@ namespace UcbBack.Models
         [Required]
         public int BranchesId { get; set; }
         public Branches Branches { get; set; }
-        
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Position_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

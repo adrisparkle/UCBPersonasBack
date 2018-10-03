@@ -64,7 +64,7 @@ namespace UcbBack.Logic.ExcelFiles
         public ContractDetail ToDistPayroll(int row, int sheet = 1)
         {
             ContractDetail person = new ContractDetail();
-            person.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+            person.Id = ContractDetail.GetNextId(_context);
             person.CUNI = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             person.PeopleId = _context.Person.FirstOrDefault(p => p.CUNI == person.CUNI).Id;
             person.DependencyId = _context.Dependencies.FirstOrDefault(d => d.Cod == wb.Worksheet(sheet).Cell(row, 3).Value.ToString()).Id;

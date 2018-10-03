@@ -184,7 +184,7 @@ namespace UcbBack.Logic.ExcelFiles
         public Dist_Payroll ToDistPayroll(int row, int sheet = 1)
         {
             Dist_Payroll payroll = new Dist_Payroll();
-            payroll.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Payroll_sqs\".nextval FROM DUMMY;").ToList()[0];
+            payroll.Id = Dist_Payroll.GetNextId(_context);
             payroll.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             payroll.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             payroll.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

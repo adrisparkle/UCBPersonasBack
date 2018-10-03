@@ -17,6 +17,10 @@ namespace UcbBack.Models
         public string Type { get; set; }
         public string Value { get; set; }
 
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_TableOfTables_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
         
     }
     public struct TableOfTablesTypes

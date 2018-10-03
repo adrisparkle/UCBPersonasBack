@@ -50,7 +50,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            access.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Access_sqs\".nextval FROM DUMMY;").ToList()[0];
+            access.Id = Access.GetNextId(_context);
 
             _context.Accesses.Add(access);
             _context.SaveChanges();

@@ -14,6 +14,7 @@ using UcbBack.Models;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Dist;
 using UcbBack.Models.Not_Mapped;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 using Resource = SAPbobsCOM.Resource;
 
 namespace UcbBack.Logic.B1
@@ -187,7 +188,7 @@ namespace UcbBack.Logic.B1
         private B1SDKLog initLog(int userId,string type,string ObjectId)
         {
             B1SDKLog log = new B1SDKLog();
-            log.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_B1SDKLog_sqs\".nextval FROM DUMMY;").ToList()[0];
+            log.Id = B1SDKLog.GetNextId(_context);
             log.ObjectId = ObjectId;
             log.BusinessObject = type;
             log.Success = true;
@@ -419,23 +420,23 @@ namespace UcbBack.Logic.B1
                                                                                         "           a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\"," +
                                                                                         "           a.\"Monto\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\",a.\"BussinesPartner\"," +
                                                                                         "           b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\",d.\"Name\" as CuentasContables,d.\"Indicator\", e.\"CodigoSAP\"" +
-                                                                                        "           FROM ADMNALRRHH.\"Dist_Cost\" a " +
-                                                                                        "               INNER JOIN  ADMNALRRHH.\"Dist_Process\" b " +
+                                                                                        "           FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                                                                                        "               INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
                                                                                         "               on a.\"DistProcessId\"=b.\"Id\" " +
                                                                                         "           AND a.\"DistProcessId\"= " + process.Id +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"Dist_TipoEmpleado\" c " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
                                                                                         "                on a.\"TipoEmpleado\"=c.\"Name\" " +
-                                                                                        "           INNER JOIN  ADMNALRRHH.\"CuentasContables\" d " +
+                                                                                        "           INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
                                                                                         "              on c.\"GrupoContableId\" = d.\"GrupoContableId\"" +
                                                                                         "           and b.\"BranchesId\" = d.\"BranchesId\" " +
                                                                                         "           and a.\"Columna\" = d.\"Concept\" " +
-                                                                                        "           INNER JOIN ADMNALRRHH.\"Branches\" e " +
+                                                                                        "           INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
                                                                                         "              on b.\"BranchesId\" = e.\"Id\") x" +
-                                                                                        " left join ucatolica.oact b" +
+                                                                                        " left join \"" + ConfigurationManager.AppSettings["B1CompanyDB"] + "\".oact b" +
                                                                                         " on x.CUENTASCONTABLES=b.\"FormatCode\"" +
-                                                                                        " left join admnalrrhh.\"Dependency\" d" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"Dependency\" d" +
                                                                                         " on x.\"Dependency\"=d.\"Cod\"" +
-                                                                                        " left join admnalrrhh.\"OrganizationalUnit\" f" +
+                                                                                        " left join \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" f" +
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
                                                                                         ") V " +
                                                                                         "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
@@ -624,7 +625,7 @@ namespace UcbBack.Logic.B1
             {
                 Uoact = _context.Database.SqlQuery<OACT>("select \"AcctCode\",\"AcctName\",\"FormatCode\"," +
                                                              "\"Dim1Relvnt\",\"Dim2Relvnt\",\"Dim3Relvnt\",\"Dim4Relvnt\"," +
-                                                             "\"Dim5Relvnt\",\"LocManTran\" from ucatolica.oact" +
+                                                             "\"Dim5Relvnt\",\"LocManTran\" from \"" + ConfigurationManager.AppSettings["B1CompanyDB"] + "\".oact" +
                                                              " where \"AcctCode\"='" + line.AccountCode + "';")
                     .FirstOrDefault();
             }

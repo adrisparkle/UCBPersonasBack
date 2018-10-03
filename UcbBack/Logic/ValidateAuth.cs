@@ -113,7 +113,7 @@ namespace UcbBack.Logic
                 string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
 
             AccessLogs log = new AccessLogs();
-            log.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_AccessLogs_sqs\".nextval FROM DUMMY;").ToList()[0];
+            log.Id = AccessLogs.GetNextId(_context);
             log.Method = method;
             log.Path = path;
             log.UserId = id;

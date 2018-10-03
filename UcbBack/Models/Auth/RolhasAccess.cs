@@ -18,5 +18,10 @@ namespace UcbBack.Models.Auth
         public Access Access { get; set; }
         public int Rolid { get; set; }
         public Rol Rol { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_RolhasAccess_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

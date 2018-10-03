@@ -23,5 +23,9 @@ namespace UcbBack.Models.Auth
         public DateTime ?TokenCreatedAt { get; set; }
         public DateTime ?RefreshTokenCreatedAt { get; set; }
 
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_User_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

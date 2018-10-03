@@ -241,7 +241,6 @@
     <Compile Include="Controllers\RolController.cs" />
     <Compile Include="Controllers\TableOfTablesController.cs" />
     <Compile Include="Controllers\TipoEmpleadoDistController.cs" />
-    <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -300,7 +299,6 @@
     <Compile Include="Models\Not Mapped\SapVoucher.cs" />
     <Compile Include="Models\Not Mapped\VoucherHeader.cs" />
     <Compile Include="Models\OrganizationalUnit.cs" />
-    <Compile Include="Models\Pais.cs" />
     <Compile Include="Models\Dist\Payroll.cs" />
     <Compile Include="Models\people.cs" />
     <Compile Include="Models\PerformanceArea.cs" />

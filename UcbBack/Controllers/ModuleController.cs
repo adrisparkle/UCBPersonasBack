@@ -44,7 +44,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            module.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Module_sqs\".nextval FROM DUMMY;").ToList()[0];
+            module.Id = Module.GetNextId(_context);
 
             _context.Modules.Add(module);
             _context.SaveChanges();

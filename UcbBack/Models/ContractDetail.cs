@@ -40,5 +40,10 @@ namespace UcbBack.Models
         public bool AI { get; set; }
 
         public string Cause { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT " + CustomSchema.Schema + ".\"rrhh_ContractDetail_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

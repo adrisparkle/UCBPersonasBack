@@ -27,5 +27,10 @@ namespace UcbBack.Models
         public Module Module { get; set; }
         [Required]
         public int ModuleId { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Resource_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

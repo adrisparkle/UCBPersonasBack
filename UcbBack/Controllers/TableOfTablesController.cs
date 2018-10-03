@@ -329,7 +329,7 @@ namespace UcbBack.Controllers
         private void addToTableOfTables(string type,string value)
         {
             TableOfTables ToT = new TableOfTables();
-            ToT.Id = _context.Database.SqlQuery<int>("SELECT \"ADMNALRRHH\".\"rrhh_TableOfTables_sqs\".nextval FROM DUMMY;").ToList()[0];
+            ToT.Id = TableOfTables.GetNextId(_context);
             ToT.Type = type;
             ToT.Value = value;
             _context.TableOfTableses.Add(ToT);

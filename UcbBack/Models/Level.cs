@@ -22,5 +22,10 @@ namespace UcbBack.Models
         [MaxLength(100, ErrorMessage = "Cadena de texto muy grande")]
         [Required]
         public string Category { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Level_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

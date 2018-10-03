@@ -44,7 +44,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            resource.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Resource_sqs\".nextval FROM DUMMY;").ToList()[0];
+            resource.Id = Resource.GetNextId(_context);
 
             _context.Resources.Add(resource);
             _context.SaveChanges();

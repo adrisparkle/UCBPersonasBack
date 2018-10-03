@@ -63,7 +63,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            branch.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Branches_sqs\".nextval FROM DUMMY;").ToList()[0];
+            branch.Id = Branches.GetNextId(_context);
 
             _context.Branch.Add(branch);
             _context.SaveChanges();

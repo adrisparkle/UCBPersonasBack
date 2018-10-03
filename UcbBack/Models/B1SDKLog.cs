@@ -20,5 +20,10 @@ namespace UcbBack.Models
         public string ErrorMessage { get; set; }
         public string ErrorCode { get; set; }
         public bool Success { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_B1SDKLog_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

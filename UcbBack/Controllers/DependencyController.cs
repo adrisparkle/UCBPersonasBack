@@ -45,7 +45,7 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            dependency.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dependency_sqs\".nextval FROM DUMMY;").ToList()[0];
+            dependency.Id = Dependency.GetNextId(_context);
             _context.Dependencies.Add(dependency);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + dependency.Id), dependency);

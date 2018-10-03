@@ -42,7 +42,7 @@ namespace UcbBack.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest();
-            organizationalUnit.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_OrganizationalUnit_sqs\".nextval FROM DUMMY;").ToList()[0];
+            organizationalUnit.Id = OrganizationalUnit.GetNextId(_context);
             _context.OrganizationalUnits.Add(organizationalUnit);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + organizationalUnit.Id), organizationalUnit);

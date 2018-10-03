@@ -91,7 +91,7 @@ namespace UcbBack.Logic.ExcelFiles
         public Dist_Academic ToDistAcademic(int row,int sheet = 1)
         {
             Dist_Academic acad = new Dist_Academic();
-            acad.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_Dist_Academic_sqs\".nextval FROM DUMMY;").ToList()[0];
+            acad.Id = Dist_Academic.GetNextId(_context);
             acad.Document = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             acad.Names = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
             acad.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();

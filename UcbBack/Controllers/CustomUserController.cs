@@ -137,7 +137,7 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            user.Id = _context.Database.SqlQuery<int>("SELECT ADMNALRRHH.\"rrhh_User_sqs\".nextval FROM DUMMY;").ToList()[0];
+            user.Id = CustomUser.GetNextId(_context);
 
             user.Token = validator.getToken(user);
             user.TokenCreatedAt = DateTime.Now;
