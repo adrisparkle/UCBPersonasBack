@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Web;
 
 namespace UcbBack.Models.Auth
 {
+    [NotMapped]
     public sealed class PasswordHash
     {
         const int SaltSize = 16, HashSize = 20, HashIter = 10000;

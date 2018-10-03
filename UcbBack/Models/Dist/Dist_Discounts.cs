@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models.Dist
 {
-    [Table("ADMNALRRHH.Dist_Discounts")]
+    [CustomSchema("Dist_Discounts")]
     public class Dist_Discounts
     {
         [Key]

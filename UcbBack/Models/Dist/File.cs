@@ -2,10 +2,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using UcbBack.Models.Auth;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models.Dist
 {
-    [Table("ADMNALRRHH.Dist_File")]
+    [CustomSchema("Dist_File")]
     public class Dist_File
     {
         [Key]

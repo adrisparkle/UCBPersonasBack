@@ -4,9 +4,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models
 {
+    [CustomSchema("B1SDKLog")]
     public class B1SDKLog
     {
         [Key]

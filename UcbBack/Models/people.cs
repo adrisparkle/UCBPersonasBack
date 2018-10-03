@@ -6,10 +6,11 @@ using System.Linq;
 using System.Web;
 using System.Xml.Serialization;
 using System.Data.Entity;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models
 {
-    [Table("ADMNALRRHH.People")]
+    [CustomSchema("People")]
     public class People
     {
         [Key]

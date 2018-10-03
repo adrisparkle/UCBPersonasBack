@@ -5,10 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Web;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models
 {
-    [Table("ADMNALRRHH.Position")]
+    [CustomSchema("Position")]
     public class Positions
     {
         [Key]
