@@ -15,6 +15,11 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
 
+        public AltasContratosController()
+        {
+            _context = new ApplicationDbContext();
+        }
+
         [NonAction]
         private async Task<System.Dynamic.ExpandoObject> HttpContentToVariables(MultipartMemoryStreamProvider req)
         {
@@ -81,6 +86,7 @@ namespace UcbBack.Controllers
             }
             catch (System.ArgumentException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
@@ -89,6 +95,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -97,6 +104,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");

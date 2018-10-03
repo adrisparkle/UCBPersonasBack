@@ -248,10 +248,10 @@ namespace UcbBack.Logic
                     group.Save();
                 }
             }
-            catch (System.DirectoryServices.DirectoryServicesCOMException E)
+            catch (System.DirectoryServices.DirectoryServicesCOMException e)
             {
                 //doSomething with E.Message.ToString(); 
-
+                Console.WriteLine(e);
             }
         }
         public void RemoveUserFromGroup(string userPrincipalName, string groupName)
@@ -269,10 +269,10 @@ namespace UcbBack.Logic
                     group.Save();
                 }
             }
-            catch (System.DirectoryServices.DirectoryServicesCOMException E)
+            catch (System.DirectoryServices.DirectoryServicesCOMException e)
             {
                 //doSomething with E.Message.ToString(); 
-
+                Console.WriteLine(e);
             }
         }
 

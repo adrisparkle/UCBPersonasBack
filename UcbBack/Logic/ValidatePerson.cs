@@ -79,6 +79,7 @@ namespace UcbBack.Logic
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
             

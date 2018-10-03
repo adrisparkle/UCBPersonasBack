@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -16,7 +17,6 @@ using DocumentFormat.OpenXml.Packaging;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models;
-using System.Linq;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -293,6 +293,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -301,6 +302,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
@@ -401,6 +403,7 @@ namespace UcbBack.Controllers
             }
             catch (System.ArgumentException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
@@ -409,6 +412,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -417,6 +421,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
@@ -523,6 +528,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -531,6 +537,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 ExcelFile.addError("Existen Enlaces a otros archivos", "Existen celdas con referencias a otros archivos.");
@@ -637,6 +644,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -645,6 +653,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
@@ -749,6 +758,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -757,6 +767,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
@@ -861,6 +872,7 @@ namespace UcbBack.Controllers
             }
             catch (System.IO.IOException e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
@@ -869,6 +881,7 @@ namespace UcbBack.Controllers
             }
             catch (System.Exception e)
             {
+                Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
