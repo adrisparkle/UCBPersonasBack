@@ -23,6 +23,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNet.Identity;
 using UcbBack.Logic;
 using UcbBack.Logic.B1;
+using UcbBack.Models.Dist;
 using UcbBack.Models.Not_Mapped;
 
 namespace UcbBack.Controllers

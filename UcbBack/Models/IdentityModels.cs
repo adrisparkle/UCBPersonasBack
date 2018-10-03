@@ -5,6 +5,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using UcbBack.Models.Auth;
+using UcbBack.Models.Dist;
 
 namespace UcbBack.Models
 {
@@ -50,6 +51,7 @@ namespace UcbBack.Models
         public DbSet<Resource> Resources  { get; set; }
         public DbSet<AccessLogs> AccessLogses  { get; set; }
         public DbSet<B1SDKLog> SdkErrorLogs  { get; set; }
+        public DbSet<TableOfTables> TableOfTableses { get; set; }
         
 
         //auth models

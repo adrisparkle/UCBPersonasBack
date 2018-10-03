@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using UcbBack.Models;
+using UcbBack.Models.Dist;
 
 namespace UcbBack.Controllers
 {

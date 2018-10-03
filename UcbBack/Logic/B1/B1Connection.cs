@@ -12,6 +12,7 @@ using Sap.Data.Hana;
 using SAPbobsCOM;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using UcbBack.Models.Dist;
 using UcbBack.Models.Not_Mapped;
 using Resource = SAPbobsCOM.Resource;
 

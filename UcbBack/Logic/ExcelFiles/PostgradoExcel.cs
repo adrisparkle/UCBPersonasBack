@@ -6,6 +6,7 @@ using System.Web;
 using ClosedXML.Excel;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using UcbBack.Models.Dist;
 
 namespace UcbBack.Logic.ExcelFiles
 {

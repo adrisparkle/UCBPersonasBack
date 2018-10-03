@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
 
-namespace UcbBack.Models
+namespace UcbBack.Models.Dist
 {
     [Table("ADMNALRRHH.Dist_LogErrores")]
     public class Dist_LogErrores
