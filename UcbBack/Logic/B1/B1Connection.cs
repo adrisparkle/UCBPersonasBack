@@ -769,7 +769,7 @@ namespace UcbBack.Logic.B1
                     string cl = col == "*" ? strcol : "a.\"" + col + "\"";
                     string query = "Select distinct " + cl + " from " + DatabaseName + ".OCRD a " +
                                    "inner join " + DatabaseName + ".CRD8 b " +
-                                   " on a.\"CardCode\"=b.\"CardCode\"" + where;
+                                   " on a.\"CardCode\"=b.\"CardCode\"" + where + " order by a.\"CardCode\"";
                     HanaCommand command = new HanaCommand(query, HanaConn);
                     HanaDataReader dataReader = command.ExecuteReader();
                     if (dataReader.HasRows)
@@ -963,7 +963,9 @@ namespace UcbBack.Logic.B1
             List<object> list = new List<object>();
             if (connectedtoHana)
             {
-                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\",\"U_Paralelo\" from " + DatabaseName + ".OPRC ";
+                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\",\"U_Paralelo\" " +
+                               "from " + DatabaseName + ".OPRC " +
+                               "where \"DimCode\"="+4;
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 

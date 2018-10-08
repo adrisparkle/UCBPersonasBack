@@ -39,8 +39,10 @@ namespace UcbBack.Logic
                     ? DateTime.Now
                     : DateTime.ParseExact(date, format, System.Globalization.CultureInfo.InvariantCulture);
                 bool xw;
+                int dd;
                 if(branchId==-1)
                 {
+                     dd = toDate.Year * 100 + toDate.Month;
                     xw = _context.ContractDetails.Where(x => x.CUNI == person.CUNI).ToList()
                         .Any(x =>
                             (
@@ -49,7 +51,7 @@ namespace UcbBack.Logic
                                 && 
                                 (
                                     x.EndDate == null
-                                    || (x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month)
+                                    || (x.EndDate.Value.Year * 100 + x.EndDate.Value.Month >= toDate.Year * 100 + toDate.Month)
                                 )
                              )
                         );
@@ -60,7 +62,7 @@ namespace UcbBack.Logic
                                 &&
                                 (
                                     x.EndDate == null
-                                    || x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month
+                                    || x.EndDate.Value.Year * 100 + x.EndDate.Value.Month >= toDate.Year * 100 + toDate.Month
                                 )
                             )
                         );
@@ -75,6 +77,9 @@ namespace UcbBack.Logic
                                  && x.EndDate.Value.Year >=toDate.Year)) 
                          && x.BranchesId == branchId));
                 }
+
+                if (!xw)
+                    return false;
                 return xw;
             }
             catch (Exception e)

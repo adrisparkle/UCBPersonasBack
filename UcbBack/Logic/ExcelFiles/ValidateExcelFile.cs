@@ -488,24 +488,24 @@ namespace UcbBack.Logic
                 var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
                 var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
                 var strparalelo = paralelo != -1 ? wb.Worksheet(sheet).Cell(i, paralelo).Value.ToString() : null;
-                // todo uncomment to validate paralel number
-                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla /*&& x.paralelo == strparalelo*/))
+               
+                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo))
                 {
                     res = false;
                     if (list.Any(x => x.cod==strcod))
                     {
-                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo /*&& x.paralelo == strparalelo*/))
+                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.paralelo == strparalelo))
                         {
                             paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta." );
                         }
-                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla /*&& x.paralelo == strparalelo*/))
+                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.paralelo == strparalelo))
                         {
                             paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
                         }
-                        /*else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.periodo == strperiodo))
+                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.periodo == strperiodo))
                         {
                             paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
-                        }*/
+                        }
                         else
                         {
                             paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
