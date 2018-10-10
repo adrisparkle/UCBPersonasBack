@@ -168,7 +168,7 @@ namespace UcbBack.Controllers
                 {
                     res.segmentoOrigen = contentPart.ReadAsStringAsync().Result;
                 }
-                else if (varname == "\"uploadfile\"")
+                else if (varname == "\"file\"")
                 {
                     Stream stream = await contentPart.ReadAsStreamAsync();
                     res.fileName = String.IsNullOrEmpty(contentDisposition.FileName) ? "" : contentDisposition.FileName.Trim('"');
@@ -186,23 +186,22 @@ namespace UcbBack.Controllers
             {
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
-
-                if (o.segmentoOrigen == null)
+                int segment = 0;
+                if (o.segmentoOrigen == null || !Int32.TryParse(o.segmentoOrigen,out segment))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar segmentoOrigen");
                     return response;
                 }
 
-                string name = o.segmentoOrigen.ToString();
-                var segId = _context.Branch.FirstOrDefault(b => b.Name == "");
+                var segId = _context.Branch.FirstOrDefault(b => b.Id == segment);
                 if (segId == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Content = new StringContent("Debe enviar segmentoOrigen valido");
                     return response;
                 }
-                ContractExcel contractExcel = new ContractExcel(o.excelStream, _context, o.fileName, segId.Id, headerin: 3, sheets: 1);
+                ContractExcel contractExcel = new ContractExcel(o.excelStream, _context, o.fileName, segId.Id, headerin: 1, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();

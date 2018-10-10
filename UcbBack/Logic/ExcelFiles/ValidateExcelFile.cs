@@ -17,6 +17,7 @@ using ExcelDataReader;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using System.Data.Entity;
 
 namespace UcbBack.Logic
 {
@@ -474,7 +475,7 @@ namespace UcbBack.Logic
 
         }
 
-        public bool VerifyParalel(int cod,int periodo, int sigla, int paralelo, int sheet =1)
+        public bool VerifyParalel(int cod,int periodo, int sigla, int paralelo, int dependency, int sheet =1)
         {
             var B1conn = B1Connection.Instance();
             bool res = true;
@@ -488,30 +489,35 @@ namespace UcbBack.Logic
                 var strperiodo = periodo != -1 ? wb.Worksheet(sheet).Cell(i, periodo).Value.ToString() : null;
                 var strsigla = sigla != -1 ? wb.Worksheet(sheet).Cell(i, sigla).Value.ToString() : null;
                 var strparalelo = paralelo != -1 ? wb.Worksheet(sheet).Cell(i, paralelo).Value.ToString() : null;
+                var strdependency = dependency != -1 ? wb.Worksheet(sheet).Cell(i, dependency).Value.ToString() : null;
                
-                if (!list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo))
+                var dep = _context.Dependencies.Include(x => x.OrganizationalUnit)
+                    .FirstOrDefault(x => x.Cod == strdependency);
+
+                if (dep == null || !list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo/* && x.OU == dep.OrganizationalUnit.Cod*/))
                 {
                     res = false;
                     if (list.Any(x => x.cod==strcod))
                     {
-                        if (list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.paralelo == strparalelo))
+                        var row = list.FirstOrDefault(x => x.cod == strcod);
+                        if (row.sigla != strsigla)
                         {
                             paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta." );
                         }
-                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.paralelo == strparalelo))
+                        if (row.periodo != strperiodo)
                         {
                             paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
                         }
-                        else if (list.Any(x => x.cod == strcod && x.sigla == strsigla && x.periodo == strperiodo))
+                        if (row.paralelo != strparalelo)
                         {
                             paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
                         }
-                        else
+
+                        // Verify dependence
+                        /*if (dep == null || row.OU != dep.OrganizationalUnit.Cod)
                         {
-                            paintXY(sigla, i, XLColor.Red, "Esta Sigla no es correcta.");
-                            paintXY(periodo, i, XLColor.Red, "Este Periodo no es correcto.");
-                            paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
-                        }
+                            paintXY(dependency, i, XLColor.Red, "Esta dependencia no esta asociada a este paralelo." + row.OU + "->" + dep.OrganizationalUnit.Cod );
+                        }*/
                     }
                     else
                     {

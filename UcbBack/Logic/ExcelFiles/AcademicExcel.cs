@@ -74,7 +74,7 @@ namespace UcbBack.Logic.ExcelFiles
 
             bool v1 = VerifyPerson(ci:1, CUNI:16, fullname:2,personActive:false);
             bool v2 = VerifyColumnValueIn(6, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.");
-            bool v3 = VerifyParalel(cod:19,periodo: 7, sigla:8,paralelo:9);
+            bool v3 = VerifyParalel(cod:19,periodo: 7, sigla:8,paralelo:9,dependency:17);
             bool v4 = VerifyColumnValueIn(12, new List<string> { "PA", "PI", "TH" });
             bool v5 = VerifyColumnValueIn(17, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "Esta Dependencia no existe en la Base de Datos Nacional.");
             var pei = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();

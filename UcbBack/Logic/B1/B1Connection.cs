@@ -963,9 +963,15 @@ namespace UcbBack.Logic.B1
             List<object> list = new List<object>();
             if (connectedtoHana)
             {
-                string query = "Select \"PrcCode\",\"U_PeriodoPARALELO\",\"U_Sigla\",\"U_Paralelo\" " +
-                               "from " + DatabaseName + ".OPRC " +
-                               "where \"DimCode\"="+4;
+                /*string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"U_CODIGO_DEPARTAMENTO\" "
+                + "from ucatolica.oprc a "
+                + "inner join admnal.\"T_GEN_PARALELOS\" b "
+                +   " on a.\"PrcCode\" = b.\"U_CODIGO_PARALELO\""
+                + " WHERE a.\"DimCode\" = " + 4 ;*/
+
+                string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
+                               + "from ucatolica.oprc"
+                               + " WHERE \"DimCode\" = " + 4;
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -978,6 +984,7 @@ namespace UcbBack.Logic.B1
                         o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
                         o.sigla = dataReader["U_Sigla"].ToString();
                         o.paralelo = dataReader["U_Paralelo"].ToString();
+                        //o.OU = dataReader["U_CODIGO_DEPARTAMENTO"].ToString();
                         list.Add(o);
                     }
                 }

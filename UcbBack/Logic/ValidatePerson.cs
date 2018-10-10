@@ -6,6 +6,7 @@ using System.Text;
 using System.Web;
 using UcbBack.Models;
 using System.Data.Entity;
+using Microsoft.Ajax.Utilities;
 
 namespace UcbBack.Logic
 {
@@ -103,9 +104,11 @@ namespace UcbBack.Logic
                         && 
                         (
                             x.EndDate == null
-                            || x.StartDate.Year * 100 + x.StartDate.Month >= toDate.Year * 100 + toDate.Month) 
+                            || x.EndDate.Value.Year * 100 + x.EndDate.Value.Month >= toDate.Year * 100 + toDate.Month) 
                         && x.Dependency.Cod == dependencyCod)
                 );
+            if (!xw)
+                return false;
             return xw;
         }
 
@@ -137,7 +140,7 @@ namespace UcbBack.Logic
             char[] letras =
             {
                 person.FirstSurName[0], 
-                person.SecondSurName[0], 
+                person.SecondSurName.IsNullOrWhiteSpace()? person.FirstSurName[1] : person.SecondSurName[0], 
                 person.Names[0], 
                 //#'-',
                 //year

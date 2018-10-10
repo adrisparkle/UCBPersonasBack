@@ -991,7 +991,7 @@ namespace UcbBack.Controllers
                     p.Id,
                     p.gestion,
                     p.mes
-                });
+                }).OrderBy(x=>x.BranchesId).ThenBy(x=>x.gestion).ThenBy(x=>x.mes);
 
             var user = auth.getUser(Request);
             var res = auth.filerByRegional(processes, user);
@@ -1407,6 +1407,134 @@ namespace UcbBack.Controllers
                 response.StatusCode = HttpStatusCode.GatewayTimeout;
             }
             
+            return response;
+        }
+        [HttpGet]
+        [Route("api/payroll/compareLastMonth/{id}")]
+        public HttpResponseMessage compareLastMonth(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var pro = _context.DistProcesses.Include(x => x.Branches).FirstOrDefault(x => x.Id == id);
+            if (pro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
+            string lastMonth;
+            string lastGestion;
+            if ((Int32.Parse(pro.mes) - 1) != 0)
+            {
+                lastMonth = (Int32.Parse(pro.mes) - 1).ToString().PadLeft(2, '0');
+                lastGestion = pro.gestion;
+            }
+            else
+            {
+                lastMonth = "12";
+                lastGestion = (Int32.Parse(pro.gestion) - 1).ToString();
+            }
+
+
+            var lastPro = _context.DistProcesses.Include(x => x.Branches)
+                .FirstOrDefault(x=> x.BranchesId==pro.BranchesId 
+                                    && x.mes==lastMonth
+                                    && x.gestion == lastGestion
+                                    //&& x.State == ProcessState.INSAP
+                                    && x.State == ProcessState.PROCESSED
+                                    );
+
+            if (lastPro == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.Content = new StringContent("No existe mes anterior en SAP, para procesar el pedido");
+                return response;
+            }
+
+            string query = "select coalesce(thismonth.\"CUNI\", lastmonth.\"CUNI\") \"CUNI\", " +
+                           "coalesce(thismonth.\"Document\", lastmonth.\"Document\") \"Documento\", " +
+                           "concat(p.\"FirstSurName\", " +
+                                "concat( case when p.\"UseSecondSurName\"=1 then concat(' ',p.\"SecondSurName\") else '' end, " +
+                                    "concat( case when p.\"UseMariedSurName\"=1 then concat(' ',p.\"MariedSurName\") else '' end, " +
+                                    "concat(' ',p.\"Names\")" +
+                                    "   ) " +
+                                "   ) " +
+                            "   ) \"NombreCompleto\"," +
+
+                           "coalesce(thismonth.\"BasicSalary\",0) - coalesce(lastmonth.\"BasicSalary\",0) \"difHB\", " +
+                           "coalesce(thismonth.\"AntiquityBonus\",0) - coalesce(lastmonth.\"AntiquityBonus\",0) \"difBA\", " +
+                           "coalesce(thismonth.\"OtherIncome\",0) - coalesce(lastmonth.\"OtherIncome\",0) \"difOI\", " +
+                           "coalesce(thismonth.\"TeachingIncome\",0) - coalesce(lastmonth.\"TeachingIncome\",0) \"difDOC\", " +
+                           "coalesce(thismonth.\"OtherAcademicIncomes\",0) - coalesce(lastmonth.\"OtherAcademicIncomes\",0) \"difOAA\", " +
+                           "coalesce(thismonth.\"AFPLaboral\",0) - coalesce(lastmonth.\"AFPLaboral\",0) \"difAFPL\", " +
+
+                           "coalesce(thismonth.\"BasicSalary\",0) \"actHB\", " +
+                           "coalesce(thismonth.\"AntiquityBonus\",0) \"actBA\", " +
+                           "coalesce(thismonth.\"OtherIncome\",0) \"actOI\", " +
+                           "coalesce(thismonth.\"TeachingIncome\",0) \"actDOC\", " +
+                           "coalesce(thismonth.\"OtherAcademicIncomes\",0) \"actOAA\", " +
+                           "coalesce(thismonth.\"AFPLaboral\",0) \"actAFPL\", " +
+
+                           "coalesce(lastmonth.\"BasicSalary\",0) \"antHB\", " +
+                           "coalesce(lastmonth.\"AntiquityBonus\",0) \"antBA\", " +
+                           "coalesce(lastmonth.\"OtherIncome\",0) \"antOI\", " +
+                           "coalesce(lastmonth.\"TeachingIncome\",0) \"antDOC\", " +
+                           "coalesce(lastmonth.\"OtherAcademicIncomes\",0) \"antOAA\", " +
+                           "coalesce(lastmonth.\"AFPLaboral\",0) \"antAFPL\" " +
+                           
+                           "from " +
+                           "( " +
+                           "select \"CUNI\", \"Document\", \"Names\", \"FirstSurName\", \"SecondSurName\", \"MariedSurName\", " +
+                           " \"BasicSalary\", \"AntiquityBonus\", \"OtherIncome\", \"TeachingIncome\", \"OtherAcademicIncomes\", " +
+                           " \"AFPLaboral\" " +
+                           "from admnalrrhh.\"Dist_Payroll\" " +
+                           "where \"DistFileId\" in (select \"Id\" from admnalrrhh.\"Dist_File\" " +
+                           "			where \"DistProcessId\" = " + pro.Id +
+                           "			and \"DistFileTypeId\" = 1 " +
+                           "			and \"State\"='UPLOADED') " +
+                           ") thismonth " +
+
+                           "Full outer join  " +
+
+                           "( " +
+                           "select \"CUNI\", \"Document\", \"Names\", \"FirstSurName\", \"SecondSurName\", \"MariedSurName\", " +
+                           "\"BasicSalary\", \"AntiquityBonus\", \"OtherIncome\", \"TeachingIncome\", \"OtherAcademicIncomes\", " +
+                           "\"AFPLaboral\" " +
+                           "from admnalrrhh.\"Dist_Payroll\" " +
+                           "where \"DistFileId\" in (select \"Id\" from admnalrrhh.\"Dist_File\" " +
+                           "			where \"DistProcessId\" = " + lastPro.Id +
+                           "			and \"DistFileTypeId\" = 1 " +
+                           "			and \"State\"='UPLOADED') " +
+                           ") lastmonth " +
+
+                           "on thismonth.\"CUNI\" = lastmonth.\"CUNI\" " +
+                           "inner join admnalrrhh.\"People\" p " +
+                            "on coalesce(thismonth.\"CUNI\", lastmonth.\"CUNI\") = p.\"CUNI\" "+
+                           "where coalesce(thismonth.\"BasicSalary\",0) != coalesce(lastmonth.\"BasicSalary\",0) " +
+                           "or coalesce(thismonth.\"AntiquityBonus\",0) != coalesce(lastmonth.\"AntiquityBonus\",0) " +
+                           "or coalesce(thismonth.\"OtherIncome\",0) != coalesce(lastmonth.\"OtherIncome\",0) " +
+                           "or coalesce(thismonth.\"TeachingIncome\",0) != coalesce(lastmonth.\"TeachingIncome\",0) " +
+                           "or coalesce(thismonth.\"OtherAcademicIncomes\",0) != coalesce(lastmonth.\"OtherAcademicIncomes\",0) " +
+                           "or coalesce(thismonth.\"AFPLaboral\",0) != coalesce(lastmonth.\"AFPLaboral\",0) ";
+            
+            IEnumerable<Comparativo> dist = _context.Database.SqlQuery<Comparativo>(query).ToList();
+
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            ex.Worksheets.Add(d.CreateDataTable(dist), "Diferencias Anterior Planilla");
+
+            //sheet.Cell(1, 2).InsertData(dist);
+
+
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "ControlCambios.xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
             return response;
         }
 
