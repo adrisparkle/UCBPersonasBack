@@ -115,6 +115,7 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    //.Include(x => x.Dependency.OrganizationalUnitId)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI
                                          && x.StartDate <= date
@@ -126,6 +127,7 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    //.Include(x => x.Dependency.OrganizationalUnitId)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI)
                     .OrderByDescending(x => x.EndDate == null ? 1 : 0).ThenByDescending(x => x.EndDate).ThenBy(x=>x.Positions.LevelId).FirstOrDefault();

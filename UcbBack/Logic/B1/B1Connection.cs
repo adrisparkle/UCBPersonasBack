@@ -400,7 +400,7 @@ namespace UcbBack.Logic.B1
             bool approved = false;
             try
             {
-                IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>("SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",sum(\"Debit\") \"Debit\",sum(\"Credit\") \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
+                string query = "SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",sum(\"Debit\") \"Debit\",sum(\"Credit\") \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
                                                                                         " FROM (" +
                                                                                         " select x.\"Id\" \"ParentKey\"," +
                                                                                         "  null \"LineNum\"," +
@@ -439,7 +439,8 @@ namespace UcbBack.Logic.B1
                                                                                         " left join \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" f" +
                                                                                         " on d.\"OrganizationalUnitId\"=f.\"Id\"" +
                                                                                         ") V " +
-                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";").ToList();
+                                                                                        "GROUP BY \"ParentKey\",\"LineNum\",\"AccountCode\", \"ShortName\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\";";
+                IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>(query).ToList();
                  var Auxdate = new DateTime(
                     Int32.Parse(process.gestion),
                     Int32.Parse(process.mes),
@@ -554,6 +555,9 @@ namespace UcbBack.Logic.B1
                             businessObject.JournalEntries.Lines.Debit = line.Debit;
                             if (line.ShortName != null)
                                 businessObject.JournalEntries.Lines.ShortName = line.ShortName;
+                            if(line.CostingCode == null)
+                                businessObject.JournalEntries.Lines.CostingCode = line.CostingCode;
+
                             businessObject.JournalEntries.Lines.CostingCode = line.CostingCode;
                             businessObject.JournalEntries.Lines.CostingCode2 = line.CostingCode2;
                             businessObject.JournalEntries.Lines.CostingCode3 = line.CostingCode3;

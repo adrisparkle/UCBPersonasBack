@@ -1531,7 +1531,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "ControlCambios.xlsx";
+            response.Content.Headers.ContentDisposition.FileName = pro.Branches.Abr + pro.gestion + pro.mes + "Novedades.xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);

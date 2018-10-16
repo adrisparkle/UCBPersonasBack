@@ -70,6 +70,36 @@ namespace UcbBack.Controllers
             return Ok(res);
         }
 
+        [HttpGet]
+        [Route("api/ContractSAP")]
+        public IHttpActionResult GetSAP()
+        {
+            DateTime date = DateTime.Now;
+            var contplist = _context.ContractDetails
+                .Include(p => p.Branches)
+                .Include(p => p.Dependency)
+                .Include(p => p.Positions)
+                .Include(p => p.People).ToList()
+                .Where(x => /*x.StartDate <= date
+                            && */(x.EndDate == null || x.EndDate.Value.Year * 100 + x.EndDate.Value.Month >= date.Year * 100 + date.Month))
+                .OrderByDescending(x => x.StartDate)
+                .ToList()
+                .Select(x => new
+                {
+                    x.People.CUNI,
+                    x.People.Document,
+                    FullName = x.People.GetFullName(),
+                    Dependency = x.Dependency.Name,
+                    DependencyCod = x.Dependency.Cod,
+                    x.BranchesId
+                }).ToList();
+            var user = auth.getUser(Request);
+
+            var res = auth.filerByRegional(contplist.AsQueryable(), user);
+
+            return Ok(res);
+        }
+
         // GET api/Contract
         [Route("api/Contract/{id}")]
         public IHttpActionResult GetContract(int id)
@@ -127,8 +157,9 @@ namespace UcbBack.Controllers
         public IHttpActionResult GetContractsBranch(int id)
         {
             List<ContractDetail> contractInDB = null;
-
-            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.BranchesId == id).Select(x=>x.People).Distinct();
+            DateTime date=new DateTime(2018,9,1);
+            DateTime date2=new DateTime(2018,1,1);
+            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.EndDate>date2 || x.EndDate==null).Select(x=>x.People).Distinct();
             int i = people.Count();
             string res = "";
 
@@ -137,14 +168,18 @@ namespace UcbBack.Controllers
                 var contract = person.GetLastContract();
                 res += contract.People.CUNI + ";";
                 res += contract.People.Document + ";";
+                res += contract.People.GetFullName() + ";";
                 res += contract.People.FirstSurName + ";";
                 res += contract.People.SecondSurName + ";";
                 res += contract.People.MariedSurName + ";";
                 res += contract.People.Names + ";";
                 res += contract.People.BirthDate + ";";
 
+
                 res += contract.Dependency.Cod + ";";
                 res += contract.Dependency.Name + ";";
+
+                res += contract.Dependency.OrganizationalUnitId + ";";
 
                 res += contract.Branches.Abr + ";";
                 res += contract.Branches.Name;

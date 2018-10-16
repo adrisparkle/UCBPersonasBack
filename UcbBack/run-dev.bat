@@ -8,7 +8,7 @@ call :strLen rootpath strlen
 set /a strlen=%strlen%-8
 
 CALL SET prevpath=%%rootpath:~0,%strlen%%%
-C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe  "C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack.sln" /p:Configuration=Debug /p:Platform="Any CPU" /p:VisualStudioVersion=12.0
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe  "C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack.sln" /p:Configuration=Debug /p:Platform="Any CPU" /p:VisualStudioVersion=12.0 /t:Rebuild
 rmdir /s /q "%destination%\"
 
 mkdir "%destination%\Areas"
