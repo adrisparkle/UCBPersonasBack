@@ -103,10 +103,10 @@ namespace UcbBack.Controllers
 
             CustomUser user = _context.CustomUsers.FirstOrDefault(u => u.UserPrincipalName == username);
 
-            if(user==null)
-                return Unauthorized();
+            //if(user==null)
+           //     return Unauthorized();
 
-            if (!activeDirectory.ActiveDirectoryAuthenticate(user.UserPrincipalName,password))
+            if (!activeDirectory.ActiveDirectoryAuthenticate(username,password))
                 return Unauthorized();
 
             user.Token = validator.getToken(user);

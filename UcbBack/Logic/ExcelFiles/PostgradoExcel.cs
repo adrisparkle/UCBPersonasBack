@@ -65,7 +65,7 @@ namespace UcbBack.Logic.ExcelFiles
 
             //bool v1 = VerifyColumnValueIn(6, connB1.getProjects(col: "PrjName").ToList(), comment: "Este Proyecto no existe en SAP.");
             bool v2 = VerifyColumnValueIn(9, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
-            bool v3 = VerifyColumnValueIn(11, new List<string>{"POST","EC","INV"}, comment: "No existe este tipo de proyecto.");
+            bool v3 = VerifyColumnValueIn(11, new List<string>{"POST","EC","INV","FC","SA"}, comment: "No existe este tipo de proyecto.");
             bool v4 = VerifyColumnValueIn(12, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "OTR", "PAN" }, comment: "No existe este tipo de tarea asignada.");
             bool v5 = VerifyColumnValueIn(13, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
             bool v6 = VerifyColumnValueIn(14, connB1.getCostCenter(B1Connection.Dimension.Periodo, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este periodo no existe en SAP.");
@@ -91,8 +91,15 @@ namespace UcbBack.Logic.ExcelFiles
                 {
                     var a1 = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
                     var a2 = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
-                    if (!(wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "EC" &&
-                        wb.Worksheet(sheet).Cell(i, index).Value.ToString() == ""))
+                    if (!(
+                            (
+                                wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "EC" 
+                                || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "FC" 
+                                || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "SA"
+                            ) 
+                            &&
+                            wb.Worksheet(sheet).Cell(i, index).Value.ToString() == ""
+                        ))
                     {
                         res = false;
                         paintXY(index, i, XLColor.Red, commnet);

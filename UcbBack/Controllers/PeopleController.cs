@@ -49,6 +49,7 @@ namespace UcbBack.Controllers
         [Route("api/addalltoAD")]
         public IHttpActionResult addalltoAD()
         {
+
             /*List<string> branches = _context.Branch.Select(x => x.ADGroupName).ToList();
             List<string> roles = _context.Rols.Select(x => x.ADGroupName).ToList();
 
@@ -62,27 +63,50 @@ namespace UcbBack.Controllers
                 activeDirectory.createGroup(rol);
             }*/
 
+            List<string> palabras = new List<string>(new string []
+            {
+                "aula",
+                "libro",
+                "lapiz",
+                "papel",
+                "folder",
+                "lentes"
+            });
 
-            /*DateTime date = new DateTime(2018,4,1);
+        DateTime date = new DateTime(2018,4,1);
             //todo run for all people   solo fata pasar fechas de corte
-            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
+            /*List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
                 Where(y => y.StartDate < date 
                            && (y.EndDate > date || y.EndDate == null) 
                            && y.Positions.Name != "DOCENTE TIEMPO HORARIO").Select(x => x.People).ToList();
 
-            List<string> asd = new List<string>();
+            Random rnd = new Random();
             foreach (var pe in person)
             {
                 //var tt = activeDirectory.findUser(pe);
-                activeDirectory.addUser(pe);
-                _context.SaveChanges();
+                string pass = palabras[rnd.Next(6)];
+                while (pass.Length<8)
+                {
+                    pass += rnd.Next(10);
+                }
+
+                var ex = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == pe.Id);
+                if (ex == null)
+                {
+                    activeDirectory.addUser(pe, pass);
+                    _context.SaveChanges();
+                    var account = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == pe.Id);
+                    account.AutoGenPass = pass;
+                    _context.SaveChanges();
+                }
+                
             }*/
             //activeDirectory.createGroup("");
-            var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "AMG680422");
-            activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.SALOMON");
-            var yo = activeDirectory.findUser(_context.Person.FirstOrDefault(x => x.CUNI == "AMG680422"));
+            var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "RFA940908");
+            activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.Admin");
+            //var yo = activeDirectory.findUser(_context.Person.FirstOrDefault(x => x.CUNI == "AMG680422"));
             
-            return Ok(yo.UserPrincipalName+" - "+yo.DisplayName);
+            return Ok();
         }
         // POST api/People
         [HttpPost]

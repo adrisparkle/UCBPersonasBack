@@ -63,8 +63,9 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance();
             bool v1 = VerifyColumnValueIn(6,_context.Branch.Select(x=>x.Abr).ToList(),comment:"Esta Regional No existe");
             bool v2 = VerifyPerson(ci: 1, CUNI: 8, fullname: 2, personActive: false);
-            //Dim1
-            var D1 = connB1.getCostCenter(B1Connection.Dimension.OrganizationalUnit, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
+            //Dim1 OU
+            //var D1 = connB1.getCostCenter(B1Connection.Dimension.OrganizationalUnit, mes: this.mes, gestion: this.gestion).Cast<string>().ToList();
+            var D1 = _context.Dependencies.Select(x => x.Cod).ToList();
             D1.Add("");
             bool v8 = VerifyColumnValueIn(9, D1, comment: "Esta Unidad Organizacional no existe en SAP.");
             // PEI

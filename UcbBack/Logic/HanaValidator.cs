@@ -17,7 +17,9 @@ namespace UcbBack.Logic
         }
         public string CleanText(string value)
         {
-            return _context.Database.SqlQuery<string>("select \"" + CustomSchema.Schema + "\".clean_text('" + value + "') from dummy;").ToList()[0];
+            return value!=null?value.ToUpper().Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O")
+                .Replace("Ú", "U").Replace("´", "").Replace("'", "").Replace("`", ""):null;
+            //return _context.Database.SqlQuery<string>("select \"" + CustomSchema.Schema + "\".clean_text('" + value + "') from dummy;").ToList()[0];
         }
 
         public float JaroWinklerSimilarity(string a, string b)

@@ -18,7 +18,13 @@ namespace UcbBack.Logic
 
         public string sDomain = "UCB.BO";
         public string Domain = "192.168.18.62";
-        public void addUser(People person)
+        private HanaValidator hanaval;
+
+        public ADClass()
+        {
+            hanaval = new HanaValidator();
+        }
+        public void addUser(People person,string tempPass=null)
         {
             try
             {
@@ -44,7 +50,7 @@ namespace UcbBack.Logic
                         up.Name = up.DisplayName;
                         up.SamAccountName = getSamAcoutName(person);
                         up.UserPrincipalName = up.SamAccountName + "@UCB.BO";
-                        up.SetPassword(person.Document); // user ChangePassword to change password lol
+                        up.SetPassword(tempPass==null?person.Document:tempPass); // user ChangePassword to change password lol
                         up.VoiceTelephoneNumber = person.PhoneNumber;
                         up.EmailAddress = person.UcbEmail;
                         up.EmployeeId = person.CUNI;
@@ -80,6 +86,7 @@ namespace UcbBack.Logic
 
         public string getSamAcoutName(People person)
         {
+            
             var _context = new ApplicationDbContext();
             var personuser = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
 
@@ -89,50 +96,50 @@ namespace UcbBack.Logic
                 return personuser.UserPrincipalName.Split('@')[0];
             }
             // First attempt
-            var SAN = person.Names.ToCharArray()[0].ToString() + "."
-                      + person.FirstSurName
-                      + (person.SecondSurName != null ? ("." + person.SecondSurName.ToCharArray()[0].ToString()) : "");
+            var SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
+                      + hanaval.CleanText(person.FirstSurName)
+                      + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
             SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
-            var UPN = SAN + "@" + Domain;
+            var UPN = SAN + "@" + sDomain;
             var search = _context.CustomUsers.Where(x => x.UserPrincipalName == UPN).ToList();
             if (search.Any())
             {
                 // Second attempt
-                SAN = person.Names.ToCharArray()[0].ToString() + person.Names.ToCharArray()[1].ToString() + "."
-                        + person.FirstSurName
-                        + (person.SecondSurName != null ? ("." + person.SecondSurName.ToCharArray()[0].ToString()) : "");
+                SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + hanaval.CleanText(person.Names).ToCharArray()[1].ToString() + "."
+                        + hanaval.CleanText(person.FirstSurName)
+                        + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
                 SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
-                UPN = SAN + "@" + Domain;
+                UPN = SAN + "@" + sDomain;
                 search = _context.CustomUsers.Where(x => x.UserPrincipalName == UPN).ToList();
                 if (search.Any())
                 {
                     // Third attempt
-                    SAN = person.Names.ToCharArray()[0].ToString() + person.Names.ToCharArray()[1].ToString() + "."
-                          + person.FirstSurName
-                          + (person.SecondSurName != null ? ("." + person.SecondSurName.ToCharArray()[0].ToString() + person.SecondSurName.ToCharArray()[1].ToString()) : "");
+                    SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + hanaval.CleanText(person.Names).ToCharArray()[1].ToString() + "."
+                          + hanaval.CleanText(person.FirstSurName)
+                          + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString() + hanaval.CleanText(person.SecondSurName).ToCharArray()[1].ToString()) : "");
                     SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
-                    UPN = SAN + "@" + Domain;
+                    UPN = SAN + "@" + sDomain;
                     search = _context.CustomUsers.Where(x => x.UserPrincipalName == UPN).ToList();
                     if (search.Any())
                     {
                         // Fourth attempt
-                        SAN = person.Names.ToCharArray()[0].ToString() + "."
-                              + person.FirstSurName
-                              + (person.SecondSurName != null ? ("." + person.SecondSurName.ToCharArray()[0].ToString()) : "")
+                        SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
+                              + hanaval.CleanText(person.FirstSurName)
+                              + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
                               + (person.BirthDate.Day).ToString().PadLeft(2,'0');
                         SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
-                        UPN = SAN + "@" + Domain;
+                        UPN = SAN + "@" + sDomain;
                         Random rnd = new Random();
                         while (_context.CustomUsers.Where(x => x.UserPrincipalName == UPN).ToList().Any())
                         {
                             // Last and final attempt
 
-                            SAN = person.Names.ToCharArray()[0].ToString() + "."
-                                                                + person.FirstSurName
-                                                                + (person.SecondSurName != null ? ("." + person.SecondSurName.ToCharArray()[0].ToString()) : "")
+                            SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
+                                                                + hanaval.CleanText(person.FirstSurName)
+                                                                + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
                                                                 + (rnd.Next(1, 100)).ToString().PadLeft(2, '0');
                             SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
                         }
@@ -143,9 +150,11 @@ namespace UcbBack.Logic
             //person.UserPrincipalName = UPN;
 
             var newUser = new CustomUser();
+            newUser.Id = CustomUser.GetNextId(_context);
             newUser.PeopleId = person.Id;
             newUser.UserPrincipalName = UPN;
-
+            _context.CustomUsers.Add(newUser);
+            _context.SaveChanges();
             return SAN;
         }
 

@@ -974,7 +974,7 @@ namespace UcbBack.Logic.B1
                 + " WHERE a.\"DimCode\" = " + 4 ;*/
 
                 string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
-                               + "from ucatolica.oprc"
+                               + "from " + DatabaseName + ".oprc"
                                + " WHERE \"DimCode\" = " + 4;
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();

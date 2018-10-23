@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Web.WebPages.Scope;
 using Microsoft.Owin;
+using Microsoft.Owin.Host.SystemWeb;
 using Owin;
 using UcbBack.Logic;
 using UcbBack.Models;
@@ -19,7 +20,7 @@ namespace UcbBack
 
         public void Configuration(IAppBuilder app)
         {
-            bool debugmode = true;
+            bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
                     long logId=0;

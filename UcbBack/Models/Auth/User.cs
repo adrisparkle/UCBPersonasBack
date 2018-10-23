@@ -22,6 +22,7 @@ namespace UcbBack.Models.Auth
         public string RefreshToken { get; set; }
         public DateTime ?TokenCreatedAt { get; set; }
         public DateTime ?RefreshTokenCreatedAt { get; set; }
+        public string AutoGenPass { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {

@@ -111,6 +111,72 @@ namespace UcbBack.Controllers
             return Ok();
         }
 
+        [HttpGet]
+        [Route("api/user/Rol/{id}")]
+        public IHttpActionResult GetRols(int id)
+        {
+            CustomUser userInDB = null;
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            var rols = activeDirectory.getUserRols(userInDB).Select(x => new { x.Id, x.Name });
+            return Ok(rols);
+        }
+
+        [HttpPost]
+        [Route("api/user/Rol/{id}")]
+        public IHttpActionResult AddRol(int id, [FromBody]JObject credentials)
+        {
+            CustomUser userInDB = null;
+
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            int rolId = 0;
+            if (credentials["RolId"] == null)
+                return BadRequest();
+
+            if (!Int32.TryParse(credentials["RolId"].ToString(), out rolId))
+                return BadRequest();
+
+            var rolInDB = _context.Rols.FirstOrDefault(b => b.Id == rolId);
+
+            if (rolInDB == null)
+                return BadRequest();
+
+            activeDirectory.AddUserToGroup(userInDB.UserPrincipalName, rolInDB.ADGroupName);
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        [Route("api/user/Rol/{id}")]
+        public IHttpActionResult RemoveRol(int id, [FromUri]int rolId)
+        {
+            CustomUser userInDB = null;
+
+            userInDB = _context.CustomUsers.Include(x => x.People).FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+
+            if (rolId == 0)
+                return BadRequest();
+
+            var rolInDB = _context.Rols.FirstOrDefault(b => b.Id == rolId);
+
+            if (rolInDB == null)
+                return BadRequest();
+
+            activeDirectory.RemoveUserFromGroup(userInDB.UserPrincipalName, rolInDB.ADGroupName);
+
+            return Ok();
+        }
+
         // GET api/user/5
         [Route("api/user/{id}")]
         public IHttpActionResult Get(int id)
