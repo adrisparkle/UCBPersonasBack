@@ -193,8 +193,8 @@ namespace UcbBack.Logic
             var l = UsedRange.LastRow().RowNumber();
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                //var xxx = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
-                if (list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase))==notin)
+                var value = cleanText(wb.Worksheet(sheet).Cell(i, index).Value.ToString());
+                if (list.Exists(x => string.Equals(cleanText(x), value, StringComparison.OrdinalIgnoreCase))==notin)
                 {
                     res = false;
                     if (paintcol)

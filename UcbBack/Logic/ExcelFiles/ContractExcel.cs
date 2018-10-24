@@ -16,13 +16,13 @@ namespace UcbBack.Logic.ExcelFiles
         private static Excelcol[] cols = new[]
         {
             new Excelcol("CUNI", typeof(string)),
-            new Excelcol("Dependencia", typeof(double)),
-            new Excelcol("Cargo", typeof(double)),
-            new Excelcol("Descripcion de Cargo", typeof(double)),
-            new Excelcol("Dedicacion", typeof(double)),
-            new Excelcol("Vinculacion", typeof(double)),
+            new Excelcol("Dependencia", typeof(string)),
+            new Excelcol("Cargo", typeof(string)),
+            new Excelcol("Descripcion de Cargo", typeof(string)),
+            new Excelcol("Dedicacion", typeof(string)),
+            new Excelcol("Vinculacion", typeof(string)),
             new Excelcol("Fecha Inicio", typeof(DateTime)),
-            new Excelcol("Fecha Fin", typeof(DateTime))
+            new Excelcol("Fecha Fin", typeof(string))
         };
 
         private static Excelcol[] peopleCols = new[]
