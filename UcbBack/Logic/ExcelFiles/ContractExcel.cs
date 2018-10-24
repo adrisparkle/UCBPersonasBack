@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using ClosedXML.Excel;
+using Microsoft.Ajax.Utilities;
 using UcbBack.Controllers;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
@@ -14,7 +15,6 @@ namespace UcbBack.Logic.ExcelFiles
     {
         private static Excelcol[] cols = new[]
         {
-            new Excelcol("Carnet Identidad", typeof(string)), 
             new Excelcol("CUNI", typeof(string)),
             new Excelcol("Dependencia", typeof(double)),
             new Excelcol("Cargo", typeof(double)),
@@ -34,6 +34,7 @@ namespace UcbBack.Logic.ExcelFiles
             new Excelcol("segundo apellido", typeof(string)),
             new Excelcol("nombres", typeof(string)),
             new Excelcol("Apellido casada", typeof(string)),
+            new Excelcol("Genero", typeof(string)),
             new Excelcol("AFP", typeof(string)),
             new Excelcol("NUA", typeof(string)),
             new Excelcol("fecha nacimiento", typeof(DateTime)),
@@ -43,7 +44,7 @@ namespace UcbBack.Logic.ExcelFiles
         private int Segment;
         private ApplicationDbContext _context;
         public ContractExcel(Stream data, ApplicationDbContext context, string fileName, int Segment ,int headerin = 1, int sheets = 1, string resultfileName = "PayrollResult")
-            : base(peopleCols, data, fileName, headerin: headerin, resultfileName: resultfileName, sheets: sheets)
+            : base(cols, data, fileName, headerin: headerin, resultfileName: resultfileName, sheets: sheets)
         {
             this.Segment = Segment;
             _context = context;
@@ -51,7 +52,7 @@ namespace UcbBack.Logic.ExcelFiles
             isFormatValid();
         }
         public ContractExcel(string fileName, int headerin = 1)
-            : base(peopleCols, fileName, headerin)
+            : base(cols, fileName, headerin)
         { }
 
         public override void toDataBase()
@@ -60,12 +61,21 @@ namespace UcbBack.Logic.ExcelFiles
 
             for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                var p = ToPeople(i);
+                var p = ToContractDetail(i);
                 if (p!=null)
-                    _context.Person.Add(p);
+                    _context.ContractDetails.Add(p);
             }
 
-            _context.SaveChanges();
+            try
+            {
+                _context.SaveChanges();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         public override bool ValidateFile()
@@ -89,25 +99,27 @@ namespace UcbBack.Logic.ExcelFiles
             if (p != null)
                 return null;
 
+            person.Id = People.GetNextId(_context);
             person.Ext = wb.Worksheet(sheet).Cell(row, 2).Value.ToString().ToUpper();
             person.TypeDocument = wb.Worksheet(sheet).Cell(row, 3).Value.ToString().ToUpper();
             person.FirstSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString().ToUpper();
             person.SecondSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString().ToUpper();
             person.Names = wb.Worksheet(sheet).Cell(row, 6).Value.ToString().ToUpper();
             person.MariedSurName = wb.Worksheet(sheet).Cell(row, 7).Value.ToString().ToUpper();
-            person.AFP = wb.Worksheet(sheet).Cell(row, 8).Value.ToString().ToUpper();
-            person.NUA = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-            var date = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
+            person.Gender = wb.Worksheet(sheet).Cell(row, 8).Value.ToString().ToUpper();
+            person.AFP = wb.Worksheet(sheet).Cell(row, 9).Value.ToString().ToUpper();
+            person.NUA = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
+            var date = wb.Worksheet(sheet).Cell(row, 11).Value.ToString();
             person.BirthDate = DateTime.Parse(date);
             person = validate.UcbCode(person);
             return person;
         }
 
-        public ContractDetail ToDistPayroll(int row, int sheet = 1)
+        public ContractDetail ToContractDetail(int row, int sheet = 1)
         {
             ContractDetail person = new ContractDetail();
             person.Id = ContractDetail.GetNextId(_context);
-            person.CUNI = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+            person.CUNI = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             person.PeopleId = _context.Person.FirstOrDefault(p => p.CUNI == person.CUNI).Id;
             person.DependencyId = _context.Dependencies.FirstOrDefault(d => d.Cod == wb.Worksheet(sheet).Cell(row, 3).Value.ToString()).Id;
             person.PositionsId = _context.Position.FirstOrDefault(p => p.Name == wb.Worksheet(sheet).Cell(row, 4).Value.ToString()).Id;

@@ -159,7 +159,7 @@ namespace UcbBack.Controllers
             List<ContractDetail> contractInDB = null;
             DateTime date=new DateTime(2018,9,1);
             DateTime date2=new DateTime(2018,1,1);
-            var people = _context.ContractDetails.Include(x=>x.People).Where(x => x.EndDate>date2 || x.EndDate==null).Select(x=>x.People).Distinct();
+            var people = _context.ContractDetails.Include(x=>x.People).Where(x=>x.EndDate==null).Select(x=>x.People).Distinct();
             int i = people.Count();
             string res = "";
 
@@ -180,6 +180,8 @@ namespace UcbBack.Controllers
                 res += contract.Dependency.Name + ";";
 
                 res += contract.Dependency.OrganizationalUnitId + ";";
+
+                res += contract.Positions.Name + ";";
 
                 res += contract.Branches.Abr + ";";
                 res += contract.Branches.Name;

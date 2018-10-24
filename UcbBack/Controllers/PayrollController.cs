@@ -904,7 +904,10 @@ namespace UcbBack.Controllers
             if (process.State != ProcessState.ERROR && process.State != ProcessState.WARNING)
                 return Ok();
 
-            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected ).Include(e=>e.Error).Select(e=>new{e.Id,e.ErrorId,e.Error.Name,e.Error.Description,e.Error.Type,e.Archivos,e.CUNI});
+            var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected )
+                .Include(e=>e.Error)
+                .Select(e => new { e.Id, e.ErrorId, e.Error.Name, e.Error.Description, e.Error.Type, e.Archivos, e.CUNI })
+                .OrderBy(x => x.Type);
             return Ok(err);
         }
 
@@ -991,7 +994,7 @@ namespace UcbBack.Controllers
                     p.Id,
                     p.gestion,
                     p.mes
-                }).OrderBy(x=>x.BranchesId).ThenBy(x=>x.gestion).ThenBy(x=>x.mes);
+                }).OrderBy(x=>x.BranchesId).ThenByDescending(x=>x.gestion).ThenByDescending(x=>x.mes);
 
             var user = auth.getUser(Request);
             var res = auth.filerByRegional(processes, user);
