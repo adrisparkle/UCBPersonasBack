@@ -32,6 +32,7 @@ namespace UcbBack.Controllers
         [Route("api/auth/GetMenu")]
         public IHttpActionResult GetMenu()
         {
+            var start = DateTime.Now;
             int userid;
             IEnumerable<string> headerId;
             if (!Request.Headers.TryGetValues("id", out headerId))
@@ -42,8 +43,13 @@ namespace UcbBack.Controllers
             var user = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(cu => cu.Id == userid);
             if (user == null)
                 return Unauthorized();
+            var uexist = DateTime.Now;
+
             var rls = activeDirectory.getUserRols(user).Select(x=>x.Id);
+            var ugetrols = DateTime.Now;
+
             var br = activeDirectory.getUserBranches(user);
+            var ugetbr = DateTime.Now;
 
             List<Access> access;
            // activeDirectory.AddUserToGroup("G.ARANA.M@UCB.BO", "Personas.Segmentos.Cochabamba");
@@ -87,6 +93,12 @@ namespace UcbBack.Controllers
                 r.children = JArray.FromObject(children.ToArray());
                 res.Add(r);
             }
+            var caljson = DateTime.Now;
+
+            var t1 = uexist - start; 
+            var t2 = ugetrols-uexist; 
+            var t3 = ugetbr - ugetrols; 
+            var t4 = caljson - ugetbr; 
             return Ok(res);
         }
 

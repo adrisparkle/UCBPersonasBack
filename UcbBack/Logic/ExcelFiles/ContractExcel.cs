@@ -117,19 +117,43 @@ namespace UcbBack.Logic.ExcelFiles
 
         public ContractDetail ToContractDetail(int row, int sheet = 1)
         {
-            ContractDetail person = new ContractDetail();
-            person.Id = ContractDetail.GetNextId(_context);
-            person.CUNI = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
-            person.PeopleId = _context.Person.FirstOrDefault(p => p.CUNI == person.CUNI).Id;
-            person.DependencyId = _context.Dependencies.FirstOrDefault(d => d.Cod == wb.Worksheet(sheet).Cell(row, 3).Value.ToString()).Id;
-            person.PositionsId = _context.Position.FirstOrDefault(p => p.Name == wb.Worksheet(sheet).Cell(row, 4).Value.ToString()).Id;
-            person.PositionDescription = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
-            person.Dedication = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
-            person.Linkage = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
-            person.BranchesId = Segment;
-            person.StartDate = wb.Worksheet(sheet).Cell(row, 8).GetDateTime();
-            person.EndDate = wb.Worksheet(sheet).Cell(row, 9).GetDateTime();
-            return person;
+            try
+            {
+                ContractDetail person = new ContractDetail();
+                person.Id = ContractDetail.GetNextId(_context);
+                person.CUNI = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
+                person.PeopleId = _context.Person.FirstOrDefault(p => p.CUNI == person.CUNI).Id;
+                var dep = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
+                var depCont = _context.Dependencies.FirstOrDefault(d => d.Cod == dep);
+                if (depCont == null)
+                {
+                    person.DependencyId = 2;
+                }
+                else
+                    person.DependencyId = depCont.Id;
+
+                var pos = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
+                var posCont = _context.Position.FirstOrDefault(p => p.Name == pos);
+                if (posCont == null)
+                {
+                    person.PositionsId = 2;
+                }
+                else
+                    person.PositionsId = posCont.Id;
+                person.PositionDescription = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
+                person.Dedication = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
+                person.Linkage = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
+                person.BranchesId = Segment;
+                person.StartDate = wb.Worksheet(sheet).Cell(row, 7).GetDateTime();
+                person.EndDate = wb.Worksheet(sheet).Cell(row, 8).Value.ToString() == "" ? (DateTime?)null : wb.Worksheet(sheet).Cell(row, 8).GetDateTime();
+                 return person;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
     }
 }

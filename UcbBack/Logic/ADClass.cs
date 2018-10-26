@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
@@ -7,6 +8,7 @@ using System.Web;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
+using Newtonsoft.Json;
 
 namespace UcbBack.Logic
 {
@@ -18,6 +20,7 @@ namespace UcbBack.Logic
 
         public string sDomain = "UCB.BO";
         public string Domain = "192.168.18.62";
+        //public string Domain = "UCB.BO";
         private HanaValidator hanaval;
 
         public ADClass()
@@ -192,8 +195,9 @@ namespace UcbBack.Logic
             return user;
         }
 
-        public List<Branches> getUserBranches(CustomUser customUser)
+        public List<Branches> getUserBranchesSLOW(CustomUser customUser)
         {
+            var start = DateTime.Now;
             List<Branches> roles = new List<Branches>();
             PrincipalContext ouContex = new PrincipalContext(ContextType.Domain,
                 Domain,
@@ -201,17 +205,64 @@ namespace UcbBack.Logic
                 "Rrhh1234");
 
             ouContex.ValidateCredentials("ADMNALRRHH", "Rrhh1234");
-            UserPrincipal user = UserPrincipal.FindByIdentity(ouContex, customUser.UserPrincipalName);
-            if (user != null)
-            {
+            //UserPrincipal user = UserPrincipal.FindByIdentity(ouContex, customUser.UserPrincipalName);
+            UserPrincipal user = new UserPrincipal(ouContex);
+            user.SamAccountName = customUser.UserPrincipalName.Split('@')[0];
+            user = new PrincipalSearcher(user).FindOne() as UserPrincipal;
+            var finduser = DateTime.Now;
+            //if (user != null)
+            //{
                 List<string> grps = new List<string>();
-                var groups = user.GetGroups();
+                var groups = user.GetGroups().ToList();
+                var getgroups = DateTime.Now;
                 foreach (var group in groups)
                 {
                     grps.Add(group.Name);
                 }
+                var listgrps = DateTime.Now;
+
                 var _context = new ApplicationDbContext();
                 roles = _context.Branch.ToList().Where(x => grps.Contains(x.ADGroupName)).ToList();
+                var end = DateTime.Now;
+
+            //}
+
+            var t1 = finduser - start;
+            var t2 = getgroups - finduser;
+            var t3 = listgrps - getgroups;
+            var t4 = end - listgrps;
+
+            return roles;
+        }
+
+        public List<Branches> getUserBranches(CustomUser customUser)
+        {
+            List<Branches> roles = new List<Branches>();
+            DirectoryEntry obEntry = new DirectoryEntry("LDAP://UCB.BO" ,
+                "ADMNALRRHH",
+                "Rrhh1234");
+            DirectorySearcher srch = new DirectorySearcher(obEntry,
+                "(sAMAccountName=" + customUser.UserPrincipalName.Split('@')[0] + ")");
+
+            SearchResult res = srch.FindOne();
+
+            if (res != null)
+            {
+            DirectoryEntry obUser = new DirectoryEntry(res.Path, "ADMNALRRHH",
+                "Rrhh1234");
+                object obGroups = obUser.Invoke("Groups");
+                List<string> grps = new List<string>();
+
+                foreach (var group in obUser.Properties["memberOf"])
+                {
+                    var ss = "{'" + group.ToString().Replace("=", "':'").Replace(",", "','")+"'}";
+                    var dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(ss);
+                    grps.Add(dic["CN"]);
+                }
+
+                var _context = new ApplicationDbContext();
+                roles = _context.Branch.ToList().Where(x => grps.Contains(x.ADGroupName)).ToList();
+
             }
 
             return roles;
@@ -220,13 +271,49 @@ namespace UcbBack.Logic
         public List<Rol> getUserRols(CustomUser customUser)
         {
             List<Rol> roles = new List<Rol>();
+            DirectoryEntry obEntry = new DirectoryEntry("LDAP://UCB.BO",
+                "ADMNALRRHH",
+                "Rrhh1234");
+            DirectorySearcher srch = new DirectorySearcher(obEntry,
+                "(sAMAccountName=" + customUser.UserPrincipalName.Split('@')[0] + ")");
+
+            SearchResult res = srch.FindOne();
+
+            if (res != null)
+            {
+                DirectoryEntry obUser = new DirectoryEntry(res.Path, "ADMNALRRHH",
+                    "Rrhh1234");
+                object obGroups = obUser.Invoke("Groups");
+                List<string> grps = new List<string>();
+
+                foreach (var group in obUser.Properties["memberOf"])
+                {
+                    var ss = "{'" + group.ToString().Replace("=", "':'").Replace(",", "','") + "'}";
+                    var dic = JsonConvert.DeserializeObject<Dictionary<string, string>>(ss);
+                    grps.Add(dic["CN"]);
+                }
+
+                var _context = new ApplicationDbContext();
+                roles = _context.Rols.Include(x => x.Resource).ToList().Where(x => grps.Contains(x.ADGroupName)).ToList();
+
+            }
+
+            return roles;
+        }
+
+        public List<Rol> getUserRolsSLOW(CustomUser customUser)
+        {
+            List<Rol> roles = new List<Rol>();
             PrincipalContext ouContex = new PrincipalContext(ContextType.Domain,
                 Domain,
                 "ADMNALRRHH@UCB.BO",
                 "Rrhh1234");
             
             ouContex.ValidateCredentials("ADMNALRRHH", "Rrhh1234");
-            UserPrincipal user = UserPrincipal.FindByIdentity(ouContex, customUser.UserPrincipalName);
+            // UserPrincipal user = UserPrincipal.FindByIdentity(ouContex, customUser.UserPrincipalName);
+            UserPrincipal user = new UserPrincipal(ouContex);
+            user.SamAccountName = customUser.UserPrincipalName.Split('@')[0];
+            user = new PrincipalSearcher(user).FindOne() as UserPrincipal;
             if (user != null)
             {
                 List<string> grps = new List<string>();
