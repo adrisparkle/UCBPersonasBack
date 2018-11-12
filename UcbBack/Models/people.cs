@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Xml.Serialization;
 using System.Data.Entity;
+using Microsoft.Ajax.Utilities;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models
@@ -96,6 +97,8 @@ namespace UcbBack.Models
 
         public bool UseSecondSurName { get; set; }
 
+        public bool Pending { get; set; }
+
 
         public string GetFullName()
         {
@@ -133,6 +136,32 @@ namespace UcbBack.Models
                     .OrderByDescending(x => x.EndDate == null ? 1 : 0).ThenByDescending(x => x.EndDate).ThenBy(x=>x.Positions.LevelId).FirstOrDefault();
             }
             return contract;
+        }
+
+        public People GetLastManager(ApplicationDbContext _contex = null, DateTime? date = null)
+        {
+            _contex = _contex == null ? new ApplicationDbContext() : _contex;
+            People manager;
+            var contract = GetLastContract(_contex, date);
+            date = date == null ? DateTime.Now : date;
+                manager = _contex.ContractDetails
+                    .Include(x => x.Positions)
+                    .Include(x => x.People)
+                    .Where(x => x.DependencyId == contract.DependencyId 
+                                && x.StartDate <= date
+                                && (x.EndDate == null || x.EndDate >= date)).OrderBy(x => x.Positions.LevelId).Select(x=>x.People).FirstOrDefault();
+            // case when manager of area
+            if (manager.CUNI == this.CUNI && contract.Dependency.ParentId != 0)
+            {
+                manager = _contex.ContractDetails
+                    .Include(x => x.Positions)
+                    .Include(x => x.People)
+                    .Where(x => x.DependencyId == contract.Dependency.ParentId
+                                && x.StartDate <= date
+                                && (x.EndDate == null || x.EndDate >= date)).OrderBy(x => x.Positions.LevelId).Select(x=>x.People).FirstOrDefault();
+            }
+
+            return manager;
         }
 
         public static int GetNextId(ApplicationDbContext _context)

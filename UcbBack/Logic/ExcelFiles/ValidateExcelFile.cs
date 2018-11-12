@@ -233,8 +233,8 @@ namespace UcbBack.Logic
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var c = new ApplicationDbContext();
             var ppllist = c.Person.ToList();
-
-            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            int n = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= n; i++)
             {
                 string strname = null;
                 string strfsn = null;
@@ -295,7 +295,7 @@ namespace UcbBack.Logic
                                         && cleanText(x.Names) == strname
                                         && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
                     {
-                        
+                        res = false;                       
                         if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
                         {
                             if (!ppllist.Any(x => x.Document == strci
@@ -425,6 +425,7 @@ namespace UcbBack.Logic
                             string aux = "";
                             if (strname != null && jaro)
                             {
+                                res = false;
                                 var similarities = hanaValidator.Similarities(strfsn + " " + strssn + " " + strname, "concat(\"FirstSurName\"," + "concat('' ''," + "concat(\"SecondSurName\"," + "concat('' '',\"Names\")" + ")" + ")" + ")", "People", "\"CUNI\"", 0.9f);
                                 if (similarities.Count > 0)
                                 {
@@ -448,6 +449,17 @@ namespace UcbBack.Logic
                                     paintXY(ci, i, XLColor.Red,  aux);
 
                                     aux = strcuni != person.CUNI ? "\nNo será: '" + person.CUNI + "'?" : "";
+                                    paintXY(CUNI, i, XLColor.Red, aux);
+                                }
+                                else
+                                {
+                                    res = false;
+                                    aux = "Esta persona no existe en la Base de Datos Nacional";
+                                    paintXY(fullname, i, XLColor.Red, aux);
+                                    paintXY(fullname, i+1, XLColor.Red, aux);
+                                    paintXY(fullname, i+2, XLColor.Red, aux);
+                                    paintXY(fullname, i+3, XLColor.Red, aux);
+                                    paintXY(ci, i, XLColor.Red, aux);
                                     paintXY(CUNI, i, XLColor.Red, aux);
                                 }
                                                                 

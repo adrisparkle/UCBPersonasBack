@@ -193,6 +193,14 @@ namespace UcbBack.Controllers
             return res;
         }
 
+        private bool verifyName(string fileName, string mes, string gestion, int branchId, string fileType,
+            out string realfileName)
+        {
+            string Abr = _context.Branch.Where(x => x.Id == branchId).Select(x => x.Abr).FirstOrDefault();
+            realfileName = Abr + gestion + mes + fileType;
+            return fileName.Split('.')[0].Equals(realfileName);
+        }
+
         [HttpGet]
         [Route("api/payroll/PayrollExcel")]
         public HttpResponseMessage GetPayrollExcel()
@@ -252,6 +260,15 @@ namespace UcbBack.Controllers
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    return response;
+                }
+
+                string realFileName="";
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "PLAN", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: "+realFileName+"\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
                     return response;
                 }
 
@@ -378,6 +395,15 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
+                string realFileName;
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "ACAD", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
+                    return response;
+                }
+
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
                 var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Academic, userid, o.fileName.ToString());
 
@@ -491,6 +517,15 @@ namespace UcbBack.Controllers
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    return response;
+                }
+
+                string realFileName;
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "DEDU", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
                     return response;
                 }
 
@@ -612,6 +647,15 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
+                string realFileName;
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "POST", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
+                    return response;
+                }
+
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
                 var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Postgrado, userid, o.fileName.ToString());
 
@@ -723,6 +767,15 @@ namespace UcbBack.Controllers
                     response.StatusCode = HttpStatusCode.BadRequest;
                     response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
                     response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    return response;
+                }
+
+                string realFileName;
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "PREG", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
                     return response;
                 }
 
@@ -840,6 +893,15 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
+                string realFileName;
+                if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "REGI", out realFileName))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
+                    return response;
+                }
+
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
                 var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.OR, userid, o.fileName.ToString());
 
@@ -921,6 +983,20 @@ namespace UcbBack.Controllers
                 return NotFound();
 
             int userid = Int32.Parse(Request.Headers.GetValues("id").First());
+
+            // todo reset ProccessEmployeeType
+            var pay = _context.DistPayrolls.Where(x =>
+                x.DistFile.DistProcessId == process.Id && x.EmployeeType != x.ProcedureTypeEmployee);
+            if (pay.Count() > 0)
+            {
+                foreach (var p in pay)
+                {
+                    p.ProcedureTypeEmployee = p.EmployeeType;
+                }
+
+                _context.SaveChanges();
+            }
+
             _context.Database.ExecuteSqlCommand("CALL \""+CustomSchema.Schema+"\".FIX_ACAD(" + process.Id + ")");
 
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_HASALLFILES(" + userid + "," + process.Id + ")");
@@ -1035,26 +1111,28 @@ namespace UcbBack.Controllers
                 return response;
             }
 
-            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>("SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
-              " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
-              " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
-              " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\",g.\"Cod\" \"UnidadOrganizacional\" " +
-            " FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
-                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " + 
-                " on a.\"DistProcessId\"=b.\"Id\" "+
-            " AND a.\"DistProcessId\"= "+ id +
-            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
-                "on a.\"TipoEmpleado\"=c.\"Name\" "+
-            " INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
-               " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
-            " and b.\"BranchesId\" = d.\"BranchesId\" "+
-            " and a.\"Columna\" = d.\"Concept\" "+
-            " INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
-               " on b.\"BranchesId\" = e.\"Id\" " +
-            " LEFT JOIN \"" + CustomSchema.Schema + "\".\"Dependency\" f " +
+            string query =
+                "SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
+                " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
+                " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
+                " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\",g.\"Cod\" \"UnidadOrganizacional\" " +
+                " FROM \"" + CustomSchema.Schema + "\".\"Dist_Cost\" a " +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_Process\" b " +
+                " on a.\"DistProcessId\"=b.\"Id\" " +
+                " AND a.\"DistProcessId\"= " + id +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"Dist_TipoEmpleado\" c " +
+                "on a.\"TipoEmpleado\"=c.\"Name\" " +
+                " INNER JOIN  \"" + CustomSchema.Schema + "\".\"CuentasContables\" d " +
+                " on c.\"GrupoContableId\" = d.\"GrupoContableId\" " +
+                " and b.\"BranchesId\" = d.\"BranchesId\" " +
+                " and a.\"Columna\" = d.\"Concept\" " +
+                " INNER JOIN \"" + CustomSchema.Schema + "\".\"Branches\" e " +
+                " on b.\"BranchesId\" = e.\"Id\" " +
+                " LEFT JOIN \"" + CustomSchema.Schema + "\".\"Dependency\" f " +
                 " on f.\"Cod\" = a.\"Dependency\" " +
-            " LEFT JOIN \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" g " +
-                " on g.\"Id\" = f.\"OrganizationalUnitId\" ").ToList();
+                " LEFT JOIN \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" g " +
+                " on g.\"Id\" = f.\"OrganizationalUnitId\" ";
+            IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>(query).ToList();
 
             var ex = new XLWorkbook();
             var d = new Distribution();

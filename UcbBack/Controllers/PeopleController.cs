@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
 using System.Data.Entity;
+using UcbBack.Logic.B1;
 
 
 namespace UcbBack.Controllers
@@ -17,12 +18,14 @@ namespace UcbBack.Controllers
     {
         private ApplicationDbContext _context;
         private ValidatePerson validator;
+        private ValidateAuth auth;
         private ADClass activeDirectory;
 
         public PeopleController()
         {
             _context = new ApplicationDbContext();
             validator = new ValidatePerson(_context);
+            auth = new ValidateAuth();
             activeDirectory = new ADClass();
         }
 
@@ -46,6 +49,16 @@ namespace UcbBack.Controllers
         }
 
         [HttpGet]
+        [Route("api/people/manager/{id}")]
+        public IHttpActionResult manager(int id)
+        {
+            People personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
+            if (personInDB == null)
+                return NotFound();
+            return Ok(personInDB.GetLastManager());
+        }
+
+        [HttpGet]
         [Route("api/addalltoAD")]
         public IHttpActionResult addalltoAD()
         {
@@ -63,7 +76,7 @@ namespace UcbBack.Controllers
                 activeDirectory.createGroup(rol);
             }*/
 
-            List<string> palabras = new List<string>(new string []
+        /*    List<string> palabras = new List<string>(new string []
             {
                 "aula",
                 "libro",
@@ -71,16 +84,28 @@ namespace UcbBack.Controllers
                 "papel",
                 "folder",
                 "lentes"
-            });
+            });*/
 
-        DateTime date = new DateTime(2018,4,1);
+        DateTime date = new DateTime(2018,5,1);
             //todo run for all people   solo fata pasar fechas de corte
-            /*List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
-                Where(y => y.StartDate < date 
-                           && (y.EndDate > date || y.EndDate == null) 
-                           && y.Positions.Name != "DOCENTE TIEMPO HORARIO").Select(x => x.People).ToList();
+            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
+                Where(y => //y.StartDate < date &&
+                           (y.EndDate > date || y.EndDate == null) 
+                           //&& y.Positions.Name != "DOCENTE TIEMPO HORARIO"
+                            //&& y.CUNI == "LME741224"
+                    ).Select(x => x.People).ToList();
+            B1Connection b1 = B1Connection.Instance();
+            var usr = auth.getUser(Request);
+            foreach (var p in person)
+            {
+                var X = b1.AddOrUpdatePersonToBusinessPartner(usr.Id,p);
+                if (X == "ERROR")
+                {
+                    X = "";
+                }
+            }
 
-            Random rnd = new Random();
+            /*Random rnd = new Random();
             foreach (var pe in person)
             {
                 //var tt = activeDirectory.findUser(pe);
@@ -102,8 +127,8 @@ namespace UcbBack.Controllers
                 
             }*/
             //activeDirectory.createGroup("");
-            var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "RFA940908");
-            activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.Admin");
+            //var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "RFA940908");
+           // activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.Admin");
             //var yo = activeDirectory.findUser(_context.Person.FirstOrDefault(x => x.CUNI == "AMG680422"));
             
             return Ok();

@@ -51,6 +51,7 @@ namespace UcbBack.Models
         public DbSet<AccessLogs> AccessLogses  { get; set; }
         public DbSet<B1SDKLog> SdkErrorLogs  { get; set; }
         public DbSet<TableOfTables> TableOfTableses { get; set; }
+        public DbSet<TempAlta> TempAltas { get; set; }
         
 
         //auth models

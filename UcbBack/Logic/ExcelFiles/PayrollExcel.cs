@@ -8,6 +8,7 @@ using UcbBack.Controllers;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
 using UcbBack.Models.Dist;
+using System.Data.Entity;
 
 namespace UcbBack.Logic.ExcelFiles
 {
@@ -47,6 +48,7 @@ namespace UcbBack.Logic.ExcelFiles
         };
 
         private string mes, gestion, segmentoOrigen;
+        private int segmentInt;
         private ApplicationDbContext _context;
         private Dist_File file;
         public PayrollExcel(Stream data, ApplicationDbContext context, string fileName, string mes, string gestion, string segmentoOrigen,Dist_File file, int headerin = 1, int sheets = 1, string resultfileName = "PayrollResult")
@@ -82,18 +84,18 @@ namespace UcbBack.Logic.ExcelFiles
             {
                 addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
             }
-
+            this.segmentInt = Int32.Parse(this.segmentoOrigen);
             bool v1 = VerifyColumnValueIn(13, connB1.getBusinessPartners().Cast<string>().ToList(), comment: "Esta AFP no esta registrada como un Bussines Partner en SAP");
             bool v2 = VerifyColumnValueIn(20, _context.TipoEmpleadoDists.Select(x => x.Name).ToList(), comment: "Este Tipo empleado no es valido.\n");
-            var xxx = connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion)
-                .Cast<string>().ToList();
             bool v3 = VerifyColumnValueIn(21, connB1.getCostCenter(B1Connection.Dimension.PEI,mes:this.mes,gestion:this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.\n");
-            bool v4 = VerifyColumnValueIn(23, _context.Dependencies.Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.\n");
-            bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: true, branchesId:Int32.Parse(this.segmentoOrigen), date: this.gestion + "-" + this.mes + "-01", dependency:23,paintdep:true,tipo:20);
+            bool v4 = VerifyColumnValueIn(23, _context.Dependencies.Where(x=>x.BranchesId == this.segmentInt).Select(m => m.Cod).Distinct().ToList(),comment:"Esta Dependencia no existe en la Base de Datos Nacional.\n");
+            bool v5 = VerifyPerson(ci: 1, CUNI: 19, fullname: 2, personActive: true, branchesId:this.segmentInt, date: this.gestion + "-" + this.mes + "-01", dependency:23,paintdep:true,tipo:20);
             bool v6 = VerifyColumnValueIn(25, connB1.getBusinessPartners().Cast<string>().ToList(), comment: "Este seguro no esta registrado como un Bussines Partner en SAP");
             bool v7 = ValidateLiquidoPagable();
             bool v8 = ValidatenoZero();
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8;
+            // todo Validate people test
+            bool v9 = true;//validateAllPeopleInPayroll();
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9;
         }
 
         public bool ValidatenoZero(int sheet = 1)
@@ -179,6 +181,29 @@ namespace UcbBack.Logic.ExcelFiles
 
             valid = valid && res;
             return res;
+        }
+
+        private bool validateAllPeopleInPayroll()
+        {
+            var date = new DateTime(Int32.Parse(this.gestion), Int32.Parse(this.mes),1);
+            var active = _context.ContractDetails.Include(x=>x.People).Where(x=> x.AI && x.StartDate <= date
+                                                        && (x.EndDate == null || x.EndDate >= date));
+            IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
+            List<string> payrollCunis = new List<string>();
+            // generate list 
+            for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                payrollCunis.Add(wb.Worksheet(1).Cell(i, 19).Value.ToString());
+            }
+
+            var res = active.Where(x => !payrollCunis.Contains(x.CUNI));
+
+            foreach (var p in res)
+            {
+                addError("Personas Faltantes", "La persona: "+ p.People.GetFullName()+" se encuentra activa en el sistema pero no se la registró en planillas." );
+            }
+
+            return res.Count()==0;
         }
 
         public Dist_Payroll ToDistPayroll(int row, int sheet = 1)

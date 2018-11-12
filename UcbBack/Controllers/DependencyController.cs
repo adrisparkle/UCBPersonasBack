@@ -21,7 +21,13 @@ namespace UcbBack.Controllers
         // GET api/Level
         public IHttpActionResult Get()
         {
-            var deplist = _context.Dependencies.Include(p => p.OrganizationalUnit).Include(i => i.Parent).ToList().Select(x => new { x.Id, x.Cod, x.Name, OrganizationalUnit = x.OrganizationalUnit.Name, Parent = x.Parent.Name }).OrderBy(x => x.Cod);
+            //var deplist = _context.Dependencies.Include(p => p.OrganizationalUnit).Include(i => i.Parent).ToList().Select(x => new { x.Id, x.Cod, x.Name, OrganizationalUnit = x.OrganizationalUnit.Name, Parent = x.Parent.Name }).OrderBy(x => x.Cod);
+            var deplist = (from dependency in _context.Dependencies
+                join branch in _context.Branch on dependency.BranchesId equals branch.Id
+                join OU in _context.OrganizationalUnits on dependency.OrganizationalUnitId equals OU.Id
+                join parent in _context.Dependencies on dependency.ParentId equals parent.Id
+                select new {dependency.Id, dependency.Cod, dependency.Name, OrganizationalUnit = OU.Name, Parent = parent.Name, Branch = branch.Abr }
+                    ).OrderBy(x => x.Cod);
             return Ok(deplist);
         }
 
@@ -56,7 +62,7 @@ namespace UcbBack.Controllers
         public IHttpActionResult Put(int id, [FromBody]Dependency dependency)
         {
             if (!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(ModelState);
 
             Dependency depInDB = _context.Dependencies.FirstOrDefault(d => d.Id == id);
             if (depInDB == null)
@@ -66,6 +72,8 @@ namespace UcbBack.Controllers
             depInDB.Name = dependency.Name;
             depInDB.ParentId = dependency.ParentId;
             depInDB.OrganizationalUnitId = dependency.OrganizationalUnitId;
+            depInDB.BranchesId = dependency.BranchesId;
+            // depInDB.Branches = _context.Branch.FirstOrDefault(x => x.Id == dependency.BranchesId);
 
             _context.SaveChanges();
             return Ok(depInDB);

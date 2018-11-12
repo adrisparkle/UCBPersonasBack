@@ -265,13 +265,16 @@ namespace UcbBack.Logic.B1
                     //if person exist as BusinesPartner
                     if (businessObject.GetByKey("R" + person.CUNI))
                     {
-                        businessObject.CardName = person.FirstSurName + " " + person.Names;
-                        businessObject.CardForeignName = person.FirstSurName + " " + person.Names;
+                        businessObject.CardName = person.GetFullName();
+                        businessObject.CardForeignName = person.GetFullName();
                         businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
                         businessObject.CardCode = "R" + person.CUNI;
-                        businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
-                        businessObject.GroupCode = 102;
 
+                        // set NIT
+                        businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                        // Set Group RRHH
+                        businessObject.GroupCode = 108;
+                        businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
 
                         // set Branch Code
                         businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
@@ -326,6 +329,28 @@ namespace UcbBack.Logic.B1
             }
         }
 
+        public bool PersonExistsAsBusinessPartner(People person)
+        {
+            string query = "select \"CardCode\" "
+                           + "from " + DatabaseName + ".ocrd"
+                           + " WHERE \"CardCode\" = '" + 'R' + person.CUNI + "'";
+            var res = _context.Database.SqlQuery<string>(query);
+            return res.Count() > 0;
+        }
+
+        public string AddOrUpdatePersonToBusinessPartner(int UserId, People person, bool update = true)
+        {
+            if (!PersonExistsAsBusinessPartner(person))
+            {
+                return addpersonToBussinesPartner(UserId,person);
+            }
+            else if (update)
+            {
+                return updatePersonInBussinesPartner(UserId, person);
+            }
+            else return "Exist not created";
+        }
+
         public string addpersonToBussinesPartner(int UserId, People person)
         {
             var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
@@ -336,15 +361,16 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
 
-                    businessObject.CardName = person.FirstSurName+ " " + person.Names;
-                    businessObject.CardForeignName = person.FirstSurName+ " " + person.Names;
+                    businessObject.CardName = person.GetFullName();
+                    businessObject.CardForeignName = person.GetFullName();
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
                     businessObject.CardCode = "R"+person.CUNI;
 
                     // set NIT
                     businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
                     // Set Group RRHH
-                    businessObject.GroupCode = 102;
+                    businessObject.GroupCode = 108;
+                    businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
                     
                     
                     // set Branch Code

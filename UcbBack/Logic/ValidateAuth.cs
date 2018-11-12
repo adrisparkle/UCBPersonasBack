@@ -93,7 +93,7 @@ namespace UcbBack.Logic
             return access == null ? false : access.NedAuth;
         }
 
-        public bool shallYouPass(int id, string token, string path, string method,out long logId)
+        public bool shallYouPass(int id, string token, string path, string method,out AccessLogs log)
         {
             
             bool pass = true;
@@ -112,17 +112,19 @@ namespace UcbBack.Logic
             Access access = _context.Accesses.FirstOrDefault(a =>
                 string.Equals(a.Path.ToUpper(), path.ToUpper()) && a.Method == method);
 
-            AccessLogs log = new AccessLogs();
-            log.Id = AccessLogs.GetNextId(_context);
-            log.Method = method;
-            log.Path = path;
-            log.UserId = id;
-            log.Success = pass;
-            log.AccessId = access == null ? 0 : access.Id;
-            _context.AccessLogses.Add(log);
-            _context.SaveChanges();
+            if (access == null || access.Id != 19)
+            {
+                log = new AccessLogs();
+                log.Id = AccessLogs.GetNextId(_context);
+                log.Method = method;
+                log.Path = path;
+                log.UserId = id;
+                log.Success = pass;
+                log.AccessId = access == null ? 0 : access.Id;
+            }
+            else
+                log = null;
 
-            logId = log.Id;
             return pass; 
         }
 

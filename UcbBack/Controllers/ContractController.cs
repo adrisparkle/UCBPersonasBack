@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using UcbBack.Logic;
 using UcbBack.Logic.ExcelFiles;
 using System.Globalization;
+using Microsoft.Ajax.Utilities;
+using Newtonsoft.Json.Linq;
 
 
 namespace UcbBack.Controllers
@@ -158,14 +160,24 @@ namespace UcbBack.Controllers
         {
             List<ContractDetail> contractInDB = null;
             DateTime date=new DateTime(2018,9,1);
-            DateTime date2=new DateTime(2018,1,1);
-            var people = _context.ContractDetails.Include(x=>x.People).Where(x=>x.EndDate==null).Select(x=>x.People).Distinct();
+            DateTime date2=new DateTime(2018,9,30);
+            var people = _context.ContractDetails.Include(x=>x.People).Include(x=>x.Branches).Where(x=>  (x.EndDate==null || x.EndDate>date2)).Select(x=>x.People).Distinct();
+            // var people = _context.CustomUsers.Include(x => x.People).Select(x => x.People);
             int i = people.Count();
             string res = "";
 
             foreach (var person in people)
             {
                 var contract = person.GetLastContract();
+                var user = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == contract.People.Id);
+               /* res += contract.People.GetFullName() + ";";
+                res += user.UserPrincipalName + ";";
+                res += "NORMAL;";
+                res += "NO;";
+                res += contract.Branches.Abr + ";";
+                res += "RENDICIONES;";
+                res += contract.CUNI + ";";*/
+
                 res += contract.People.CUNI + ";";
                 res += contract.People.Document + ";";
                 res += contract.People.GetFullName() + ";";
@@ -182,6 +194,10 @@ namespace UcbBack.Controllers
                 res += contract.Dependency.OrganizationalUnitId + ";";
 
                 res += contract.Positions.Name + ";";
+                res += contract.Dedication + ";";
+                res += contract.Linkage + ";";
+                res += contract.AI + ";";
+
 
                 res += contract.Branches.Abr + ";";
                 res += contract.Branches.Name;
@@ -214,9 +230,112 @@ namespace UcbBack.Controllers
             }
             return res;
         }
+
+        [HttpGet]
+        [Route("api/Contract/AltaExcel/save/{id}")]
+        public IHttpActionResult saveLastAltaExcel(int id)
+        {
+            var tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State != "SAVED");
+            if (tempAlta.Count() > 0)
+                return NotFound();
+
+            var validator = new ValidatePerson();
+
+            foreach (var alta in tempAlta)
+            {
+                var person = new People();
+
+                if (alta.State == "NEW")
+                {
+                    person.Id = People.GetNextId(_context);
+                    person.FirstSurName = alta.FirstSurName.Trim();
+                    person.SecondSurName = alta.SecondSurName.Trim().IsNullOrWhiteSpace() ? null : alta.SecondSurName.Trim();
+                    person.MariedSurName = alta.MariedSurName.Trim().IsNullOrWhiteSpace() ? null : alta.MariedSurName.Trim();
+                    person.Names = alta.Names.Trim();
+                    person.BirthDate = alta.BirthDate;
+                    person.Gender = alta.Gender;
+
+                    person.AFP = alta.AFP;
+                    person.NUA = alta.NUA;
+
+                    person.Document = alta.Document;
+                    person.Ext = alta.Ext;
+                    person.TypeDocument = alta.TypeDocument;
+
+                    person.UseSecondSurName = person.SecondSurName.IsNullOrWhiteSpace();
+                    person.UseMariedSurName = person.MariedSurName.IsNullOrWhiteSpace();
+
+                    person = validator.UcbCode(person);
+                    person.Pending = true;
+
+                    _context.Person.Add(person);
+                }
+                else
+                {
+                    person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
+                }
+
+                var contract = new ContractDetail();
+
+                contract.Id = ContractDetail.GetNextId(_context);
+                contract.DependencyId = _context.Dependencies.FirstOrDefault(x=>x.Cod==alta.Dependencia).Id;
+                contract.CUNI = person.CUNI;
+                contract.PeopleId = person.Id;
+                contract.BranchesId = alta.BranchesId;
+                contract.Dedication = "TH";
+                contract.Linkage = "TH";
+                contract.PositionDescription = "Docente Tiempo Horario";
+                contract.PositionsId = 26;
+                contract.StartDate = alta.StartDate;
+                contract.EndDate = alta.EndDate;
+
+            }
+
+            _context.SaveChanges();
+            return Ok(tempAlta);
+        }
+
+
+        [HttpDelete]
+        [Route("api/Contract/AltaExcel")]
+        public IHttpActionResult removeLastAltaExcel(JObject data)
+        {
+            int branchesid;
+            if (data["segmentoOrigen"] == null || !Int32.TryParse(data["segmentoOrigen"].ToString(), out branchesid))
+            {
+                ModelState.AddModelError("Mal Formato", "Debes enviar mes, gestion y segmentoOrigen");
+                return BadRequest();
+
+            }
+            List<TempAlta> tempAlta = _context.TempAltas.Where(x => x.BranchesId == branchesid && x.State != "UPLOADED" && x.State != "CANCELED").ToList();
+            foreach (var al in tempAlta)
+            {
+                al.State = "CANCELED";
+            }
+
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("api/Contract/AltaExcel/{id}")]
+        public IHttpActionResult getLastAltaExcel(int id)
+        {
+            List<TempAlta> tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State != "UPLOADED" && x.State != "CANCELED").ToList();
+            return Ok(tempAlta);
+        }
+
+        [HttpGet]
+        [Route("api/Contract/AltaExcel")]
+        public HttpResponseMessage getAltaExcelTemplate()
+        {
+            ContractExcel contractExcel = new ContractExcel(fileName: "AltaExcel_TH.xlsx", headerin: 3);
+            return contractExcel.getTemplate();
+        }
+
         [HttpPost]
         [Route("api/Contract/AltaExcel")]
-        public async Task<HttpResponseMessage> UploadORExcel()
+        public async Task<HttpResponseMessage> AltaExcel()
         {
             var response = new HttpResponseMessage();
             try
@@ -238,7 +357,7 @@ namespace UcbBack.Controllers
                     response.Content = new StringContent("Debe enviar segmentoOrigen valido");
                     return response;
                 }
-                ContractExcel contractExcel = new ContractExcel(o.excelStream, _context, o.fileName, segId.Id, headerin: 1, sheets: 1);
+                ContractExcel contractExcel = new ContractExcel(o.excelStream, _context, o.fileName, segId.Id, headerin: 3, sheets: 1);
                 if (contractExcel.ValidateFile())
                 {
                     contractExcel.toDataBase();
