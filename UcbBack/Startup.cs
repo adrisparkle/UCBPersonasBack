@@ -23,7 +23,7 @@ namespace UcbBack
             bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
-                    // long logId=0;
+                    //long logId=0;
                     AccessLogs log=null;
                     ApplicationDbContext _context = new ApplicationDbContext();
                     var req = environment.Request;
@@ -66,19 +66,20 @@ namespace UcbBack
                         if (log != null)
                         {
                             log.ResponseCode = environment.Response.StatusCode.ToString();
-                            _context.AccessLogses.Add(log);
                             _context.SaveChanges();
                         }
                     }
                     else
-                    await next();
-                    //log = _context.AccessLogses.FirstOrDefault(x => x.Id == logId);
-                    if (log != null)
                     {
-                        log.ResponseCode = environment.Response.StatusCode.ToString();
-                        //_context.AccessLogses.Add(log);
-                        _context.SaveChanges();
+                        await next();
+                        //log = _context.AccessLogses.FirstOrDefault(x => x.Id == logId);
+                        if (log != null)
+                        {
+                            log.ResponseCode = environment.Response.StatusCode.ToString();
+                            _context.SaveChanges();
+                        }
                     }
+                    
                 }
             );
             //app.UseStaticFiles();
