@@ -13,7 +13,7 @@ namespace UcbBack.Logic
     {
         private ApplicationDbContext _context;
         private ADClass activeDirectory;
-        public int tokenLife = 1*60;
+        public int tokenLife = 10*60;
         public int refeshtokenLife = 4*60*60;
 
 
@@ -121,6 +121,8 @@ namespace UcbBack.Logic
                 log.UserId = id;
                 log.Success = pass;
                 log.AccessId = access == null ? 0 : access.Id;
+                _context.AccessLogses.Add(log);
+                _context.SaveChanges();
             }
             else
                 log = null;
