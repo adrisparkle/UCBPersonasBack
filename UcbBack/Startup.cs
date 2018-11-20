@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity.Migrations;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,7 +24,7 @@ namespace UcbBack
             bool debugmode = false;
             app.Use(async (environment, next) =>
                 {
-                    //long logId=0;
+                    long logId=0;
                     AccessLogs log=null;
                     ApplicationDbContext _context = new ApplicationDbContext();
                     var req = environment.Request;
@@ -49,6 +50,7 @@ namespace UcbBack
                     }
 
                     bool sup = validator.shallYouPass(userid, token, endpoint, verb, out log);
+
                     if (!debugmode && !sup)
                     {
                         environment.Response.StatusCode = 401;
@@ -66,6 +68,7 @@ namespace UcbBack
                         if (log != null)
                         {
                             log.ResponseCode = environment.Response.StatusCode.ToString();
+                            _context.AccessLogses.AddOrUpdate(log);
                             _context.SaveChanges();
                         }
                     }
@@ -76,6 +79,7 @@ namespace UcbBack
                         if (log != null)
                         {
                             log.ResponseCode = environment.Response.StatusCode.ToString();
+                            _context.AccessLogses.AddOrUpdate(log);
                             _context.SaveChanges();
                         }
                     }
