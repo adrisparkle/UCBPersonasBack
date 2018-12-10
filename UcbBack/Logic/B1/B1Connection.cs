@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.Entity.Migrations;
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
@@ -195,6 +196,72 @@ namespace UcbBack.Logic.B1
             return log;
         }
 
+        public string updatePersonToEmployeeMasterData(int UserId, People person)
+        {
+            var log = initLog(UserId, BusinessObjectType.Employee, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
+
+                    oEmployeesInfo.GetByKey(person.SAPCodeRRHH.Value);
+                    //oEmployeesInfo. = getEmpSAPId(person);
+                    oEmployeesInfo.FirstName = person.Names;
+                    oEmployeesInfo.LastName = person.FirstSurName;
+                    oEmployeesInfo.Gender = person.Gender == "M" ? BoGenderTypes.gt_Male : BoGenderTypes.gt_Female;
+                    oEmployeesInfo.DateOfBirth = person.BirthDate;
+                    oEmployeesInfo.ExternalEmployeeNumber = person.CUNI;
+                    oEmployeesInfo.IdNumber = person.Document;
+                    //oEmployeesInfo.Department = Int32.Parse(person.GetLastContract().Dependency.Cod);
+                    oEmployeesInfo.Active = BoYesNoEnum.tYES;
+
+                    // set Branch Code
+                    var bplid = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
+                    oEmployeesInfo.EmployeeBranchAssignment.BPLID = bplid;
+                    oEmployeesInfo.EmployeeBranchAssignment.Add();
+
+                    oEmployeesInfo.Update();
+                    string newKey = company.GetNewObjectKey();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                            newKey = newKey.Replace("\t1", "");
+                        }
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return newKey;
+                    }
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+        }
+
         public string addPersonToEmployeeMasterData(int UserId,People person)
         {
             var log = initLog(UserId,BusinessObjectType.Employee,person.Id.ToString());
@@ -205,11 +272,18 @@ namespace UcbBack.Logic.B1
                     company.StartTransaction();
                     SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
 
-                    oEmployeesInfo.FirstName = person.Names + "-4";
+                    oEmployeesInfo.FirstName = person.Names;
                     oEmployeesInfo.LastName = person.FirstSurName;
                     oEmployeesInfo.Gender = person.Gender == "M" ? BoGenderTypes.gt_Male : BoGenderTypes.gt_Female;
                     oEmployeesInfo.DateOfBirth = person.BirthDate;
                     oEmployeesInfo.ExternalEmployeeNumber = person.CUNI;
+                    oEmployeesInfo.IdNumber = person.Document;
+                    //oEmployeesInfo.Department = Int32.Parse(person.GetLastContract().Dependency.Cod);
+                    oEmployeesInfo.Active = BoYesNoEnum.tYES;
+
+                    // set Branch Code
+                    oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
+                    oEmployeesInfo.EmployeeBranchAssignment.Add();
 
                     oEmployeesInfo.Add();
                     string newKey = company.GetNewObjectKey();
@@ -229,6 +303,8 @@ namespace UcbBack.Logic.B1
                         {
                             company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                             newKey = newKey.Replace("\t1", "");
+                            person.SAPCodeRRHH = Int32.Parse(newKey);
+                            _context.Person.AddOrUpdate(person);
                         }
                         _context.SdkErrorLogs.Add(log);
                         _context.SaveChanges();
@@ -277,10 +353,13 @@ namespace UcbBack.Logic.B1
                         businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
 
                         // set Branch Code
-                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                        businessObject.BPBranchAssignment.BPLID =
-                            Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
-                        businessObject.BPBranchAssignment.Add();
+                        var brs = _context.Branch.ToList();
+                        foreach (var b in brs)
+                        {
+                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                            businessObject.BPBranchAssignment.Add();
+                        }
                         // save new business partner
                         businessObject.Update();
                         // get the new code
@@ -329,6 +408,15 @@ namespace UcbBack.Logic.B1
             }
         }
 
+        public bool PersonExistsAsRRHH(People person)
+        {
+            string query = "select \"ExtEmpNo\" "
+                           + "from " + DatabaseName + ".ohem"
+                           + " WHERE \"ExtEmpNo\" = '" + person.CUNI + "'";
+            var res = _context.Database.SqlQuery<string>(query);
+            return res.Count() > 0;
+        }
+
         public bool PersonExistsAsBusinessPartner(People person)
         {
             string query = "select \"CardCode\" "
@@ -336,6 +424,27 @@ namespace UcbBack.Logic.B1
                            + " WHERE \"CardCode\" = '" + 'R' + person.CUNI + "'";
             var res = _context.Database.SqlQuery<string>(query);
             return res.Count() > 0;
+        }
+
+        public string AddOrUpdatePerson(int UserId, People person, bool update = true)
+        {
+            string res = "";
+            res = AddOrUpdatePersonToBusinessPartner(UserId, person, update: update);
+            res += AddOrUpdatePersonToRRHH(UserId, person, update: update);
+            return res;
+        }
+
+        public string AddOrUpdatePersonToRRHH(int UserId, People person, bool update = true)
+        {
+            if (!PersonExistsAsRRHH(person))
+            {
+                return addPersonToEmployeeMasterData(UserId, person);
+            }
+            else if (update)
+            {
+                return updatePersonToEmployeeMasterData(UserId, person);
+            }
+            else return "Exist not created";
         }
 
         public string AddOrUpdatePersonToBusinessPartner(int UserId, People person, bool update = true)
@@ -423,7 +532,7 @@ namespace UcbBack.Logic.B1
         public string addVoucher(int UserId, Dist_Process process)
         {
             var log = initLog(UserId, BusinessObjectType.Voucher, process.Id.ToString());
-            bool approved = false;
+            bool approved = true;
             try
             {
                 string query = "SELECT \"ParentKey\",\"LineNum\",\"AccountCode\",sum(\"Debit\") \"Debit\",sum(\"Credit\") \"Credit\", \"ShortName\", null as \"LineMemo\",\"ProjectCode\",\"CostingCode\",\"CostingCode2\",\"CostingCode3\",\"CostingCode4\",\"CostingCode5\",\"BPLId\" " +
@@ -512,7 +621,7 @@ namespace UcbBack.Logic.B1
 
                         // add header Journal Entrie Approved:
                         businessObject.ReferenceDate = date;
-                        businessObject.Memo = "Planilla prueba SDK Aprobado " + process.Branches.Abr;
+                        businessObject.Memo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + process.mes + "-" + process.gestion;
                         businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;
@@ -565,7 +674,6 @@ namespace UcbBack.Logic.B1
                     {
                         SAPbobsCOM.JournalVouchers businessObject = (SAPbobsCOM.JournalVouchers)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalVouchers);
                         // add header Vouvher:
-
                         businessObject.JournalEntries.ReferenceDate = date;
                         businessObject.JournalEntries.Memo = "Planilla prueba SDK SALOMON " + process.Branches.Abr;
                         businessObject.JournalEntries.TaxDate = date;
