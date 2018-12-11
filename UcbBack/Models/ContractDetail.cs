@@ -28,7 +28,10 @@ namespace UcbBack.Models
 
         public string PositionDescription { get; set; }
         public string Dedication { get; set; }
-        public string Linkage { get; set; }
+
+        public TableOfTables Link { get; set; }
+        [ForeignKey("Link")]
+        public int Linkage { get; set; }
 
         public int BranchesId { get; set; }
         public Branches Branches { get; set; }
@@ -40,6 +43,9 @@ namespace UcbBack.Models
         public bool AI { get; set; }
 
         public string Cause { get; set; }
+
+        public DateTime? UpdatedAt { get; set; }
+
 
         public static int GetNextId(ApplicationDbContext _context)
         {

@@ -13,7 +13,7 @@ namespace UcbBack.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public Int64 Id { set; get; }
+        public int Id { set; get; }
         public string Type { get; set; }
         public string Value { get; set; }
 

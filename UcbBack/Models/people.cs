@@ -93,6 +93,11 @@ namespace UcbBack.Models
         [MaxLength(20, ErrorMessage = "Cadena de texto muy grande")]
         public string InsuranceNumber { get; set; }
 
+        [MaxLength(250, ErrorMessage = "Cadena de texto muy grande")]
+        public string DocPath { get; set; }
+
+        public int? SAPCodeRRHH { get; set; }
+
         public bool UseMariedSurName { get; set; }
 
         public bool UseSecondSurName { get; set; }
@@ -118,11 +123,12 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    .Include(x => x.Link)
                     //.Include(x => x.Dependency.OrganizationalUnitId)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI
                                          && x.StartDate <= date
-                                         && (x.EndDate == null || x.EndDate >= date)).OrderBy(x=>x.Positions.LevelId).FirstOrDefault();
+                                         && (x.EndDate == null || x.EndDate.Value >= date)).OrderBy(x=>x.Positions.LevelId).FirstOrDefault();
             }
             else
             {
@@ -130,6 +136,7 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    .Include(x => x.Link)
                     //.Include(x => x.Dependency.OrganizationalUnitId)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI)
