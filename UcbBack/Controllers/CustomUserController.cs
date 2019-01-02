@@ -37,7 +37,8 @@ namespace UcbBack.Controllers
                     x.Id,
                     x.UserPrincipalName,
                     person = x.People.GetFullName(),
-                    x.PeopleId
+                    x.PeopleId,
+                    x.AutoGenPass
                 });
             return Ok(userlist);
 
@@ -192,6 +193,7 @@ namespace UcbBack.Controllers
             respose.UserPrincipalName = userInDB.UserPrincipalName;
             respose.PeopleId = userInDB.People.Id;
             respose.Name = userInDB.People.GetFullName();
+            respose.Gender = userInDB.People.Gender;
             return Ok(respose);
         }
 

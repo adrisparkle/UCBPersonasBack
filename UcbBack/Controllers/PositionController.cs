@@ -6,23 +6,54 @@ using System.Net.Http;
 using System.Web.Http;
 using UcbBack.Models;
 using System.Data.Entity;
+using System.Xml.Linq;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Newtonsoft.Json.Linq;
+using UcbBack.Logic;
 
 namespace UcbBack.Controllers
 {
     public class PositionsController : ApiController
     {
-        private ApplicationDbContext _context;    
+        private ApplicationDbContext _context;
+        private ValidateAuth auth;
 
         public PositionsController()
         {
             _context = new ApplicationDbContext();
+            auth = new ValidateAuth();
         }
 
         // GET api/Positions
         public IHttpActionResult Get()
         {
-            var poslist = _context.Position.Include(p=>p.Level).ToList().Select(x=>new{x.Id,x.Name,x.Level.Cod,x.Level.Category});
-            return Ok(poslist); 
+            var all = from pos in _context.Position.Include(x => x.Level)
+                join brs in _context.BranchhasPositions on pos.Id equals brs.PositionId
+                where brs.Enabled
+                select new
+                {
+                    pos.Id,
+                    pos.Name,
+                    pos.Level.Cod,
+                    pos.Level.Category,
+                    brs.BranchesId 
+                };
+            var user = auth.getUser(Request);
+            var filtered = auth.filerByRegional(all.AsQueryable(), user);
+            List<dynamic> res = new List<dynamic>();
+            foreach (var p in filtered)
+            {
+                dynamic r = new JObject();
+                r.Id = p.Id;
+                r.Name = p.Name;
+                r.Cod = p.Cod;
+                r.Category = p.Category;
+                if (!res.Any(x=>x.Id==r.Id))
+                    res.Add(r);
+            }
+
+            var xs = res.ToList().Distinct();
+            return Ok(xs); 
         }
 
         // GET api/Positions/5
