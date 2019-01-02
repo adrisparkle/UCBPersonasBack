@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Configuration;
 using System.Linq;
 using System.Web;
 using System.Xml.Serialization;
 using System.Data.Entity;
+using System.Security.Cryptography;
 using Microsoft.Ajax.Utilities;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
@@ -123,8 +125,8 @@ namespace UcbBack.Models
                     .Include(x => x.Branches)
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
+                    .Include(x => x.Dependency.OrganizationalUnit)
                     .Include(x => x.Link)
-                    //.Include(x => x.Dependency.OrganizationalUnitId)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI
                                          && x.StartDate <= date
@@ -137,7 +139,7 @@ namespace UcbBack.Models
                     .Include(x => x.Positions)
                     .Include(x => x.Dependency)
                     .Include(x => x.Link)
-                    //.Include(x => x.Dependency.OrganizationalUnitId)
+                    .Include(x => x.Dependency.OrganizationalUnit)
                     .Include(x=>x.People)
                     .Where(x => x.CUNI == this.CUNI)
                     .OrderByDescending(x => x.EndDate == null ? 1 : 0).ThenByDescending(x => x.EndDate).ThenBy(x=>x.Positions.LevelId).FirstOrDefault();
@@ -158,6 +160,8 @@ namespace UcbBack.Models
                                 && x.StartDate <= date
                                 && (x.EndDate == null || x.EndDate >= date)).OrderBy(x => x.Positions.LevelId).Select(x=>x.People).FirstOrDefault();
             // case when manager of area
+            if (manager == null)
+                return null;
             if (manager.CUNI == this.CUNI && contract.Dependency.ParentId != 0)
             {
                 manager = _contex.ContractDetails
@@ -168,12 +172,127 @@ namespace UcbBack.Models
                                 && (x.EndDate == null || x.EndDate >= date)).OrderBy(x => x.Positions.LevelId).Select(x=>x.People).FirstOrDefault();
             }
 
+            if (manager == null)
+                manager = null;
+            return manager;
+        }
+
+        public People GetLastManagerAuthorizator(ApplicationDbContext _contex = null, DateTime? date = null)
+        {
+            _contex = _contex == null ? new ApplicationDbContext() : _contex;
+            People manager;
+            var contract = GetLastContract(_contex, date);
+            date = date == null ? DateTime.Now : date;
+            manager = _contex.ContractDetails
+                .Include(x => x.Positions)
+                .Include(x => x.Positions.Level)
+                .Include(x => x.People)
+                .Where(x => x.DependencyId == contract.DependencyId
+                            && x.StartDate <= date
+                            && (x.EndDate == null || x.EndDate >= date)
+                            && (
+                                x.Positions.Level.Cod == "N1" || // RECTOR NACIONAL
+                                x.Positions.Level.Cod == "N2" || // VICERRECTOR NACIONAL
+                                x.Positions.Level.Cod == "N3" || // SECRETARIO GENERAL NACIONAL
+                                x.Positions.Level.Cod == "N4" || // AUDITOR INTERNO NACIONAL
+                                x.Positions.Level.Cod == "N5" || // DIRECTOR NACIONAL
+                                x.Positions.Level.Cod == "N6" || // COORDINADOR NACIONAL
+                                x.Positions.Level.Cod == "R1" || // RECTOR REGIONAL
+                                x.Positions.Level.Cod == "R3" || // SECRETARIA ACADEMICA || DIRECTOR REGIONAL || DIRECTOR AREA
+                                x.Positions.Level.Cod == "R4" || // JEFE DEPARTAMENTO
+                                x.Positions.Level.Cod == "R5" || // JEFE UNIDAD
+                                x.Positions.Level.Cod == "G1" || // DECANO
+                                x.Positions.Level.Cod == "G2" || // DIRECTOR
+                                x.Positions.Level.Cod == "G3" || // JEFE ACADEMICO
+                                x.Positions.Level.Cod == "G4"    // COORDINADOR ACADEMICO
+                                )
+                            ).OrderBy(x => x.Positions.LevelId).ThenBy(x=>x.StartDate).Select(x => x.People).FirstOrDefault();
+            // case when manager of area
+            var parentId = contract.Dependency.ParentId;
+            while ((manager == null || manager.CUNI == this.CUNI) && parentId != 0)
+            {
+                manager = _contex.ContractDetails
+                    .Include(x => x.Positions)
+                    .Include(x => x.People)
+                    .Where(x => x.DependencyId == parentId
+                                && x.StartDate <= date
+                                && (x.EndDate == null || x.EndDate >= date)
+                                && (
+                                    x.Positions.Level.Cod == "N1" ||
+                                    x.Positions.Level.Cod == "N2" ||
+                                    x.Positions.Level.Cod == "N3" ||
+                                    x.Positions.Level.Cod == "N4" ||
+                                    x.Positions.Level.Cod == "N5" ||
+                                    x.Positions.Level.Cod == "N6" ||
+                                    x.Positions.Level.Cod == "R1" ||
+                                    x.Positions.Level.Cod == "R3" ||
+                                    x.Positions.Level.Cod == "R4" ||
+                                    x.Positions.Level.Cod == "R5" ||
+                                    x.Positions.Level.Cod == "G1" ||
+                                    x.Positions.Level.Cod == "G2" ||
+                                    x.Positions.Level.Cod == "G3" ||
+                                    x.Positions.Level.Cod == "G4"
+                                )
+                                ).OrderBy(x => x.Positions.LevelId).ThenBy(x => x.StartDate).Select(x => x.People).FirstOrDefault();
+                parentId = _contex.Dependencies.FirstOrDefault(x => x.Id == parentId).ParentId;
+            }
+
+            if (manager == null)
+                manager = null;
             return manager;
         }
 
         public static int GetNextId(ApplicationDbContext _context)
         {
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
+
+        public void CreateInRendiciones(ApplicationDbContext _context)
+        {
+            
+            _context = _context == null ? new ApplicationDbContext() : _context;
+            var user = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == this.Id);
+            //var HashPass = user.AutoGenPass;
+            var HashPass =
+                _context.Database.SqlQuery<string>("select  to_varchar(hash_sha256(to_binary('" + user.AutoGenPass +
+                                                   "'))) from dummy").ToList()[0].ToLower();
+
+            int nextId = _context.Database.SqlQuery<int>("SELECT \"" + ConfigurationManager.AppSettings["RendicionesSchema"] + "\".\"DIMRENDUSUARIO_SEQ\".nextval FROM DUMMY;").ToList()[0];
+            string query = "insert into  " +
+                           " 	" + ConfigurationManager.AppSettings["RendicionesSchema"] + ".rend_u ( " +
+                           " 			\"U_IdU\", " +
+                           " 			\"U_Login\", " +
+                           " 			\"U_Pass\", " +
+                           " 			\"U_SuperUser\", " +
+                           " 			\"U_AppRend\", " +
+                           " 			\"U_AppExtB\", " +
+                           " 			\"U_AppUpLA\", " +
+                           " 			\"U_GenDocPre\", " +
+                           " 			\"U_NomUser\", " +
+                           " 			\"U_NomSup\", " +
+                           " 			\"U_Estado\", " +
+                           " 			\"U_AppConf\", " +
+                           " 			\"U_CardCode\", " +
+                           " 			\"U_CardName\" " +
+                           " 		) " +
+                           " 	values ( " +
+                           " 			" + nextId + ", " +
+                           " 			'" + user.UserPrincipalName + "', " +
+                           " 			'" + HashPass + "', " +
+                           " 			0, " +
+                           " 			1, " +
+                           " 			0, " +
+                           " 			0, " +
+                           " 			0, " +
+                           " 			'" + this.GetFullName() + "', " +
+                           " 			'" + this.GetLastManager().GetFullName() + "', " +
+                           " 			1, " +
+                           " 			0, " +
+                           " 			'R" + this.CUNI + "', " +
+                           " 			'R" + this.CUNI + "-" + this.GetFullName() + "' " +
+                           " 		) ";
+            var res = _context.Database.ExecuteSqlCommand(query);
+            
         }
     }
 }

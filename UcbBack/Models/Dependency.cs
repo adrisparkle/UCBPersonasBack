@@ -31,10 +31,12 @@ namespace UcbBack.Models
         public int? ParentId { get; set; }
 
         [Required(ErrorMessage = "Te olvidaste de {0}")]
-        public int OrganizationalUnitId { get; set; }
         public OrganizationalUnit OrganizationalUnit { get; set; }
+        public int OrganizationalUnitId { get; set; }
+
         [Required]
         public int BranchesId { get; set; }
+
 
         public static int GetNextId(ApplicationDbContext _context)
         {
