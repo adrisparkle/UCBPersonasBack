@@ -222,6 +222,9 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = bplid;
                     oEmployeesInfo.EmployeeBranchAssignment.Add();
 
+                    var ou = person.GetLastContract();
+                    oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
+
                     oEmployeesInfo.Update();
                     string newKey = company.GetNewObjectKey();
                     company.GetLastError(out errorCode, out errorMessage);
@@ -280,6 +283,8 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.IdNumber = person.Document;
                     //oEmployeesInfo.Department = Int32.Parse(person.GetLastContract().Dependency.Cod);
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
+                    var ou = person.GetLastContract();
+                    oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
 
                     // set Branch Code
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
@@ -358,6 +363,12 @@ namespace UcbBack.Logic.B1
                         {
                             businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
                             businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                            businessObject.BPBranchAssignment.Delete();
+                        }
+                        foreach (var b in brs)
+                        {
+                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
                             businessObject.BPBranchAssignment.Add();
                         }
                         // save new business partner
@@ -391,6 +402,78 @@ namespace UcbBack.Logic.B1
                     _context.SdkErrorLogs.Add(log);
                     _context.SaveChanges();
                     return "ERROR";
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+        }
+
+        public string addpersonToBussinesPartner(int UserId, People person)
+        {
+            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
+
+                    businessObject.CardName = person.GetFullName();
+                    businessObject.CardForeignName = person.GetFullName();
+                    businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
+                    businessObject.CardCode = "R" + person.CUNI;
+
+                    // set NIT
+                    businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                    // Set Group RRHH
+                    businessObject.GroupCode = 108;
+                    businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
+
+                    // set Branch Code
+                    var brs = _context.Branch.ToList();
+                    foreach (var b in brs)
+                    {
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        businessObject.BPBranchAssignment.Add();
+                    }
+
+                    // save new business partner
+                    businessObject.Add();
+                    // get the new code
+                    string newKey = company.GetNewObjectKey();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                            newKey = newKey.Replace("\t1", "");
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return newKey;
+                        }
+                    }
                 }
                 log.Success = false;
                 log.ErrorMessage = "SDK: Not Connected";
@@ -458,75 +541,6 @@ namespace UcbBack.Logic.B1
                 return updatePersonInBussinesPartner(UserId, person);
             }
             else return "Exist not created";
-        }
-
-        public string addpersonToBussinesPartner(int UserId, People person)
-        {
-            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
-            try
-            {
-                if (company.Connected)
-                {
-                    company.StartTransaction();
-                    SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
-
-                    businessObject.CardName = person.GetFullName();
-                    businessObject.CardForeignName = person.GetFullName();
-                    businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                    businessObject.CardCode = "R"+person.CUNI;
-
-                    // set NIT
-                    businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
-                    // Set Group RRHH
-                    businessObject.GroupCode = 108;
-                    businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
-                    
-                    
-                    // set Branch Code
-                    businessObject.BPBranchAssignment.DisabledForBP=SAPbobsCOM.BoYesNoEnum.tNO;
-                    businessObject.BPBranchAssignment.BPLID =
-                        Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
-                    businessObject.BPBranchAssignment.Add();
-                    // save new business partner
-                    businessObject.Add();
-                    // get the new code
-                    string newKey = company.GetNewObjectKey();
-                    company.GetLastError(out errorCode, out errorMessage);
-                    if (errorCode != 0)
-                    {
-                        log.Success = false;
-                        log.ErrorCode = errorCode.ToString();
-                        log.ErrorMessage = "SDK: " + errorMessage;
-                        _context.SdkErrorLogs.Add(log);
-                        _context.SaveChanges();
-                        return "ERROR";
-                    }
-                    else
-                    {
-                        if (company.InTransaction)
-                        {
-                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
-                            newKey = newKey.Replace("\t1", "");
-                            _context.SdkErrorLogs.Add(log);
-                            _context.SaveChanges();
-                            return newKey;
-                        }
-                    }
-                }
-                log.Success = false;
-                log.ErrorMessage = "SDK: Not Connected";
-                _context.SdkErrorLogs.Add(log);
-                _context.SaveChanges();
-                return "ERROR";
-            }
-            catch (Exception ex)
-            {
-                log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
-                _context.SdkErrorLogs.Add(log);
-                _context.SaveChanges();
-                return "ERROR";
-            }
         }
 
         public string addVoucher(int UserId, Dist_Process process)

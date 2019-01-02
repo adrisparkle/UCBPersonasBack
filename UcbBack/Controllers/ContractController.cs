@@ -20,6 +20,8 @@ using System.Globalization;
 using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic.B1;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
+using UcbBack.Models.ViewMoldes;
 
 
 namespace UcbBack.Controllers
@@ -42,61 +44,104 @@ namespace UcbBack.Controllers
         }
 
         // GET api/Contract
+        [HttpGet]
+        [Route("api/CrearRendiciones")]
+        public IHttpActionResult CrearRendiciones()
+        {
+            var person = _context.Person.FirstOrDefault(x => x.Id == 1584);
+            person.CreateInRendiciones(_context);
+            return Ok();
+        }
+
+        // GET api/Contract
         [Route("api/Contract")]
         public IHttpActionResult Get()
         {
-            DateTime date = DateTime.Now;
-            /*var allpeople = _context.ContractDetails.Include(p => p.People)
-                .Where(x =>(x.EndDate == null || x.EndDate > date))
-                            .Select(x => x.People).Distinct().ToList();
+            /* DateTime date = DateTime.Now;
 
-            var contDist = allpeople.Select(x => new
-            {
-                x.Id,
-                x.CUNI,
-                x.Document,
-                FullName = x.GetFullName(),
-                Dependency = x.GetLastContract(_context,DateTime.Now).Dependency.Name,
-                DependencyCod = x.GetLastContract(_context, DateTime.Now).Dependency.Cod,
-                Branches = x.GetLastContract(_context, DateTime.Now).Branches.Abr,
-                BranchesId = x.GetLastContract(_context, DateTime.Now).Dependency.BranchesId,
-                Positions = x.GetLastContract(_context, DateTime.Now).Positions.Name,
-                Dedication = x.GetLastContract(_context, DateTime.Now).Dedication,
-                Linkage = x.GetLastContract(_context, DateTime.Now).Linkage,
-                StartDate = x.GetLastContract(_context, DateTime.Now).StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
-                EndDate = x.GetLastContract(_context, DateTime.Now).EndDate == null ? null : x.GetLastContract(_context, DateTime.Now).EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
-            }).ToList();*/
+             var contplist = _context.ContractDetails
+                 .Include(p => p.Branches)
+                 .Include(p => p.Dependency)
+                 .Include(p => p.Positions)
+                 .Include(p => p.People)
+                 .Include(p => p.Link)
+                 .Where(x => (x.EndDate == null || x.EndDate > date))
+                 .OrderByDescending(x=>x.StartDate)
+                 .ToList()
+                 .Select(x => new
+                 {
+                     x.Id, 
+                     x.People.CUNI, 
+                     x.People.Document, 
+                     FullName= x.People.GetFullName(),
+                     Dependency = x.Dependency.Name, 
+                     DependencyCod = x.Dependency.Cod, 
+                     Branches = x.Branches.Abr, 
+                     BranchesId = x.Dependency.BranchesId, 
+                     Positions=x.Positions.Name, 
+                     x.Dedication,
+                     Linkage = x.Link.Value,
+                     StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
+                     EndDate = x.EndDate == null?null:x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
+                 }).ToList(); */
 
-            var contplist = _context.ContractDetails
-                .Include(p => p.Branches)
-                .Include(p => p.Dependency)
-                .Include(p => p.Positions)
-                .Include(p => p.People)
-                .Include(p => p.Link)
-                .Where(x => (x.EndDate == null || x.EndDate > date))
-                .OrderByDescending(x=>x.StartDate)
-                .ToList()
-                .Select(x => new
-                {
-                    x.Id, 
-                    x.People.CUNI, 
-                    x.People.Document, 
-                    FullName= x.People.GetFullName(),
-                    Dependency = x.Dependency.Name, 
-                    DependencyCod = x.Dependency.Cod, 
-                    Branches = x.Branches.Abr, 
-                    BranchesId = x.Dependency.BranchesId, 
-                    Positions=x.Positions.Name, 
-                    x.Dedication,
-                    Linkage = x.Link.Value,
-                    StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
-                    EndDate = x.EndDate == null?null:x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
-                }).ToList();
+            var query =
+                " select * from " +
+                "(select 	p.\"Document\", " +
+                " 		" + CustomSchema.Schema + ".clean_text(  " +
+                " 			concat(coalesce(p.\"FirstSurName\",''), " +
+                " 				concat(' ', " +
+                " 					concat(case when p.\"UseSecondSurName\"=1 then coalesce(p.\"SecondSurName\",'') else '' end, " +
+                " 						concat(' ', " +
+                " 							concat( case when p.\"UseMariedSurName\"=1 then coalesce(p.\"MariedSurName\",'') else '' end, coalesce(p.\"Names\",'')) " +
+                " 							) " +
+                " 						) " +
+                " 					) " +
+                " 				)  " +
+                " 			) as \"FullName\", " +
+                " 		x.* " +
+                " from ( " +
+                " 	select 	a.\"Id\", " +
+                " 			a.cuni, " +
+                " 			c.\"Name\" as \"Dependency\", " +
+                " 			c.\"Cod\" as \"DependencyCod\",  " +
+                " 			d.\"Abr\" as \"Branches\",  " +
+                " 			d.\"Id\" as \"BranchesId\",  " +
+                " 			b.\"Name\" as \"Positions\",  " +
+                " 			a.\"Dedication\", " +
+                " 			e.\"Value\" as \"Linkage\", " +
+                " 			a.\"StartDate\",  " +
+                " 			a.\"EndDate\",   " +
+                " 			ROW_NUMBER()  " +
+                " 				OVER 	( " +
+                " 							PARTITION BY cuni  " +
+                " 							order by 	 " +
+                " 								(case when a.\"EndDate\" is null then 1 else 0 end) desc,  " +
+                " 								a.\"EndDate\" desc, " +
+                " 								b.\"LevelId\" desc " +
+                " 						) AS row_num " +
+                " 	from " + CustomSchema.Schema + ".\"ContractDetail\" a  " +
+                " 	inner join " + CustomSchema.Schema + ".\"Position\" b " +
+                " 	on a.\"PositionsId\" = b.\"Id\" " +
+                " 	inner join " + CustomSchema.Schema + ".\"Dependency\" c " +
+                " 	on a.\"DependencyId\" = c.\"Id\" " +
+                " 	inner join " + CustomSchema.Schema + ".\"Branches\" d " +
+                " 	on c.\"BranchesId\" = d.\"Id\" " +
+                " 	inner join " + CustomSchema.Schema + ".\"TableOfTables\" e " +
+                " 	on a.\"Linkage\" = e.\"Id\" " +
+                " ) x " +
+                " inner join " + CustomSchema.Schema + ".\"People\" p " +
+                " on x.cuni = p.cuni " +
+                " where row_num = 1 " +
+                " and (x.\"EndDate\" is null or x.\"EndDate\" > current_date) " +
+                " ) f " +
+                " order By f.\"FullName\"";
+            var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
 
             //var res = auth.filerByRegional(contplist.AsQueryable(), user);
-            var res = auth.filerByRegional(contplist.AsQueryable(), user);
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
 
             return Ok(res);
         }
@@ -253,7 +298,7 @@ namespace UcbBack.Controllers
         {
             List<ContractDetail> contractInDB = null;
             DateTime date=new DateTime(2018,9,1);
-            DateTime date2=new DateTime(2018,11,29);
+            DateTime date2=new DateTime(2018,12,29);
             var people = _context.ContractDetails.Include(x=>x.People).Include(x=>x.Branches).Include(x=>x.Link).Where(x=>  (x.EndDate==null || x.EndDate>date2)).Select(x=>x.People).Distinct();
             // var people = _context.CustomUsers.Include(x => x.People).Select(x => x.People);
             int i = people.Count();
@@ -281,6 +326,7 @@ namespace UcbBack.Controllers
                 res += contract.People.MariedSurName + ";";
                 res += contract.People.Names + ";";
                 res += contract.People.BirthDate + ";";
+                res += contract.People.UcbEmail + ";";
 
 
                 res += contract.Dependency.Cod + ";";
@@ -290,11 +336,18 @@ namespace UcbBack.Controllers
                 res += o.Cod + ";";
                 res += o.Name + ";";
 
-
                 res += contract.Positions.Name + ";";
                 res += contract.Dedication + ";";
                 res += contract.Link.Value + ";";
                 res += contract.AI + ";";
+                var lm = contract.People.GetLastManagerAuthorizator(_context);
+                res += lm==null?";":lm.CUNI + ";";
+                res += lm==null?";":lm.GetFullName() + ";";
+                var lmlc = lm==null?null:lm.GetLastContract(_context);
+                res += lmlc == null ? ";" : lmlc.Positions.Name + ";";
+                res += lmlc == null ? ";" : lmlc.Dependency.Cod + ";";
+                res += lmlc == null ? ";" : lmlc.Dependency.Name + ";";
+
                 var b = br.FirstOrDefault(x => x.Id == contract.Dependency.BranchesId);
                 res += b.Abr + ";";
                 res += b.Name;

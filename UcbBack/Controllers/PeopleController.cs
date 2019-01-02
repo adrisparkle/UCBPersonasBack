@@ -11,6 +11,7 @@ using UcbBack.Logic;
 using UcbBack.Models;
 using System.Data.Entity;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
@@ -98,10 +99,37 @@ namespace UcbBack.Controllers
             return res;
         }
 
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/people/UploadCI/{id}")]
+        public Task<HttpResponseMessage> getCI(int id)
+        {
+            HttpRequestMessage httpRequestMessage = Request;
+            HttpResponseMessage httpResponseMessage = httpRequestMessage.CreateResponse(HttpStatusCode.NotFound);
+
+            var person = _context.Person.FirstOrDefault(x => x.Id == id);
+            if (person == null)
+                return System.Threading.Tasks.Task.FromResult(httpResponseMessage);
+            if (person.DocPath == null)
+                return System.Threading.Tasks.Task.FromResult(httpResponseMessage);
+            var dataBytes = File.ReadAllBytes(person.DocPath);
+            var CIStuff = new MemoryStream(dataBytes);  
+
+            httpRequestMessage = Request;
+            httpResponseMessage = httpRequestMessage.CreateResponse(HttpStatusCode.OK);
+            httpResponseMessage.Content = new StreamContent(CIStuff);
+            //httpResponseMessage.Content = new ByteArrayContent(bookStuff.ToArray());  
+            httpResponseMessage.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+            var filename = person.DocPath.Split('\\');
+            httpResponseMessage.Content.Headers.ContentDisposition.FileName = filename[filename.Length - 1];
+            httpResponseMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+            return System.Threading.Tasks.Task.FromResult(httpResponseMessage);
+
+        }
 
         [System.Web.Http.HttpPost]
         [System.Web.Http.Route("api/people/UploadCI/{id}")]
-        public HttpResponseMessage Index(int id)
+        public HttpResponseMessage UploadCI(int id)
         {
             if (!Request.Content.IsMimeMultipartContent("form-data"))
                 return Request.CreateResponse(HttpStatusCode.InternalServerError);
@@ -128,16 +156,16 @@ namespace UcbBack.Controllers
                         type != "image/pjpeg" &&
                         type != "image/gif" &&
                         type != "image/x-png" &&
+                        type != "application/pdf" &&
                         type != "image/png")
                     {
                         response.StatusCode = HttpStatusCode.BadRequest;
-                        response.Content = new StringContent("Invalid File");
+                        response.Content = new StringContent("Invalid File: " + type);
                         return response;
                     }
                     string path = Path.Combine(HttpContext.Current.Server.MapPath("~/Images/PeopleDocuments"),
                         (person.CUNI + Path.GetExtension(file.FileName)));
                     file.SaveAs(path);
-
                     person.DocPath = path;
                     _context.SaveChanges();
                     response.StatusCode = HttpStatusCode.OK;
@@ -148,7 +176,7 @@ namespace UcbBack.Controllers
                 catch (Exception ex)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent("Invalid File"+ex.Message);
+                    response.Content = new StringContent("{\"Message\": \"Invalid File" + ex.Message + "\"}");
                     return response;
                 }
             }
@@ -208,7 +236,18 @@ namespace UcbBack.Controllers
 
             if (personInDB == null)
                 return NotFound();
-
+            var ADauth = new ADClass();
+            var usr = auth.getUser(Request);
+            var rols = ADauth.getUserRols(usr);
+            var canUpdatePending = false;
+            foreach (var rol in rols)
+            {
+                if (rol.Name == "GPS Admin" || rol.Name == "Admin" )
+                {
+                    canUpdatePending = true;
+                    break;
+                }
+            }
             dynamic res = new JObject();
             res.Id = personInDB.Id;
             res.CUNI = personInDB.CUNI;
@@ -222,6 +261,8 @@ namespace UcbBack.Controllers
             res.MariedSurName = personInDB.MariedSurName == null ? "" : personInDB.MariedSurName;
             res.UseMariedSurName = personInDB.UseMariedSurName;
             res.UseSecondSurName = personInDB.UseSecondSurName;
+            res.Pending = personInDB.Pending;
+            res.canUpdatePending = personInDB.Pending && canUpdatePending;
             var c = personInDB.GetLastContract(_context, date:DateTime.Now);
             res.Contract = c != null;
             res.ContractId = c == null ? (dynamic) "" : c.Id;
@@ -255,7 +296,32 @@ namespace UcbBack.Controllers
             People personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
             if (personInDB == null)
                 return NotFound();
-            return Ok(personInDB.GetLastManager());
+            return Ok(personInDB.GetLastManagerAuthorizator());
+        }
+
+
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/addalltoSAP")]
+        public IHttpActionResult addalltoSAP()
+        {
+            var date = new DateTime(2017, 1, 1);
+            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
+                Where(y => (y.EndDate > date || y.EndDate == null)
+                ).Select(x => x.People).Distinct().ToList();
+            B1Connection b1 = B1Connection.Instance();
+            var usr = auth.getUser(Request);
+            int i = 0;
+            foreach (var p in person)
+            {
+                i++;
+                var X = b1.AddOrUpdatePerson(usr.Id, p);
+                if (X.Contains("ERROR"))
+                {
+                    X = "";
+                }
+            }
+
+            return Ok();
         }
 
         [System.Web.Http.HttpGet]
@@ -286,27 +352,14 @@ namespace UcbBack.Controllers
                 "lentes"
             });
 
-        DateTime date = new DateTime(2017,1,1);
+        DateTime date = new DateTime(2018,1,1);
             //todo run for all people   solo fata pasar fechas de corte
             /*var usr = _context.CustomUsers.Select(x => x.PeopleId).ToList();*/
             List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
                 Where(y => (y.EndDate > date || y.EndDate == null)
                     ).Select(x => x.People).Distinct().ToList();
 
-            B1Connection b1 = B1Connection.Instance();
-            var usr = auth.getUser(Request);
-            int i = 0;
-            foreach (var p in person)
-            {
-                i++;
-                var X = b1.AddOrUpdatePerson(usr.Id,p);
-                if (X.Contains("ERROR"))
-                {
-                    X = "";
-                }
-            }
-
-            /*Random rnd = new Random();
+            Random rnd = new Random();
             foreach (var pe in person)
             {
                 //var tt = activeDirectory.findUser(pe);
@@ -319,20 +372,17 @@ namespace UcbBack.Controllers
                 var ex = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == pe.Id);
                 if (ex == null)
                 {
-                    activeDirectory.addUser(pe, pass);
+                    activeDirectory.adddOrUpdate(pe, pass);
                     _context.SaveChanges();
                     var account = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == pe.Id);
                     account.AutoGenPass = pass;
                     _context.SaveChanges();
                 }
-                
-            }*/
-            //activeDirectory.createGroup("");
-            //var yoo = _context.Person.FirstOrDefault(x => x.CUNI == "RFA940908");
-           // activeDirectory.AddUserToGroup(_context.CustomUsers.FirstOrDefault(x => x.PeopleId == yoo.Id).UserPrincipalName, "Personas.Admin");
-            //var yo = activeDirectory.findUser(_context.Person.FirstOrDefault(x => x.CUNI == "AMG680422"));
             
-            return Ok();
+            }
+            var per = _context.Person.FirstOrDefault(x => x.CUNI == "AEC801205");
+            var r = activeDirectory.findUser(per);
+            return Ok(r);
         }
         // POST api/People
         [System.Web.Http.HttpPost]
@@ -385,7 +435,11 @@ namespace UcbBack.Controllers
             return Created(new Uri(Request.RequestUri + "/" + person.Id), res);
         }
 
-        
+        [System.Web.Http.NonAction]
+        private string cleanText(string text)
+        {
+            return text == null ? null : Regex.Replace(text.ToUpper(), @"[\d]", string.Empty).ToUpper();
+        }
 
         // PUT api/People/5
         [System.Web.Http.HttpPut]
@@ -398,31 +452,50 @@ namespace UcbBack.Controllers
             People personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
             if (personInDB == null)
                 return NotFound();
+            person = validator.CleanName(person);
             //--------------------------REQUIRED COLS--------------------------
-            personInDB.TypeDocument = person.TypeDocument;
+            personInDB.TypeDocument = cleanText(person.TypeDocument);
             personInDB.Document = person.Document;
-            personInDB.Ext = person.Ext;
-            personInDB.Names = person.Names;
-            personInDB.FirstSurName = person.FirstSurName;
-            personInDB.SecondSurName = person.SecondSurName;
+            personInDB.Ext = cleanText(person.Ext);
+            personInDB.Names = cleanText(person.Names);
+            personInDB.FirstSurName = cleanText(person.FirstSurName);
+            personInDB.SecondSurName = cleanText(person.SecondSurName);
             personInDB.BirthDate = person.BirthDate;
-            personInDB.Gender = person.Gender;
-            personInDB.Nationality = person.Nationality;
+            personInDB.Gender = cleanText(person.Gender);
+            personInDB.Nationality = cleanText(person.Nationality);
             personInDB.UseMariedSurName = person.UseMariedSurName;
             personInDB.UseSecondSurName = person.UseSecondSurName;
             //------------------------NON REQUIRED COLS--------------------------
-            personInDB.MariedSurName = person.MariedSurName;
+            personInDB.MariedSurName = cleanText(person.MariedSurName);
             personInDB.PhoneNumber = person.PhoneNumber;
             personInDB.PersonalEmail = person.PersonalEmail;
             personInDB.OfficePhoneNumber = person.OfficePhoneNumber;
             personInDB.OfficePhoneNumberExt = person.OfficePhoneNumberExt;
             personInDB.HomeAddress = person.HomeAddress;
             personInDB.UcbEmail = person.UcbEmail;
-            personInDB.AFP = person.AFP;
+            personInDB.AFP = cleanText(person.AFP);
             personInDB.NUA = person.NUA;
             personInDB.Insurance = person.Insurance;
             personInDB.InsuranceNumber = person.InsuranceNumber;
 
+
+            var ADauth = new ADClass();
+            var usr = auth.getUser(Request);
+            var rols = ADauth.getUserRols(usr);
+            var canUpdatePending = false;
+            foreach (var rol in rols)
+            {
+                if (rol.Name == "GPS Admin" || rol.Name == "Admin")
+                {
+                    canUpdatePending = true;
+                    break;
+                }
+            }
+
+            if (canUpdatePending)
+            {
+                personInDB.Pending = person.Pending;
+            }
             _context.SaveChanges();
             return Ok(personInDB);
         }
