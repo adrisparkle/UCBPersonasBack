@@ -30,8 +30,8 @@ namespace UcbBack.Models
         [Column("Parent")]
         public int? ParentId { get; set; }
 
-        [Required(ErrorMessage = "Te olvidaste de {0}")]
         public OrganizationalUnit OrganizationalUnit { get; set; }
+        [Required(ErrorMessage = "Te olvidaste de {0}")]
         public int OrganizationalUnitId { get; set; }
 
         [Required]
