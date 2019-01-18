@@ -266,6 +266,7 @@ namespace UcbBack.Logic
                         {
                             if (!personValidator.IspersonDependency(p, strdep, date, format))
                             {
+                                res = false;
                                 paintXY(dependency, i, XLColor.Red, "Esta Persona NO se encuentra en esta Dependencia, según la base de datos nacional\n");
                             }
                         }

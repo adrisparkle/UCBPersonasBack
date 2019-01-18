@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
@@ -19,9 +20,11 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models;
 using System.Net.Http.Headers;
+using System.Security.AccessControl;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNet.Identity;
+using Sap.Data.Hana;
 using UcbBack.Logic;
 using UcbBack.Logic.B1;
 using UcbBack.Models.Dist;
@@ -250,46 +253,57 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (!((IDictionary<string, object>)o).ContainsKey("mes")
-                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
-                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
-                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                if (!((IDictionary<string, object>) o).ContainsKey("mes")
+                    || !((IDictionary<string, object>) o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>) o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>) o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>) o).ContainsKey("excelStream")
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
-                    response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
+                    response.Content =
+                        new StringContent(
+                            "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
-                string realFileName="";
+                string realFileName = "";
                 if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "PLAN", out realFileName))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: "+realFileName+"\"}");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " +
+                        realFileName + "\"}");
                     response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
                     return response;
                 }
 
                 int userid = 0;
-                if (!Int32.TryParse(Request.Headers.GetValues("id").First(),out userid))
+                if (!Int32.TryParse(Request.Headers.GetValues("id").First(), out userid))
                 {
                     response.StatusCode = HttpStatusCode.Unauthorized;
                     return response;
                 }
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Payroll, userid, o.fileName.ToString());
+
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen,
+                    ExcelFileType.Payroll, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
-                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
+                    response.Content =
+                        new StringContent(
+                            "Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                ExcelFile = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
-                
+                ExcelFile = new PayrollExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion,
+                    o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+
                 if (ExcelFile.ValidateFile())
                 {
                     ExcelFile.toDataBase();
@@ -299,6 +313,7 @@ namespace UcbBack.Controllers
                     response.Content = new StringContent("Se subio el archivo correctamente.");
                     return response;
                 }
+
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
                 return ExcelFile.toResponse();
@@ -306,7 +321,8 @@ namespace UcbBack.Controllers
             catch (System.ArgumentException e)
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
+                response.Headers.Add("UploadErrors",
+                    "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -315,9 +331,26 @@ namespace UcbBack.Controllers
             {
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
+                response.Headers.Add("UploadErrors",
+                    "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
+                return response;
+            }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
             catch (System.Exception e)
@@ -448,6 +481,22 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
+                return response;
+            }
             catch (System.Exception e)
             {
                 Console.WriteLine(e);
@@ -571,6 +620,22 @@ namespace UcbBack.Controllers
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
+                return response;
+            }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
             catch (System.Exception e)
@@ -698,6 +763,22 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
+                return response;
+            }
             catch (System.Exception e)
             {
                 Console.WriteLine(e);
@@ -821,6 +902,22 @@ namespace UcbBack.Controllers
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
+                return response;
+            }
             catch (System.Exception e)
             {
                 Console.WriteLine(e);
@@ -942,6 +1039,22 @@ namespace UcbBack.Controllers
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
+                return response;
+            }
+            catch (HanaException e)
+            {
+                if (e.NativeError == 258)
+                {
+                    Console.WriteLine(e);
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Content = new StringContent("Error conexion SAP");
+                    return response;
+                }
+                Console.WriteLine(e);
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
             catch (System.Exception e)
@@ -1083,9 +1196,9 @@ namespace UcbBack.Controllers
         public IHttpActionResult Process(int id)
         {
 
-            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State != ProcessState.CANCELED || p.State != ProcessState.INSAP ));
+            var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State != ProcessState.CANCELED && p.State != ProcessState.INSAP ));
             if (processInDB == null)
-                return NotFound();
+                return BadRequest("No se Puede borrar este Proceso.");
             processInDB.State = ProcessState.CANCELED;
             _context.SaveChanges();
 
@@ -1112,7 +1225,11 @@ namespace UcbBack.Controllers
             }
 
             string query =
-                "SELECT a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
+                "SELECT " +
+                /*Start TEST join personas*/         
+                " p.\"FirstSurName\" \"Paterno\", p.\"SecondSurName\" \"Materno\", p.\"Names\" \"Nombres\", " +
+                /*END TEST join personas*/         
+                " a.\"Document\" \"Documento\",a.\"TipoEmpleado\",a.\"Dependency\" \"Dependencia\",a.\"PEI\"," +
                 " a.\"PlanEstudios\",a.\"Paralelo\",a.\"Periodo\",a.\"Project\" \"Proyecto\",a.\"BussinesPartner\" \"SocioNegocio\"," +
                 " a.\"Monto\" \"MontoBase\",a.\"Porcentaje\",a.\"MontoDividido\",a.\"segmentoOrigen\"," +
                 " b.\"mes\",b.\"gestion\",e.\"Name\" as Segmento ,d.\"Concept\" \"Concepto\",d.\"Name\" as CuentasContables,d.\"Indicator\" \"Indicador\",g.\"Cod\" \"UnidadOrganizacional\" " +
@@ -1131,7 +1248,11 @@ namespace UcbBack.Controllers
                 " LEFT JOIN \"" + CustomSchema.Schema + "\".\"Dependency\" f " +
                 " on f.\"Cod\" = a.\"Dependency\" " +
                 " LEFT JOIN \"" + CustomSchema.Schema + "\".\"OrganizationalUnit\" g " +
-                " on g.\"Id\" = f.\"OrganizationalUnitId\" ";
+                " on g.\"Id\" = f.\"OrganizationalUnitId\" " +
+                /*Start TEST join personas*/               
+                " LEFT JOIN \"" + CustomSchema.Schema + "\".\"People\" p" +
+                " on p.\"Document\"= a.\"Document\"";
+                /*END TEST join personas*/         
             IEnumerable<Distribution> dist = _context.Database.SqlQuery<Distribution>(query).ToList();
 
             var ex = new XLWorkbook();
@@ -1487,6 +1608,11 @@ namespace UcbBack.Controllers
             {
                 response.StatusCode = HttpStatusCode.GatewayTimeout;
             }
+            else
+            {
+                pro.State = ProcessState.INSAP;
+                _context.SaveChanges();
+            }
             
             return response;
         }
@@ -1521,8 +1647,7 @@ namespace UcbBack.Controllers
                 .FirstOrDefault(x=> x.BranchesId==pro.BranchesId 
                                     && x.mes==lastMonth
                                     && x.gestion == lastGestion
-                                    //&& x.State == ProcessState.INSAP
-                                    && x.State == ProcessState.PROCESSED
+                                    && (x.State == ProcessState.INSAP || x.State == ProcessState.PROCESSED)
                                     );
 
             if (lastPro == null)

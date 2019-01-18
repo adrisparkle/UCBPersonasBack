@@ -94,8 +94,94 @@ namespace UcbBack.Logic.ExcelFiles
             bool v7 = ValidateLiquidoPagable();
             bool v8 = ValidatenoZero();
             // todo Validate people test
-            bool v9 = true;//validateAllPeopleInPayroll();
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9;
+            bool v9 = validateAllPeopleInPayroll();
+            // HB
+            bool v10 = ValidateNoNegative(6);
+            // Bono
+            bool v11 = ValidateNoNegative(7);
+            // Otros Ingresos
+            bool v12 = ValidateNoNegative(8);
+            // Ingresos Docencia
+            bool v13 = ValidateNoNegative(9);
+            // Ingresos Otras Actividades Academicas
+            bool v14 = ValidateNoNegative(10);
+            // Reintegro
+            bool v15 = ValidateNoNegative(11);
+            // Total Ganado
+            bool v16 = ValidateNoNegative(12);
+            // Aporte AFP
+            bool v17 = ValidateNoNegative(14);
+            // IVA
+            bool v18 = ValidateNoNegative(15);
+            // Descuentos
+            bool v19 = ValidateNoNegative(16);
+            // Total Descuentos
+            bool v20 = ValidateNoNegative(17);
+            // Liquido Pagable
+            bool v21 = ValidateNoNegative(18);
+            // Horas Trabajadas
+            bool v22 = ValidateNoNegative(22);
+            // Aporte Patronal AFP
+            bool v23 = ValidateNoNegative(24);
+            // Aporte Patronal SCP
+            bool v24 = ValidateNoNegative(26);
+            // Provision Aguinaldo
+            bool v25 = ValidateNoNegative(27);
+            // Provision Prima
+            bool v26 = ValidateNoNegative(28);
+            // Provision Indeminizacion
+            bool v27 = ValidateNoNegative(29);
+            // Socio de Negocio AFP
+            bool v28 = ValidateSN(13);
+            // Socio de Negocio SSU
+            bool v29 = ValidateSN(25);
+            bool Negativos = v10 && v11 && v12 && v13 && v14 && v15 && v16 && v17 && v18 && v19 && v20 && v21 && v22 &&
+                             v23 && v24 && v25 && v26 && v27;
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9 && Negativos && v28 && v29;
+        }
+
+        public bool ValidateSN(int col, int sheet = 1)
+        {
+            bool res = true;
+            string comment = "Este Socio de Negocio no corresponde a la Regional.";
+            int sn = Int32.Parse(this.segmentoOrigen);
+            var reg = _context.Branch.FirstOrDefault(x => x.Id == sn);
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var l = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                if (!wb.Worksheet(sheet).Cell(i, col).Value.ToString().StartsWith(reg.InicialSN))
+                {
+                    res = false;
+                    paintXY(col, i, XLColor.Red, comment);
+                }
+            }
+            valid = valid && res;
+            return valid;
+        }
+
+        public bool ValidateNoNegative(int col, int sheet = 1)
+        {
+            bool res = true;
+            string comment = "Este Valor no puede ser negativo.";
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            var l = UsedRange.LastRow().RowNumber();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                double nz = -1;
+                if (Double.TryParse(wb.Worksheet(sheet).Cell(i, col).Value.ToString(), out nz))
+                {
+                    if (nz<0)
+                    {
+                        res = false;
+                        paintXY(col, i, XLColor.Red, comment);
+                    }
+                }
+            }
+            valid = valid && res;
+            if (!res)
+                addError("Valor negativo", "Existen columnas que no pueden ser negativas");
+            return valid;
         }
 
         public bool ValidatenoZero(int sheet = 1)
@@ -119,6 +205,8 @@ namespace UcbBack.Logic.ExcelFiles
                 }
             }
             valid = valid && res;
+            if(!res)
+                addError("Valor cero", "Existen columnas que no pueden ser cero");
             return res;
         }
 
@@ -185,9 +273,10 @@ namespace UcbBack.Logic.ExcelFiles
 
         private bool validateAllPeopleInPayroll()
         {
+            var br = Int32.Parse(this.segmentoOrigen);
             var date = new DateTime(Int32.Parse(this.gestion), Int32.Parse(this.mes),1);
-            var active = _context.ContractDetails.Include(x=>x.People).Where(x=> x.AI && x.StartDate <= date
-                                                        && (x.EndDate == null || x.EndDate >= date));
+            var active = _context.ContractDetails.Include(x=>x.Dependency).Include(x=>x.People).Where(x=> x.StartDate <= date
+                                                        && (x.EndDate == null || x.EndDate >= date) && x.Dependency.BranchesId == br).ToList();
             IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
             List<string> payrollCunis = new List<string>();
             // generate list 
@@ -197,12 +286,13 @@ namespace UcbBack.Logic.ExcelFiles
             }
 
             var res = active.Where(x => !payrollCunis.Contains(x.CUNI));
-
+            var str = "Las siguientes personas se encuentran activas en el sistema pero no se las registró en planillas:";
             foreach (var p in res)
             {
-                addError("Personas Faltantes", "La persona: "+ p.People.GetFullName()+" se encuentra activa en el sistema pero no se la registró en planillas." );
+                str+= "\n -"+ p.People.GetFullName();
             }
-
+            if(res.Count()>0)
+                addError("Personas Faltantes", str);
             return res.Count()==0;
         }
 
@@ -215,30 +305,30 @@ namespace UcbBack.Logic.ExcelFiles
             payroll.FirstSurName = wb.Worksheet(sheet).Cell(row, 3).Value.ToString();
             payroll.SecondSurName = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
             payroll.MariedSurName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
-            payroll.BasicSalary = strToDecimal(row, 6);
-            payroll.AntiquityBonus = strToDecimal(row, 7);
-            payroll.OtherIncome = strToDecimal(row, 8);
-            payroll.TeachingIncome = strToDecimal(row, 9);
-            payroll.OtherAcademicIncomes = strToDecimal(row, 10);
-            payroll.Reintegro = strToDecimal(row, 11);
-            payroll.TotalAmountEarned = strToDecimal(row, 12);
+            payroll.BasicSalary = Math.Round(strToDecimal(row, 6), 2);
+            payroll.AntiquityBonus = Math.Round(strToDecimal(row, 7), 2);
+            payroll.OtherIncome = Math.Round(strToDecimal(row, 8), 2);
+            payroll.TeachingIncome = Math.Round(strToDecimal(row, 9), 2);
+            payroll.OtherAcademicIncomes = Math.Round(strToDecimal(row, 10), 2);
+            payroll.Reintegro = Math.Round(strToDecimal(row, 11), 2);
+            payroll.TotalAmountEarned = Math.Round(strToDecimal(row, 12), 2);
             payroll.AFP = wb.Worksheet(sheet).Cell(row, 13).Value.ToString();
-            payroll.AFPLaboral = strToDecimal(row, 14);
-            payroll.RcIva = strToDecimal(row, 15);
-            payroll.Discounts = strToDecimal(row, 16);
-            payroll.TotalAmountDiscounts = strToDecimal(row, 17);
-            payroll.TotalAfterDiscounts = strToDecimal(row, 18);
+            payroll.AFPLaboral = Math.Round(strToDecimal(row, 14), 2);
+            payroll.RcIva = Math.Round(strToDecimal(row, 15), 2);
+            payroll.Discounts = Math.Round(strToDecimal(row, 16), 2);
+            payroll.TotalAmountDiscounts = Math.Round(strToDecimal(row, 17), 2);
+            payroll.TotalAfterDiscounts = Math.Round(strToDecimal(row, 18), 2);
             payroll.CUNI = wb.Worksheet(sheet).Cell(row, 19).Value.ToString();
             payroll.EmployeeType = wb.Worksheet(sheet).Cell(row, 20).Value.ToString();
             payroll.PEI = wb.Worksheet(sheet).Cell(row, 21).Value.ToString();
             payroll.WorkedHours = strToDouble(row, 22);
             payroll.Dependency = wb.Worksheet(sheet).Cell(row, 23).Value.ToString();
-            payroll.AFPPatronal = strToDecimal(row, 24);
+            payroll.AFPPatronal = Math.Round(strToDecimal(row, 24), 2);
             payroll.IdentificadorSSU = wb.Worksheet(sheet).Cell(row, 25).Value.ToString();
-            payroll.SeguridadCortoPlazoPatronal = strToDecimal(row, 26);
-            payroll.ProvAguinaldo = strToDecimal(row, 27);
-            payroll.ProvPrimas = strToDecimal(row, 28);
-            payroll.ProvIndeminizacion = strToDecimal(row, 29);
+            payroll.SeguridadCortoPlazoPatronal = Math.Round(strToDecimal(row, 26), 2);
+            payroll.ProvAguinaldo = Math.Round(strToDecimal(row, 27), 2);
+            payroll.ProvPrimas = Math.Round(strToDecimal(row, 28), 2);
+            payroll.ProvIndeminizacion = Math.Round(strToDecimal(row, 29), 2);
             payroll.ProcedureTypeEmployee = payroll.EmployeeType;
 
             payroll.Porcentaje = 0m;

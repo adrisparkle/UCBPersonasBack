@@ -11,6 +11,9 @@ namespace UcbBack.Models.Not_Mapped
     [NotMapped]
     public class Distribution
     {
+        public string Paterno { get; set; }
+        public string Materno { get; set; }
+        public string Nombres { get; set; }
         public string Documento { get; set; }
         public string TipoEmpleado { get; set; }
         public string Dependencia { get; set; }
