@@ -23,6 +23,14 @@ namespace UcbBack.Models.Auth
         public DateTime ?TokenCreatedAt { get; set; }
         public DateTime ?RefreshTokenCreatedAt { get; set; }
         public string AutoGenPass { get; set; }
+        public string TipoLicenciaSAP { get; set; }
+        public bool? CajaChica { get; set; }
+        public bool? SolicitanteCompras { get; set; }
+        public bool? AutorizadorCompras { get; set; }
+        public bool? Rendiciones { get; set; }
+        [ForeignKey("AuthPeopleId")]
+        public People Auth { get; set; }
+        public int? AuthPeopleId { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {
