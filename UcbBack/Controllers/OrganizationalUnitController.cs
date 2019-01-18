@@ -20,7 +20,7 @@ namespace UcbBack.Controllers
         // GET api/OrganizationalUnit
         public IHttpActionResult Get()
         {
-            return Ok(_context.OrganizationalUnits.ToList());
+            return Ok(_context.OrganizationalUnits.OrderBy(x=>x.Cod).ToList());
         }
 
         // GET api/OrganizationalUnit/5
