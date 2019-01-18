@@ -247,6 +247,70 @@ namespace UcbBack.Models
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_People_sqs\".nextval FROM DUMMY;").ToList()[0];
         }
 
+        public void GetPerfilRendiciones(out int id,out string nom)
+        {
+            var reg = this.GetLastContract().Dependency.BranchesId;
+            switch (reg)
+            {
+                case 2: //TJA
+                    id = 4;
+                    nom = "RENDICIONES_TJA-Moneda Local(BS)";
+                    break;
+                case 3: //CBB
+                    id = 2;
+                    nom = "RENDICIONES_CBB-Moneda Local(BS)";
+                    break;
+                case 7: //UCE
+                    id = 7;
+                    nom = "RENDICIONES_UCE-Moneda Local(BS)";
+                    break;
+                case 16: //SC
+                    id = 3;
+                    nom = "RENDICIONES_SCZ-Moneda Local(BS)";
+                    break;
+                case 17: //LP
+                    id = 1;
+                    nom = "RENDICIONES_LPZ-Moneda Local(BS)";
+                    break;
+                case 18: //EPC
+                    id = 5;
+                    nom = "RENDICIONES_EPC-Moneda Local(BS)";
+                    break;
+                case 22: //TEO
+                    id = 6;
+                    nom = "RENDICIONES_TEO-Moneda Local(BS)";
+                    break;
+                default:
+                    id = 0;
+                    nom = "";
+                    break;
+            }
+        }
+
+        public string GetContador()
+        {
+            var reg = this.GetLastContract().Dependency.BranchesId;
+            switch (reg)
+            {
+                case 2: //TJA
+                    return "DELGADILLO APARICIO EDGAR";
+                case 3: //CBB
+                    return "PEREDO GUMUCIO JONNY HAAMET";
+                case 6: //UCE
+                    return "AGUIRRE RIOS GLORIA DORIS";
+                case 16: //SC
+                    return "CAMACHO MORENO MARGARITA MARCIA";
+                case 17: //LP
+                    return "ALDUNATE MORALES NANCY JAEL";
+                case 18: //EPC
+                    return "ALIAGA CALCINA LIZ MARGOTH";
+                case 22: //TEO
+                    return "PEREDO GUMUCIO JONNY HAAMET";
+                default:
+                    return null;
+            }
+        }
+
         public void CreateInRendiciones(ApplicationDbContext _context)
         {
             
@@ -285,14 +349,28 @@ namespace UcbBack.Models
                            " 			0, " +
                            " 			0, " +
                            " 			'" + this.GetFullName() + "', " +
-                           " 			'" + this.GetLastManager().GetFullName() + "', " +
+                           " 			'" + this.GetContador() + "', " +
                            " 			1, " +
                            " 			0, " +
                            " 			'R" + this.CUNI + "', " +
                            " 			'R" + this.CUNI + "-" + this.GetFullName() + "' " +
                            " 		) ";
+
             var res = _context.Database.ExecuteSqlCommand(query);
-            
+
+            int idperfil;
+            string nomperfil;
+            this.GetPerfilRendiciones(out idperfil, out nomperfil);
+
+            string query2 = "insert into \"" + ConfigurationManager.AppSettings["RendicionesSchema"] + "\".\"REND_PRM\" (U_IDUSUARIO, U_IDPERFIL, U_NOMBREPERFIL) " +
+                            " values (" +
+                            nextId+ ", " +
+                            idperfil + ",'" +
+                            nomperfil + "'" +
+                            ")";
+
+            var res2 = _context.Database.ExecuteSqlCommand(query2);
+
         }
     }
 }
