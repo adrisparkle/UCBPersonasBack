@@ -36,6 +36,7 @@ namespace UcbBack.Controllers
                     x.InitialsInterRegional,
                     x.SerieComprobanteContalbeSAP,
                     x.SocioGenericDerechosLaborales,
+                    x.InicialSN,
                     x.CodigoSAP
                 }).OrderBy(x=>x.Id);
 
@@ -90,6 +91,7 @@ namespace UcbBack.Controllers
             brachInDB.SerieComprobanteContalbeSAP = branch.SerieComprobanteContalbeSAP;
             brachInDB.SocioGenericDerechosLaborales = branch.SocioGenericDerechosLaborales;
             brachInDB.CodigoSAP = branch.CodigoSAP;
+            brachInDB.InicialSN = branch.InicialSN;
 
             _context.SaveChanges();
             return Ok(brachInDB);
