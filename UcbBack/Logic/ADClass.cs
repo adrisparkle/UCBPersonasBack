@@ -8,6 +8,7 @@ using System.Web;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
+using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json;
 
 namespace UcbBack.Logic
@@ -27,6 +28,20 @@ namespace UcbBack.Logic
         {
             hanaval = new HanaValidator();
         }
+
+        public void adddOrUpdate(People person, string tempPass = null, bool update=false)
+        {
+            var p = findUser(person);
+            if (p == null)
+            {
+                addUser(person,tempPass);
+            }
+            else if (update)
+            {
+                updateUser(person);
+            }
+        }
+
         public void addUser(People person,string tempPass=null)
         {
             try
@@ -46,17 +61,18 @@ namespace UcbBack.Logic
                     {
                         var initials = person.FirstSurName.ToCharArray()[0].ToString() +
                                        person.Names.ToCharArray()[0].ToString();
+                        up.DisplayName = person.GetFullName();
+                        up.Name = up.DisplayName;                        
                         up.GivenName = person.Names;
                         //up.MiddleName = person.SecondSurName;
                         up.Surname = person.FirstSurName;
-                        up.DisplayName = person.GetFullName();
-                        up.Name = up.DisplayName;
                         up.SamAccountName = getSamAcoutName(person);
                         up.UserPrincipalName = up.SamAccountName + "@UCB.BO";
                         up.SetPassword(tempPass==null?person.Document:tempPass); // user ChangePassword to change password lol
                         up.VoiceTelephoneNumber = person.PhoneNumber;
                         up.EmailAddress = person.UcbEmail;
                         up.EmployeeId = person.CUNI;
+                        up.PasswordNeverExpires = true;
                         up.Enabled = true;
                         //up.ExpirePasswordNow();
 
@@ -87,6 +103,63 @@ namespace UcbBack.Logic
             
         }
 
+        public void updateUser(People person)
+        {
+            try
+            {
+                var contract = person.GetLastContract();
+
+                var branchGroup = contract.Branches.ADGroupName;
+
+                using (PrincipalContext ouContex = new PrincipalContext(ContextType.Domain,
+                    Domain,
+                    "OU=" + contract.Branches.ADOUName + ",DC=UCB,DC=BO",
+                    "ADMNALRRHH",
+                    "Rrhh1234"))
+                {
+                    var usr = findUser(person);
+                    using (UserPrincipal up = (UserPrincipal)usr)
+                    {
+                        var initials = person.FirstSurName.ToCharArray()[0].ToString() +
+                                       person.Names.ToCharArray()[0].ToString();
+                        up.GivenName = person.Names;
+                        up.Surname = person.FirstSurName;
+                        up.DisplayName = person.GetFullName();
+                        up.Name = up.DisplayName;
+                        //up.SamAccountName = getSamAcoutName(person);
+                        //up.UserPrincipalName = up.SamAccountName + "@UCB.BO";
+                        up.VoiceTelephoneNumber = person.PhoneNumber;
+                        up.EmailAddress = person.UcbEmail;
+                        up.EmployeeId = person.CUNI;
+                        up.PasswordNeverExpires = true;
+                        up.Enabled = true;
+
+                        up.Save();
+                        AddUserToGroup(up.UserPrincipalName, contract.Branches.ADGroupName); // allways with UserPrincipalName to add to the group
+
+                        if (up.GetUnderlyingObjectType() == typeof(DirectoryEntry))
+                        {
+                            using (var entry = (DirectoryEntry)up.GetUnderlyingObject())
+                            {
+                                entry.Properties["initials"].Value = initials;
+                                entry.Properties["title"].Value = contract.Positions.Name;
+                                entry.Properties["company"].Value = contract.Branches.Name;
+                                //todo find a way to know who is the manager
+                                //entry.Properties["manager"].Value = "NaN";
+                                entry.Properties["department"].Value = contract.Dependency.Name;
+                                entry.CommitChanges();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (PrincipalExistsException e)
+            {
+                Console.WriteLine(e);
+            }
+
+        }
+
         public string getSamAcoutName(People person)
         {
             
@@ -101,7 +174,7 @@ namespace UcbBack.Logic
             // First attempt
             var SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
                       + hanaval.CleanText(person.FirstSurName)
-                      + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
+                      + (!person.SecondSurName.IsNullOrWhiteSpace() ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
             SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
             var UPN = SAN + "@" + sDomain;
             var search = _context.CustomUsers.Where(x => x.UserPrincipalName == UPN).ToList();
@@ -110,7 +183,7 @@ namespace UcbBack.Logic
                 // Second attempt
                 SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + hanaval.CleanText(person.Names).ToCharArray()[1].ToString() + "."
                         + hanaval.CleanText(person.FirstSurName)
-                        + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
+                        + (!person.SecondSurName.IsNullOrWhiteSpace() ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "");
                 SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
                 UPN = SAN + "@" + sDomain;
@@ -120,7 +193,7 @@ namespace UcbBack.Logic
                     // Third attempt
                     SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + hanaval.CleanText(person.Names).ToCharArray()[1].ToString() + "."
                           + hanaval.CleanText(person.FirstSurName)
-                          + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString() + hanaval.CleanText(person.SecondSurName).ToCharArray()[1].ToString()) : "");
+                          + (!person.SecondSurName.IsNullOrWhiteSpace() ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString() + hanaval.CleanText(person.SecondSurName).ToCharArray()[1].ToString()) : "");
                     SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
                     UPN = SAN + "@" + sDomain;
@@ -130,7 +203,7 @@ namespace UcbBack.Logic
                         // Fourth attempt
                         SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
                               + hanaval.CleanText(person.FirstSurName)
-                              + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
+                              + (!person.SecondSurName.IsNullOrWhiteSpace() ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
                               + (person.BirthDate.Day).ToString().PadLeft(2,'0');
                         SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
 
@@ -142,7 +215,7 @@ namespace UcbBack.Logic
 
                             SAN = hanaval.CleanText(person.Names).ToCharArray()[0].ToString() + "."
                                                                 + hanaval.CleanText(person.FirstSurName)
-                                                                + (person.SecondSurName != null ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
+                                                                + (!person.SecondSurName.IsNullOrWhiteSpace() ? ("." + hanaval.CleanText(person.SecondSurName).ToCharArray()[0].ToString()) : "")
                                                                 + (rnd.Next(1, 100)).ToString().PadLeft(2, '0');
                             SAN = System.Text.Encoding.UTF8.GetString(System.Text.Encoding.GetEncoding("ISO-8859-8").GetBytes(SAN.Replace(" ", "")));
                         }
@@ -193,6 +266,33 @@ namespace UcbBack.Logic
             PrincipalSearcher ps = new PrincipalSearcher(up);
             user = (UserPrincipal)ps.FindOne();
             return user;
+        }
+
+        public void enableUser(People person)
+        {
+            ApplicationDbContext _context = new ApplicationDbContext();
+            var user = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
+            try
+            {
+                PrincipalContext ouContex = new PrincipalContext(ContextType.Domain,
+                    Domain,
+                    "ADMNALRRHH@UCB.BO",
+                    "Rrhh1234");
+                //PrincipalContext principalContext = new PrincipalContext(ContextType.Domain);
+
+                UserPrincipal userPrincipal = UserPrincipal.FindByIdentity
+                    (ouContex, user.UserPrincipalName);
+
+                userPrincipal.Enabled = true;
+                userPrincipal.PasswordNeverExpires = true;
+
+                userPrincipal.Save();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public List<Branches> getUserBranchesSLOW(CustomUser customUser)
