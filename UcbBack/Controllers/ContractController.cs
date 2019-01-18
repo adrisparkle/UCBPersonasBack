@@ -44,103 +44,15 @@ namespace UcbBack.Controllers
         }
 
         // GET api/Contract
-        [HttpGet]
-        [Route("api/CrearRendiciones")]
-        public IHttpActionResult CrearRendiciones()
-        {
-            var person = _context.Person.FirstOrDefault(x => x.Id == 1584);
-            person.CreateInRendiciones(_context);
-            return Ok();
-        }
-
-        // GET api/Contract
         [Route("api/Contract")]
         public IHttpActionResult Get()
         {
-            /* DateTime date = DateTime.Now;
-
-             var contplist = _context.ContractDetails
-                 .Include(p => p.Branches)
-                 .Include(p => p.Dependency)
-                 .Include(p => p.Positions)
-                 .Include(p => p.People)
-                 .Include(p => p.Link)
-                 .Where(x => (x.EndDate == null || x.EndDate > date))
-                 .OrderByDescending(x=>x.StartDate)
-                 .ToList()
-                 .Select(x => new
-                 {
-                     x.Id, 
-                     x.People.CUNI, 
-                     x.People.Document, 
-                     FullName= x.People.GetFullName(),
-                     Dependency = x.Dependency.Name, 
-                     DependencyCod = x.Dependency.Cod, 
-                     Branches = x.Branches.Abr, 
-                     BranchesId = x.Dependency.BranchesId, 
-                     Positions=x.Positions.Name, 
-                     x.Dedication,
-                     Linkage = x.Link.Value,
-                     StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
-                     EndDate = x.EndDate == null?null:x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
-                 }).ToList(); */
-
-            var query =
-                " select * from " +
-                "(select 	p.\"Document\", " +
-                " 		" + CustomSchema.Schema + ".clean_text(  " +
-                " 			concat(coalesce(p.\"FirstSurName\",''), " +
-                " 				concat(' ', " +
-                " 					concat(case when p.\"UseSecondSurName\"=1 then coalesce(p.\"SecondSurName\",'') else '' end, " +
-                " 						concat(' ', " +
-                " 							concat( case when p.\"UseMariedSurName\"=1 then coalesce(p.\"MariedSurName\",'') else '' end, coalesce(p.\"Names\",'')) " +
-                " 							) " +
-                " 						) " +
-                " 					) " +
-                " 				)  " +
-                " 			) as \"FullName\", " +
-                " 		x.* " +
-                " from ( " +
-                " 	select 	a.\"Id\", " +
-                " 			a.cuni, " +
-                " 			c.\"Name\" as \"Dependency\", " +
-                " 			c.\"Cod\" as \"DependencyCod\",  " +
-                " 			d.\"Abr\" as \"Branches\",  " +
-                " 			d.\"Id\" as \"BranchesId\",  " +
-                " 			b.\"Name\" as \"Positions\",  " +
-                " 			a.\"Dedication\", " +
-                " 			e.\"Value\" as \"Linkage\", " +
-                " 			a.\"StartDate\",  " +
-                " 			a.\"EndDate\",   " +
-                " 			ROW_NUMBER()  " +
-                " 				OVER 	( " +
-                " 							PARTITION BY cuni  " +
-                " 							order by 	 " +
-                " 								(case when a.\"EndDate\" is null then 1 else 0 end) desc,  " +
-                " 								a.\"EndDate\" desc, " +
-                " 								b.\"LevelId\" desc " +
-                " 						) AS row_num " +
-                " 	from " + CustomSchema.Schema + ".\"ContractDetail\" a  " +
-                " 	inner join " + CustomSchema.Schema + ".\"Position\" b " +
-                " 	on a.\"PositionsId\" = b.\"Id\" " +
-                " 	inner join " + CustomSchema.Schema + ".\"Dependency\" c " +
-                " 	on a.\"DependencyId\" = c.\"Id\" " +
-                " 	inner join " + CustomSchema.Schema + ".\"Branches\" d " +
-                " 	on c.\"BranchesId\" = d.\"Id\" " +
-                " 	inner join " + CustomSchema.Schema + ".\"TableOfTables\" e " +
-                " 	on a.\"Linkage\" = e.\"Id\" " +
-                " ) x " +
-                " inner join " + CustomSchema.Schema + ".\"People\" p " +
-                " on x.cuni = p.cuni " +
-                " where row_num = 1 " +
-                " and (x.\"EndDate\" is null or x.\"EndDate\" > current_date) " +
-                " ) f " +
-                " order By f.\"FullName\"";
+            var query ="select * from " + CustomSchema.Schema + ".lastcontracts "+
+                        " where \"EndDate\" is null or \"EndDate\"> current_date";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
 
-            //var res = auth.filerByRegional(contplist.AsQueryable(), user);
             var res = auth.filerByRegional(rawresult.AsQueryable(), user);
 
             return Ok(res);
@@ -298,7 +210,7 @@ namespace UcbBack.Controllers
         {
             List<ContractDetail> contractInDB = null;
             DateTime date=new DateTime(2018,9,1);
-            DateTime date2=new DateTime(2018,12,29);
+            DateTime date2=new DateTime(2019,1,1);
             var people = _context.ContractDetails.Include(x=>x.People).Include(x=>x.Branches).Include(x=>x.Link).Where(x=>  (x.EndDate==null || x.EndDate>date2)).Select(x=>x.People).Distinct();
             // var people = _context.CustomUsers.Include(x => x.People).Select(x => x.People);
             int i = people.Count();
