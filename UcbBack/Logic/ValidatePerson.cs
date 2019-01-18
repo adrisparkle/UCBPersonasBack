@@ -156,7 +156,7 @@ namespace UcbBack.Logic
 
             person.CUNI = new string(letras);
             //colision!
-            if ((_context.Person.FirstOrDefault(p => p.CUNI == person.CUNI)) != null)
+            while ((_context.Person.FirstOrDefault(p => p.CUNI == person.CUNI)) != null)
             {
                 char[] monthi =
                 {
