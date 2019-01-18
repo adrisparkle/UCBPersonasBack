@@ -224,6 +224,9 @@ namespace UcbBack.Logic.B1
 
                     var ou = person.GetLastContract();
                     oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
+                    oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R" + person.CUNI;
+                    if(person.SecondSurName!=null)
+                    oEmployeesInfo.UserFields.Fields.Item("U_ApMaterno").Value = person.SecondSurName;
 
                     oEmployeesInfo.Update();
                     string newKey = company.GetNewObjectKey();
@@ -285,6 +288,7 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
                     var ou = person.GetLastContract();
                     oEmployeesInfo.UserFields.Fields.Item("U_UnidadOrg").Value = ou.Dependency.OrganizationalUnit.Cod;
+                    oEmployeesInfo.UserFields.Fields.Item("U_Cod_SN").Value = "R"+person.CUNI;
 
                     // set Branch Code
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
@@ -359,12 +363,6 @@ namespace UcbBack.Logic.B1
 
                         // set Branch Code
                         var brs = _context.Branch.ToList();
-                        foreach (var b in brs)
-                        {
-                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                            businessObject.BPBranchAssignment.Delete();
-                        }
                         foreach (var b in brs)
                         {
                             businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
@@ -595,6 +593,18 @@ namespace UcbBack.Logic.B1
                     Int32.Parse(process.mes),
                     DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes))
                 );
+                var debe = dist.Sum(x => decimal.Parse(x.Debit));
+                var haber = dist.Sum(x => decimal.Parse(x.Credit));
+                if (debe != haber)
+                {
+                    // no cuadra debe y haber
+                    log.Success = false;
+                    log.ErrorCode = errorCode.ToString();
+                    log.ErrorMessage = "System: Diferencia entre deba y haber. Debe(" + debe + ") - Haber(" + haber + ")";
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                    return "ERROR";
+                }
 
                 // If process Date is null set last day of the month in proccess
                 DateTime date = process.RegisterDate == null ? Auxdate : process.RegisterDate.Value;
