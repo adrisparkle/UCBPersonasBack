@@ -10,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
 using System.Data.Entity;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -206,8 +207,8 @@ namespace UcbBack.Controllers
                     x.Dependency.Cod,
                     Dependency = x.Dependency.Name,
                     Positions = x.Positions.Name,
-                    //StartDate = x.StartDate.ToString("dd-MM-yyyy"),
-                    //EndDate = x.EndDate==null?null:x.EndDate.Value.ToString("dd-MM-yyyy")
+                    StartDatestr = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
+                    EndDatestr = x.EndDate == null ? null : x.EndDate.Value.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     StartDate = x.StartDate.ToString("MM-dd-yyyy"),
                     EndDate = x.EndDate == null ? null : x.EndDate.Value.ToString("MM-dd-yyyy")
                 });
@@ -275,9 +276,12 @@ namespace UcbBack.Controllers
             res.DependencyId = c == null ? (dynamic) "" : c.Dependency.Id;
             res.Dependency = c == null ? "" : c.Dependency.Name;
             res.Branches = c == null ? null : _context.Branch.FirstOrDefault(x => x.Id == c.Dependency.BranchesId).Name;
+            res.StartDatestr = c == null ? (dynamic) "" : c.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES"));
+            res.EndDatestr = c == null ? (dynamic)"" : c.EndDate == null ? "" : c.EndDate.Value.ToString("dd MMM yyyy", new CultureInfo("es-ES"));
             res.StartDate = c == null ? (dynamic)"" : c.StartDate.ToString("MM/dd/yyyy");
             res.EndDate = c == null ? (dynamic)"" : c.EndDate == null ? "" : c.EndDate.Value.ToString("MM/dd/yyyy");
             res.Gender = personInDB.Gender;
+            res.BirthDatestr = personInDB.BirthDate.ToString("dd MMM yyyy", new CultureInfo("es-ES"));
             res.BirthDate = personInDB.BirthDate.ToString("MM/dd/yyyy");
             res.Nationality = personInDB.Nationality;
             res.AFP = personInDB.AFP;
@@ -305,9 +309,15 @@ namespace UcbBack.Controllers
         public IHttpActionResult addalltoSAP()
         {
             var date = new DateTime(2017, 1, 1);
-            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
+            /*List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
                 Where(y => (y.EndDate > date || y.EndDate == null)
-                ).Select(x => x.People).Distinct().ToList();
+                ).Select(x => x.People).Distinct().ToList();*/
+
+            List<string> cunis = new List<string>(new string[]
+            {
+                "VCS720825",
+            });
+            List<People> person = _context.Person.ToList().Where(x=>cunis.Contains(x.CUNI)).ToList();
             B1Connection b1 = B1Connection.Instance();
             var usr = auth.getUser(Request);
             int i = 0;
@@ -322,6 +332,68 @@ namespace UcbBack.Controllers
             }
 
             return Ok();
+        }
+
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/enableAllInAD/")]
+        public IHttpActionResult enableAllInAD()
+        {
+            DateTime date = new DateTime(2018, 1, 1);
+            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
+                Where(y => (y.EndDate > date || y.EndDate == null)
+                ).Select(x => x.People).Distinct().ToList();
+            int i = 0;
+            foreach (var pe in person)
+            {
+                i++;
+                activeDirectory.enableUser(pe);
+            }
+
+            return Ok();
+        }
+
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/addalltoAD/{cuni}")]
+        public IHttpActionResult addalltoADId(string cuni)
+        {
+
+            List<string> palabras = new List<string>(new string[]
+            {
+                "aula",
+                "libro",
+                "lapiz",
+                "papel",
+                "folder",
+                "lentes"
+            });
+
+            /*var usr = _context.CustomUsers.Select(x => x.PeopleId).ToList();*/
+            People person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
+                Where(y => y.CUNI == cuni
+                    ).Select(x => x.People).Distinct().ToList().FirstOrDefault();
+
+            Random rnd = new Random();
+
+            //var tt = activeDirectory.findUser(pe);
+            string pass = palabras[rnd.Next(6)];
+            while (pass.Length < 8)
+            {
+                pass += rnd.Next(10);
+            }
+
+            var ex = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
+            if (ex == null)
+            {
+                activeDirectory.adddOrUpdate(person, pass);
+                _context.SaveChanges();
+                var account = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
+                account.AutoGenPass = pass;
+                _context.SaveChanges();
+            }
+
+            var per = _context.Person.FirstOrDefault(x => x.CUNI == "AEC801205");
+            var r = activeDirectory.findUser(per);
+            return Ok(r);
         }
 
         [System.Web.Http.HttpGet]
@@ -356,7 +428,7 @@ namespace UcbBack.Controllers
             //todo run for all people   solo fata pasar fechas de corte
             /*var usr = _context.CustomUsers.Select(x => x.PeopleId).ToList();*/
             List<People> person = _context.ContractDetails.Include(x => x.People).Include(x=>x.Positions).
-                Where(y => (y.EndDate > date || y.EndDate == null)
+                Where(y => (y.EndDate > date || y.EndDate == null) && y.CUNI == "SAG930730"
                     ).Select(x => x.People).Distinct().ToList();
 
             Random rnd = new Random();

@@ -9,7 +9,7 @@ namespace UcbBack.Models.ViewMoldes
     [NotMapped]
     public class UserViewModel
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public int? SAPCodeRRHH { get; set; }
         public string CUNI { get; set; }
         public string Document { get; set; }

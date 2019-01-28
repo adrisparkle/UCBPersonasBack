@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
+using UcbBack.Models.ViewMoldes;
 
 namespace UcbBack.Controllers
 {
@@ -38,10 +40,33 @@ namespace UcbBack.Controllers
                     x.UserPrincipalName,
                     person = x.People.GetFullName(),
                     x.PeopleId,
-                    x.AutoGenPass
+                    x.AutoGenPass,
+                    x.TipoLicenciaSAP,
+                    x.CajaChica,
+                    x.SolicitanteCompras,
+                    x.AutorizadorCompras,
+                    x.Rendiciones
                 });
-            return Ok(userlist);
-
+            var query = "select u.\"Id\", p.\"SAPCodeRRHH\", p.cuni, p.\"Document\", c.\"FullName\", u.\"TipoLicenciaSAP\",u.\"CajaChica\", " +
+            " u.\"SolicitanteCompras\", u.\"AutorizadorCompras\", u.\"Rendiciones\", " +
+            " p.\"UcbEmail\",coalesce(u.\"UserPrincipalName\",'Sin Usuario') as \"UserPrincipalName\", c.\"DependencyCod\", c.\"Dependency\", ou.\"Cod\" as \"OUCod\", " +
+            " ou.\"Name\" as \"OUName\", c.\"Positions\", c.\"Dedication\", c.\"Linkage\", pauth.\"SAPCodeRRHH\" as \"AuthSAPCodeRRHH\", " +
+            " auth.cuni as \"AuthCUNI\", auth.\"FullName\" as \"AuthFullName\", auth.\"Positions\" as \"AuthPositions\", c.\"Branches\", u.\"AutoGenPass\" " +
+            " from " + CustomSchema.Schema + ".lastcontracts c " +
+            " left join " + CustomSchema.Schema + ".\"User\" u " +
+            "    on c.\"PeopleId\" = u.\"PeopleId\" " +
+            " inner join " + CustomSchema.Schema + ".\"People\" p " +
+            "    on c.\"PeopleId\" = p.\"Id\" " +
+            " inner join " + CustomSchema.Schema + ".\"OrganizationalUnit\" ou " +
+            "    on c.\"OUId\" = ou.\"Id\" " +
+            " left join " + CustomSchema.Schema + ".lastcontracts auth " +
+            "   on u.\"AuthPeopleId\" = auth.\"PeopleId\" " +
+            " left join " + CustomSchema.Schema + ".\"People\" pauth " +
+            "    on auth.\"PeopleId\" = pauth.\"Id\"" +
+            " order by (case when u.\"UserPrincipalName\" is null then 1 else 0 end) asc," +
+            "    c.\"FullName\"";
+            var rawresult = _context.Database.SqlQuery<UserViewModel>(query).ToList();
+            return Ok(rawresult);
         }
 
         [HttpPost]
@@ -178,6 +203,16 @@ namespace UcbBack.Controllers
             return Ok();
         }
 
+        [Route("api/user/DefAuth/{id}")]
+        public IHttpActionResult GetAuth(int id)
+        {
+            var userInDB = _context.Person.FirstOrDefault(d => d.Id == id);
+
+            if (userInDB == null)
+                return NotFound();
+            return Ok(userInDB.GetLastManagerAuthorizator(_context).Id);
+        }
+
         // GET api/user/5
         [Route("api/user/{id}")]
         public IHttpActionResult Get(int id)
@@ -194,6 +229,13 @@ namespace UcbBack.Controllers
             respose.PeopleId = userInDB.People.Id;
             respose.Name = userInDB.People.GetFullName();
             respose.Gender = userInDB.People.Gender;
+            respose.TipoLicenciaSAP = userInDB.TipoLicenciaSAP;
+            respose.CajaChica = userInDB.CajaChica;
+            respose.SolicitanteCompras = userInDB.SolicitanteCompras;
+            respose.AutorizadorCompras = userInDB.AutorizadorCompras;
+            respose.Rendiciones = userInDB.Rendiciones;
+            respose.AuthPeopleId = userInDB.AuthPeopleId;
+            //userInDB.CreateInRendiciones(_context);
             return Ok(respose);
         }
 
@@ -202,23 +244,57 @@ namespace UcbBack.Controllers
         [Route("api/user/")]
         public IHttpActionResult Register([FromBody]CustomUser user)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
+            //if (!ModelState.IsValid)
+            //    return BadRequest(ModelState);
+            var person = _context.Person.FirstOrDefault(x => x.Id == user.PeopleId);
+            
+            List<string> palabras = new List<string>(new string[]
+            {
+                "aula",
+                "libro",
+                "lapiz",
+                "papel",
+                "folder",
+                "lentes"
+            });
 
-            user.Id = CustomUser.GetNextId(_context);
+            Random rnd = new Random();
 
-            user.Token = validator.getToken(user);
-            user.TokenCreatedAt = DateTime.Now;
-            user.RefreshToken = validator.getRefreshToken(user);
-            user.RefreshTokenCreatedAt = DateTime.Now;
-            _context.CustomUsers.Add(user);
-            _context.SaveChanges();
+            string pass = palabras[rnd.Next(6)];
+            while (pass.Length < 8)
+            {
+                pass += rnd.Next(10);
+            }
+
+            CustomUser account;
+            var ex = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
+            if (ex == null)
+            {
+                activeDirectory.adddOrUpdate(person, pass);
+                _context.SaveChanges();
+                account = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(x => x.PeopleId == person.Id);
+                account.AutoGenPass = pass;
+                account.TipoLicenciaSAP = user.TipoLicenciaSAP;
+                account.CajaChica = user.CajaChica == null ? false : user.CajaChica.Value;
+                account.SolicitanteCompras = user.SolicitanteCompras == null ? false : user.SolicitanteCompras.Value;
+                account.AutorizadorCompras = user.AutorizadorCompras == null ? false : user.AutorizadorCompras.Value;
+                account.Rendiciones = user.Rendiciones == null ? false:user.Rendiciones.Value;
+                account.AuthPeopleId = user.AuthPeopleId;
+                if(user.Rendiciones.Value)
+                    account.CreateInRendiciones(_context);
+
+                _context.SaveChanges();
+            }
+            else
+            {
+                return Ok();
+            }
+
+            user = account;
 
             dynamic respose = new JObject();
             respose.Id = user.Id;
             respose.UserPrincipalName = user.UserPrincipalName;
-            respose.Token = user.Token;
-            respose.RefreshToken = user.RefreshToken;
 
             return Created(new Uri(Request.RequestUri + "/" + respose.Id), respose);
         }
@@ -228,8 +304,17 @@ namespace UcbBack.Controllers
         [Route("api/user/{id}")]
         public IHttpActionResult Put(int id, CustomUser user)
         {
-            var userInDb = _context.CustomUsers.FirstOrDefault(x => x.Id == id);
-            userInDb.UserPrincipalName = user.UserPrincipalName;
+            var userInDb = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(x => x.Id == id);
+            if (userInDb == null)
+                return NotFound();
+            userInDb.TipoLicenciaSAP = user.TipoLicenciaSAP;
+            userInDb.CajaChica = user.CajaChica;
+            userInDb.SolicitanteCompras = user.SolicitanteCompras;
+            userInDb.AutorizadorCompras = user.AutorizadorCompras;
+            userInDb.Rendiciones = user.Rendiciones;
+            if (userInDb.Rendiciones.Value || userInDb.CajaChica.Value)
+                userInDb.CreateInRendiciones(_context);
+            userInDb.updatePerfilesRend(_context);
             _context.SaveChanges();
             return Ok(userInDb);
 

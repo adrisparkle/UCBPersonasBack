@@ -20,8 +20,8 @@ robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL /is
 mkdir "%destination%\fonts"
 robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL /is
 
-mkdir "%destination%\Images"
-robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is
+:: mkdir "%destination%\Images"
+:: robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is
 
 mkdir "%destination%\Scripts"
 robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /is

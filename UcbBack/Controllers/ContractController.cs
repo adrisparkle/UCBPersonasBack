@@ -177,8 +177,8 @@ namespace UcbBack.Controllers
                     x.AI,
                     x.Dedication,
                     Linkage = x.Link.Value,
-                    //StartDate = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
-                    //EndDate = x.EndDate == null ? "" : x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES"))
+                    StartDatestr = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
+                    EndDatestr = x.EndDate == null ? "" : x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     StartDate = x.StartDate.ToString("MM/dd/yyyy"),
                     EndDate = x.EndDate == null ? "" : x.EndDate.Value.ToString("MM/dd/yyyy")
                 });
@@ -306,37 +306,7 @@ namespace UcbBack.Controllers
             foreach (var alta in tempAlta)
             {
                 var person = new People();
-
-                if (alta.State == "NEW")
-                {
-                    person.Id = People.GetNextId(_context);
-                    person.FirstSurName = alta.FirstSurName.Trim();
-                    person.SecondSurName = alta.SecondSurName.Trim().IsNullOrWhiteSpace() ? null : alta.SecondSurName.Trim();
-                    person.MariedSurName = alta.MariedSurName.Trim().IsNullOrWhiteSpace() ? null : alta.MariedSurName.Trim();
-                    person.Names = alta.Names.Trim();
-                    person.BirthDate = alta.BirthDate;
-                    person.Gender = alta.Gender;
-
-                    person.AFP = alta.AFP;
-                    person.NUA = alta.NUA;
-
-                    person.Document = alta.Document;
-                    person.Ext = alta.Ext;
-                    person.TypeDocument = alta.TypeDocument;
-
-                    person.UseSecondSurName = person.SecondSurName.IsNullOrWhiteSpace();
-                    person.UseMariedSurName = person.MariedSurName.IsNullOrWhiteSpace();
-
-                    person = validator.UcbCode(person);
-                    person.Pending = true;
-
-                    _context.Person.Add(person);
-                }
-                else
-                {
-                    person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
-                }
-
+                person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
                 var contract = new ContractDetail();
 
                 contract.Id = ContractDetail.GetNextId(_context);
@@ -366,7 +336,7 @@ namespace UcbBack.Controllers
             if (data["segmentoOrigen"] == null || !Int32.TryParse(data["segmentoOrigen"].ToString(), out branchesid))
             {
                 ModelState.AddModelError("Mal Formato", "Debes enviar mes, gestion y segmentoOrigen");
-                return BadRequest();
+                return BadRequest();    
 
             }
             List<TempAlta> tempAlta = _context.TempAltas.Where(x => x.BranchesId == branchesid && x.State != "UPLOADED" && x.State != "CANCELED").ToList();

@@ -9,33 +9,34 @@ set /a strlen=%strlen%-8
 
 CALL SET prevpath=%%rootpath:~0,%strlen%%%
 C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe  "C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack.sln" /p:Configuration=Debug /p:Platform="Any CPU" /p:VisualStudioVersion=12.0 /t:Rebuild
-rmdir /s /q "%destination%\"
+
+:: rmdir /s /q "%destination%\"
 
 mkdir "%destination%\Areas"
-robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\bin"
-robocopy "%rootpath%\bin" "%destination%\bin" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\bin" "%destination%\bin" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Content"
-robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\fonts"
-robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Images"
 robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Scripts"
-robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Views"
-robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
-robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 
 
