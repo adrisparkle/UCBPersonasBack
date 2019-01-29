@@ -222,6 +222,7 @@
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
+    <Compile Include="Controllers\CauseOfMovementController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
     <Compile Include="Controllers\CostCentersController.cs" />
     <Compile Include="Controllers\CuentasContablesController.cs" />
@@ -274,6 +275,9 @@
     <Compile Include="Models\Auth\RolhasAccess.cs" />
     <Compile Include="Models\Auth\User.cs" />
     <Compile Include="Models\Branches.cs" />
+    <Compile Include="Models\BranchhasPosition.cs" />
+    <Compile Include="Models\CauseOfMovement.cs" />
+    <Compile Include="Models\ChangesLogs.cs" />
     <Compile Include="Models\Contract.cs" />
     <Compile Include="Models\ContractDetail.cs" />
     <Compile Include="Models\Dist\CuentaContable.cs" />
@@ -309,6 +313,8 @@
     <Compile Include="Models\Dist\TipoEmpleadoDist.cs" />
     <Compile Include="Models\TableOfTables.cs" />
     <Compile Include="Models\TempAlta.cs" />
+    <Compile Include="Models\ViewMoldes\ContractDetailViewModel.cs" />
+    <Compile Include="Models\ViewMoldes\UserViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
