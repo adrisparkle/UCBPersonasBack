@@ -62,6 +62,7 @@ namespace UcbBack.Models
         public DbSet<Rol> Rols { get; set; }
         public DbSet<RolhasAccess> RolshaAccesses { get; set; }
         public DbSet<CustomUser> CustomUsers { get; set; }
+        public DbSet<SystemErrorLogs> SystemErrorLogses { get; set; }
 
         
         
