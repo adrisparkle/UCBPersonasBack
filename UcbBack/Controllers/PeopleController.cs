@@ -313,18 +313,17 @@ namespace UcbBack.Controllers
                 Where(y => (y.EndDate > date || y.EndDate == null)
                 ).Select(x => x.People).Distinct().ToList();*/
 
-            List<string> cunis = new List<string>(new string[]
-            {
-                "VCS720825",
-            });
-            List<People> person = _context.Person.ToList().Where(x=>cunis.Contains(x.CUNI)).ToList();
+            string query = "SELECT p.* FROM ADMNALRRHH.\"People\" p\r\ninner join ucatolica.ocrd bp\r\non concat(\'R\', p.cuni) = bp.\"CardCode\"";
+            List<People> person = _context.Database.SqlQuery<People>(query).ToList();
+
+            //person = person.Where(x => x.CUNI == "RFA940908").ToList();
             B1Connection b1 = B1Connection.Instance();
             var usr = auth.getUser(Request);
             int i = 0;
             foreach (var p in person)
             {
                 i++;
-                var X = b1.AddOrUpdatePerson(usr.Id, p);
+                var X = b1.AddOrUpdatePersonToBusinessPartnerSUPPLIER(usr.Id, p);
                 if (X.Contains("ERROR"))
                 {
                     X = "";
@@ -463,15 +462,16 @@ namespace UcbBack.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            person = validator.CleanName(person);
-            person = validator.UcbCode(person);
             //verificar que el ci no exista
             if (_context.Person.FirstOrDefault(p => p.Document == person.Document) != null)
                 return BadRequest("El Documento de identidad ya existe.");
 
+            var user = auth.getUser(Request);
+            person = validator.CleanName(person);
+            
             // verificar si existen personas existentes con una similitud mayor al 90%
-            var similarities = validator.VerifyExisting(person,0.95f);
-            var s = similarities.Count();
+            /*var similarities = validator.VerifyExisting(person,0.95f);
+            var s = similarities.Count();*/
             //si existe alguna similitud pedir confirmacion
             /*if (s > 0)
             {
@@ -493,7 +493,9 @@ namespace UcbBack.Controllers
             
             //si pasa la confirmacion anterior se le asigna un id y se guarda la nueva persona en la BDD
             person.Id = People.GetNextId(_context);
-            
+            person = validator.UcbCode(person, user);
+            //register updated time
+            person.CreatedAt = DateTime.Now;
             _context.Person.Add(person);
             _context.SaveChanges();
             // activeDirectory.addUser(person);
@@ -524,7 +526,14 @@ namespace UcbBack.Controllers
             People personInDB = _context.Person.FirstOrDefault(d => d.Id == id);
             if (personInDB == null)
                 return NotFound();
+
             person = validator.CleanName(person);
+            // log changes
+            ChangesLogs log = new ChangesLogs();
+            log.AddChangesLog(personInDB, person, new List<string>() { "TypeDocument", "Document", "Ext", "Names", "FirstSurName", "SecondSurName", "BirthDate", "Gender", 
+                "Nationality", "UseMariedSurName", "UseSecondSurName", "MariedSurName", "PhoneNumber", "PersonalEmail", "OfficePhoneNumber", "OfficePhoneNumberExt",
+                "HomeAddress", "UcbEmail", "AFP", "NUA", "Insurance", "InsuranceNumber" });
+
             //--------------------------REQUIRED COLS--------------------------
             personInDB.TypeDocument = cleanText(person.TypeDocument);
             personInDB.Document = person.Document;
@@ -549,6 +558,10 @@ namespace UcbBack.Controllers
             personInDB.NUA = person.NUA;
             personInDB.Insurance = person.Insurance;
             personInDB.InsuranceNumber = person.InsuranceNumber;
+            //register updated time
+            personInDB.UpdatedAt = DateTime.Now;
+
+
 
 
             var ADauth = new ADClass();
