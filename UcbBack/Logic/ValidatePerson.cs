@@ -7,6 +7,7 @@ using System.Web;
 using UcbBack.Models;
 using System.Data.Entity;
 using Microsoft.Ajax.Utilities;
+using UcbBack.Models.Auth;
 
 namespace UcbBack.Logic
 {
@@ -130,7 +131,7 @@ namespace UcbBack.Logic
             return token;
         }
 
-        public People UcbCode(People person)
+        public People UcbCode(People person,CustomUser user)
         {
             DateTime bd = person.BirthDate;
             var daystr = person.BirthDate.ToString("dd");
@@ -155,9 +156,12 @@ namespace UcbBack.Logic
             };
 
             person.CUNI = new string(letras);
-            //colision!
+            //collision!
             while ((_context.Person.FirstOrDefault(p => p.CUNI == person.CUNI)) != null)
             {
+                //register error log number 9 (CUNI Collision)
+                SystemErrorLogs log = new SystemErrorLogs(user,person,9);
+                // calculate other CUNI
                 char[] monthi =
                 {
                     person.CUNI[5], person.CUNI[6]
