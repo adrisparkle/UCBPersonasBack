@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
@@ -20,6 +21,7 @@ namespace UcbBack.Models.ViewMoldes
         public string Positions { get; set; }
         public string Dedication { get; set; }
         public string Linkage { get; set; }
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
