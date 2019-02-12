@@ -100,18 +100,21 @@ namespace UcbBack.Models
 
         public int? SAPCodeRRHH { get; set; }
 
-        public bool UseMariedSurName { get; set; }
+        public int UseMariedSurName { get; set; }
 
-        public bool UseSecondSurName { get; set; }
+        public int UseSecondSurName { get; set; }
 
         public bool Pending { get; set; }
+
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
 
         public string GetFullName()
         {
             return this.FirstSurName + " " +
-                   (this.UseSecondSurName ? (this.SecondSurName + " ") : "") +
-                   (this.UseMariedSurName ? (this.MariedSurName + " ") : "") +
+                   (this.UseSecondSurName==1 ? (this.SecondSurName + " ") : "") +
+                   (this.UseMariedSurName==1 ? (this.MariedSurName + " ") : "") +
                    this.Names;
         }
 
