@@ -16,18 +16,18 @@ namespace UcbBack.Models
         public int Id { set; get; }
 
         public string CUNI { get; set; }
-        public string TypeDocument { get; set; }
+        //public string TypeDocument { get; set; }
         public string Document { get; set; }
-        public string Ext { get; set; }
+        //public string Ext { get; set; }
         public string Names { get; set; }
         public string FirstSurName { get; set; }
         public string SecondSurName { get; set; }
         public string MariedSurName { get; set; }
-        public DateTime BirthDate { get; set; }
-        public string Gender { get; set; }
-        public string Nationality { get; set; }
-        public string AFP { get; set; }
-        public string NUA { get; set; }
+        //public DateTime BirthDate { get; set; }
+        //public string Gender { get; set; }
+        //public string Nationality { get; set; }
+        //public string AFP { get; set; }
+        //public string NUA { get; set; }
         public string Dependencia { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
