@@ -63,6 +63,7 @@ namespace UcbBack.Controllers
             "   on u.\"AuthPeopleId\" = auth.\"PeopleId\" " +
             " left join " + CustomSchema.Schema + ".\"People\" pauth " +
             "    on auth.\"PeopleId\" = pauth.\"Id\"" +
+            " where c.\"EndDate\" is null or c.\"EndDate\" > current_date" +
             " order by (case when u.\"UserPrincipalName\" is null then 1 else 0 end) asc," +
             "    c.\"FullName\"";
             var rawresult = _context.Database.SqlQuery<UserViewModel>(query).ToList();
@@ -235,7 +236,7 @@ namespace UcbBack.Controllers
             respose.AutorizadorCompras = userInDB.AutorizadorCompras;
             respose.Rendiciones = userInDB.Rendiciones;
             respose.AuthPeopleId = userInDB.AuthPeopleId;
-            //userInDB.CreateInRendiciones(_context);
+
             return Ok(respose);
         }
 
@@ -280,9 +281,10 @@ namespace UcbBack.Controllers
                 account.AutorizadorCompras = user.AutorizadorCompras == null ? false : user.AutorizadorCompras.Value;
                 account.Rendiciones = user.Rendiciones == null ? false:user.Rendiciones.Value;
                 account.AuthPeopleId = user.AuthPeopleId;
+                _context.SaveChanges();
+
                 if(user.Rendiciones.Value)
                     account.CreateInRendiciones(_context);
-
                 _context.SaveChanges();
             }
             else
@@ -312,6 +314,7 @@ namespace UcbBack.Controllers
             userInDb.SolicitanteCompras = user.SolicitanteCompras;
             userInDb.AutorizadorCompras = user.AutorizadorCompras;
             userInDb.Rendiciones = user.Rendiciones;
+            userInDb.AuthPeopleId = user.AuthPeopleId;
             if (userInDb.Rendiciones.Value || userInDb.CajaChica.Value)
                 userInDb.CreateInRendiciones(_context);
             userInDb.updatePerfilesRend(_context);
