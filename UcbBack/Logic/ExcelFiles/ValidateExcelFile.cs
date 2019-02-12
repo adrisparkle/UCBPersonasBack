@@ -129,6 +129,11 @@ namespace UcbBack.Logic
             {
                 var sheet = wb.Worksheet(l);
                 IXLRange UsedRange = sheet.RangeUsed();
+                /*if (UsedRange==null)
+                {
+                    addError("Archivo Sin Datos", "No se encontró datos en el archivo subido.");
+                    return false;
+                }*/
                 if (UsedRange.ColumnCount() != columns.Length)
                 {
                     addError("Cantidad de Columnas", "Se esperaba tener " + columns.Length + "columnas en la hoja: " + sheet.Name + " se encontró " + UsedRange.ColumnCount());
@@ -292,18 +297,18 @@ namespace UcbBack.Logic
                     if (!ppllist.Any(x => x.Document == strci
                                         && x.CUNI == strcuni
                                         && cleanText(x.FirstSurName) == strfsn
-                                        && (!x.UseSecondSurName || cleanText(x.SecondSurName) == strssn)
+                                        && (x.UseSecondSurName==0 || cleanText(x.SecondSurName) == strssn)
                                         && cleanText(x.Names) == strname
-                                        && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
+                                        && (x.UseMariedSurName==0 || cleanText(x.MariedSurName) == strmsn)))
                     {
                         res = false;                       
                         if (strci != null && ppllist.Any(x => x.Document == strci.ToString()))
                         {
                             if (!ppllist.Any(x => x.Document == strci
                                                   && cleanText(x.FirstSurName) == strfsn
-                                                  && (!x.UseSecondSurName || cleanText(x.SecondSurName) == strssn)
+                                                  && (x.UseSecondSurName==0 || cleanText(x.SecondSurName) == strssn)
                                                   && cleanText(x.Names) == strname
-                                                  && (!x.UseMariedSurName || cleanText(x.MariedSurName) == strmsn)))
+                                                  && (x.UseMariedSurName==0 || cleanText(x.MariedSurName) == strmsn)))
                             {
                                 if (paintcolnombre)
                                 {
@@ -313,7 +318,7 @@ namespace UcbBack.Logic
                                     aux = similarities!=null && strfsn != similarities.FirstSurName ? "\nNo será: '" + similarities.FirstSurName + "'?" : "";
                                     paintXY(fullname, i, XLColor.Red,  aux);
 
-                                    if (similarities != null && similarities.UseSecondSurName)
+                                    if (similarities != null && similarities.UseSecondSurName==1)
                                     {
                                         aux = similarities != null && strssn != similarities.SecondSurName ? "\nNo será: '" + similarities.SecondSurName + "'?" : "";
                                         paintXY(fullname + 1, i, XLColor.Red, aux);
@@ -322,7 +327,7 @@ namespace UcbBack.Logic
                                     aux = similarities != null && strname != similarities.Names ? "\nNo será: '" + similarities.Names + "'?" : "";
                                     paintXY(fullname + 2, i, XLColor.Red, aux);
 
-                                    if (similarities != null && similarities.UseMariedSurName)
+                                    if (similarities != null && similarities.UseMariedSurName==1)
                                     {
                                         aux = similarities != null && strmsn != similarities.MariedSurName ? "\nNo será: '" + similarities.MariedSurName + "'?" : "";
                                         paintXY(fullname + 3, i, XLColor.Red, aux);
