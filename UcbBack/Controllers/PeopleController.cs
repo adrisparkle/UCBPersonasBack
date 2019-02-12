@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.Ajax.Utilities;
 using UcbBack.Logic.B1;
 
 
@@ -512,7 +513,7 @@ namespace UcbBack.Controllers
         [System.Web.Http.NonAction]
         private string cleanText(string text)
         {
-            return text == null ? null : Regex.Replace(text.ToUpper(), @"[\d]", string.Empty).ToUpper();
+            return text.IsNullOrWhiteSpace() ? null : Regex.Replace(text.ToUpper(), @"[\d]", string.Empty).ToUpper();
         }
 
         // PUT api/People/5
