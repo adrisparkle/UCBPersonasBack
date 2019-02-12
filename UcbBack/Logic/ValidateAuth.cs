@@ -165,7 +165,12 @@ namespace UcbBack.Logic
                 else
                 {
                     res = list.ToList().Where(x => br.Contains(x.BranchesId)).AsQueryable();
-
+                    try
+                    {
+                        //try to filter bt active if table has active property
+                        res = res.ToList().Where(x => x.Active == true).AsQueryable();
+                    }
+                    catch (Exception){} 
                 }
             }           
             return res;
