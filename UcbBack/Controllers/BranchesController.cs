@@ -37,7 +37,10 @@ namespace UcbBack.Controllers
                     x.SerieComprobanteContalbeSAP,
                     x.SocioGenericDerechosLaborales,
                     x.InicialSN,
-                    x.CodigoSAP
+                    x.CodigoSAP,
+                    x.CuentaSociosRCUNI,
+                    x.CuentaSociosHCUNI,
+                    x.VatGroup
                 }).OrderBy(x=>x.Id);
 
             var user = auth.getUser(Request);
@@ -92,7 +95,9 @@ namespace UcbBack.Controllers
             brachInDB.SocioGenericDerechosLaborales = branch.SocioGenericDerechosLaborales;
             brachInDB.CodigoSAP = branch.CodigoSAP;
             brachInDB.InicialSN = branch.InicialSN;
-
+            brachInDB.CuentaSociosHCUNI = branch.CuentaSociosHCUNI;
+            brachInDB.CuentaSociosRCUNI = branch.CuentaSociosRCUNI;
+            brachInDB.VatGroup = branch.VatGroup;
             _context.SaveChanges();
             return Ok(brachInDB);
         }

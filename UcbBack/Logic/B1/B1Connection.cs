@@ -336,6 +336,14 @@ namespace UcbBack.Logic.B1
             }
         }
 
+        /* -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           ---------------------------------------------------SOCIO DE NEGOCIO CLIENTE (R-CUNI)-----------------------------------------------------------------------
+           -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           ----------------------------------------------------------------------------------------------------------------------------------------------------------- */
+        private string BPClientPrefix = "R";
+
+        // -----------------------------------------------------------------------UPDATE ----------------------------------------------------------------------------
         public string updatePersonInBussinesPartner(int UserId, People person)
         {
             var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
@@ -348,18 +356,21 @@ namespace UcbBack.Logic.B1
                         (SAPbobsCOM.BusinessPartners) company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
                             .oBusinessPartners);
                     //if person exist as BusinesPartner
-                    if (businessObject.GetByKey("R" + person.CUNI))
+                    if (businessObject.GetByKey(this.BPClientPrefix + person.CUNI))
                     {
                         businessObject.CardName = person.GetFullName();
                         businessObject.CardForeignName = person.GetFullName();
                         businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                        businessObject.CardCode = "R" + person.CUNI;
+                        businessObject.CardCode = this.BPClientPrefix + person.CUNI;
 
                         // set NIT
                         businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
                         // Set Group RRHH
                         businessObject.GroupCode = 108;
-                        businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
+                        businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
+                        //add deb account
+                        var contract = person.GetLastContract(_context);
+                        businessObject.DebitorAccount = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
 
                         // set Branch Code
                         var brs = _context.Branch.ToList();
@@ -367,8 +378,19 @@ namespace UcbBack.Logic.B1
                         {
                             businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
                             businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                            businessObject.BPBranchAssignment.Delete();
+                        }
+
+                        foreach (var b in brs)
+                        {
+                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
                             businessObject.BPBranchAssignment.Add();
                         }
+                        // If only one Branch
+                        /*businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
+                        businessObject.BPBranchAssignment.Add();*/
                         // save new business partner
                         businessObject.Update();
                         // get the new code
@@ -417,6 +439,8 @@ namespace UcbBack.Logic.B1
             }
         }
 
+
+        // ----------------------------------------------------------------------- ADD ----------------------------------------------------------------------------
         public string addpersonToBussinesPartner(int UserId, People person)
         {
             var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
@@ -430,13 +454,16 @@ namespace UcbBack.Logic.B1
                     businessObject.CardName = person.GetFullName();
                     businessObject.CardForeignName = person.GetFullName();
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
-                    businessObject.CardCode = "R" + person.CUNI;
+                    businessObject.CardCode = this.BPClientPrefix + person.CUNI;
 
                     // set NIT
                     businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
                     // Set Group RRHH
                     businessObject.GroupCode = 108;
-                    businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
+                    businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
+                    //add deb account
+                    var contract = person.GetLastContract(_context);
+                    businessObject.DebitorAccount = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
 
                     // set Branch Code
                     var brs = _context.Branch.ToList();
@@ -489,6 +516,203 @@ namespace UcbBack.Logic.B1
             }
         }
 
+        /* -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           ---------------------------------------------------SOCIO DE NEGOCIO SUPPLIER (H-CUNI)----------------------------------------------------------------------
+           -----------------------------------------------------------------------------------------------------------------------------------------------------------
+           ----------------------------------------------------------------------------------------------------------------------------------------------------------- */
+        private string BPSupplierPrefix = "H";
+
+        // ----------------------------------------------------------------------- UPDATE ----------------------------------------------------------------------------
+        public string updatePersonInBussinesPartnerSUPPLIER(int UserId, People person)
+        {
+            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject =
+                        (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                            .oBusinessPartners);
+                    //if person exist as BusinesPartner
+                    if (businessObject.GetByKey(this.BPSupplierPrefix + person.CUNI))
+                    {
+                        businessObject.CardName = person.GetFullName();
+                        businessObject.CardForeignName = person.GetFullName();
+                        businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
+                        businessObject.CardCode = this.BPSupplierPrefix + person.CUNI;
+                        
+                        // set NIT
+                        businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                        // Set Group RRHH
+                        businessObject.GroupCode = 111;
+                        businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
+                        //add deb account
+                        var contract = person.GetLastContract(_context);
+                        businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(contract.Branches.CuentaSociosHCUNI);
+                        //Indicador Impuesto
+                        businessObject.UserFields.Fields.Item("VatGroup").Value = contract.Branches.VatGroup;
+
+                        // set Branch Code
+                        var brs = _context.Branch.ToList();
+
+                        foreach (var b in brs)
+                        {
+                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                            businessObject.BPBranchAssignment.Delete();
+                        }
+
+                        foreach (var b in brs)
+                        {
+                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                            // If only one Branch
+                            //businessObject.BPBranchAssignment.Delete();
+                            businessObject.BPBranchAssignment.Add();
+                        }
+                        
+                        // If only one Branch
+                        /*businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
+                        businessObject.BPBranchAssignment.Add();*/
+
+
+                        // save new business partner
+                        businessObject.Update();
+                        // get the new code
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return "ERROR";
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                newKey = newKey.Replace("\t1", "");
+                                _context.SdkErrorLogs.Add(log);
+                                _context.SaveChanges();
+                                return newKey;
+                            }
+                        }
+                    }
+                    log.Success = false;
+                    log.ErrorMessage = "SDK: Not Found";
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                    return "ERROR";
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+        }
+
+
+        // ----------------------------------------------------------------------- ADD ----------------------------------------------------------------------------
+        public string addpersonToBussinesPartnerSUPPLIER(int UserId, People person)
+        {
+            var log = initLog(UserId, BusinessObjectType.BussinesPartner, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
+
+                    businessObject.CardName = person.GetFullName();
+                    businessObject.CardForeignName = person.GetFullName();
+                    businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
+                    businessObject.CardCode = this.BPSupplierPrefix + person.CUNI;
+
+                    // set NIT
+                    businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
+                    // Set Group RRHH
+                    businessObject.GroupCode = 111;
+                    businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
+                    //add deb account
+                    var contract = person.GetLastContract(_context);
+                    businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(contract.Branches.CuentaSociosHCUNI);
+                    //Indicador Impuesto
+                    businessObject.UserFields.Fields.Item("VatGroup").Value = contract.Branches.VatGroup;
+
+                    // set Branch Code
+                    var brs = _context.Branch.ToList();
+                    foreach (var b in brs)
+                    {
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        businessObject.BPBranchAssignment.Add();
+                    }
+
+                    // save new business partner
+                    businessObject.Add();
+                    // get the new code
+                    string newKey = company.GetNewObjectKey();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        return "ERROR";
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                            newKey = newKey.Replace("\t1", "");
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return newKey;
+                        }
+                    }
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+        }
+
+        public string getAccountId(string accountCode)
+        {
+            string query = "select \"AcctCode\" from ucatolica.oact where \"FormatCode\" = '" + accountCode + "'";
+            var res = _context.Database.SqlQuery<string>(query).ToList()[0];
+            return res;
+        }
+
         public bool PersonExistsAsRRHH(People person)
         {
             string query = "select \"ExtEmpNo\" "
@@ -498,11 +722,22 @@ namespace UcbBack.Logic.B1
             return res.Count() > 0;
         }
 
+        // BP Exist as CLIENT
         public bool PersonExistsAsBusinessPartner(People person)
         {
             string query = "select \"CardCode\" "
                            + "from " + DatabaseName + ".ocrd"
-                           + " WHERE \"CardCode\" = '" + 'R' + person.CUNI + "'";
+                           + " WHERE \"CardCode\" = '" + this.BPClientPrefix + person.CUNI + "'";
+            var res = _context.Database.SqlQuery<string>(query);
+            return res.Count() > 0;
+        }
+
+        // BP Exist as SUPPLIER
+        public bool PersonExistsAsBusinessPartnerSUPPLIER(People person)
+        {
+            string query = "select \"CardCode\" "
+                           + "from " + DatabaseName + ".ocrd"
+                           + " WHERE \"CardCode\" = '" + this.BPSupplierPrefix + person.CUNI + "'";
             var res = _context.Database.SqlQuery<string>(query);
             return res.Count() > 0;
         }
@@ -512,6 +747,7 @@ namespace UcbBack.Logic.B1
             string res = "";
             res = AddOrUpdatePersonToBusinessPartner(UserId, person, update: update);
             res += AddOrUpdatePersonToRRHH(UserId, person, update: update);
+            res += AddOrUpdatePersonToBusinessPartnerSUPPLIER(UserId, person, update: update);
             return res;
         }
 
@@ -540,6 +776,21 @@ namespace UcbBack.Logic.B1
             }
             else return "Exist not created";
         }
+
+        public string AddOrUpdatePersonToBusinessPartnerSUPPLIER(int UserId, People person, bool update = true)
+        {
+            if (!PersonExistsAsBusinessPartnerSUPPLIER(person))
+            {
+                return addpersonToBussinesPartnerSUPPLIER(UserId, person);
+            }
+            else if (update)
+            {
+                return updatePersonInBussinesPartnerSUPPLIER(UserId, person);
+            }
+            else return "Exist not created";
+        }
+
+
 
         public string addVoucher(int UserId, Dist_Process process)
         {

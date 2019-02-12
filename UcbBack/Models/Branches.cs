@@ -51,6 +51,10 @@ namespace UcbBack.Models
 
         public string InicialSN { get; set; }
 
+        public string CuentaSociosRCUNI { get; set; }
+        public string CuentaSociosHCUNI { get; set; }
+        public string VatGroup { get; set; }
+
         public static int GetNextId(ApplicationDbContext _context)
         {
             return _context.Database.SqlQuery<int>("SELECT " + CustomSchema.Schema + ".\"rrhh_Branches_sqs\".nextval FROM DUMMY;").ToList()[0];
