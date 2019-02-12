@@ -20,7 +20,8 @@ namespace UcbBack.Controllers
         // GET api/OrganizationalUnit
         public IHttpActionResult Get()
         {
-            return Ok(_context.OrganizationalUnits.OrderBy(x=>x.Cod).ToList());
+            var ou = _context.OrganizationalUnits.OrderBy(x => x.Cod).ToList();
+            return Ok(ou);
         }
 
         // GET api/OrganizationalUnit/5
@@ -61,6 +62,7 @@ namespace UcbBack.Controllers
 
             OUnitInDB.Cod = organizationalUnit.Cod;
             OUnitInDB.Name = organizationalUnit.Name;
+            OUnitInDB.Active = organizationalUnit.Active;
 
             _context.SaveChanges();
             return Ok(OUnitInDB);

@@ -37,6 +37,10 @@ namespace UcbBack.Models
         [Required]
         public int BranchesId { get; set; }
 
+        public bool Active { get; set; }
+
+        public bool Academic { get; set; }
+
 
         public static int GetNextId(ApplicationDbContext _context)
         {

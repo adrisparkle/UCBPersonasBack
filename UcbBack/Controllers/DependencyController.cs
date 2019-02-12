@@ -6,16 +6,19 @@ using System.Net.Http;
 using System.Web.Http;
 using UcbBack.Models;
 using System.Data.Entity;
+using UcbBack.Logic;
 
 namespace UcbBack.Controllers
 {
     public class DependencyController : ApiController
     {
         private ApplicationDbContext _context;
+        private ValidateAuth validator;
 
         public DependencyController()
         {
             _context = new ApplicationDbContext();
+            validator = new ValidateAuth();
         }
 
         // GET api/Level
@@ -26,8 +29,10 @@ namespace UcbBack.Controllers
                 join branch in _context.Branch on dependency.BranchesId equals branch.Id
                 join OU in _context.OrganizationalUnits on dependency.OrganizationalUnitId equals OU.Id
                 join parent in _context.Dependencies on dependency.ParentId equals parent.Id
-                select new {dependency.Id, dependency.Cod, dependency.Name, OrganizationalUnit = OU.Name, Parent = parent.Name, Branch = branch.Abr }
+                           select new { dependency.Id, dependency.Cod, dependency.Name, OrganizationalUnit = OU.Name, Parent = parent.Name, Branch = branch.Abr, BranchesId = branch.Id, dependency.Active,dependency.Academic }
                     ).OrderBy(x => x.Cod);
+            var user = validator.getUser(Request);
+            validator.filerByRegional(deplist,user);
             return Ok(deplist);
         }
 
@@ -73,6 +78,8 @@ namespace UcbBack.Controllers
             depInDB.ParentId = dependency.ParentId;
             depInDB.OrganizationalUnitId = dependency.OrganizationalUnitId;
             depInDB.BranchesId = dependency.BranchesId;
+            depInDB.Active = dependency.Active;
+            depInDB.Academic = dependency.Academic;
             // depInDB.Branches = _context.Branch.FirstOrDefault(x => x.Id == dependency.BranchesId);
 
             _context.SaveChanges();

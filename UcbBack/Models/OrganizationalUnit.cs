@@ -23,6 +23,8 @@ namespace UcbBack.Models
         [Required]
         public string Name { get; set; }
 
+        public bool Active { get; set; }
+
         public static int GetNextId(ApplicationDbContext _context)
         {
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_OrganizationalUnit_sqs\".nextval FROM DUMMY;").ToList()[0];
