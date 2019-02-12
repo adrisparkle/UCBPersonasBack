@@ -47,7 +47,7 @@ namespace UcbBack.Models
                             log.Is = sNewValue;
                             log.Was = sOldValue;
                             log.Property = oProperty.Name;
-                            log.ObjectId = newRecod.Id.ToString();
+                            log.ObjectId = oldRecord.Id;
                             log.Object = obj;
                             log.addLog();
                         }
@@ -62,7 +62,7 @@ namespace UcbBack.Models
                         log.Is = sNewValue;
                         log.Was = sOldValue;
                         log.Property = oProperty.Name;
-                        log.ObjectId = newRecod.Id.ToString();
+                        log.ObjectId = oldRecord.Id;
                         log.Object = obj;
                         log.addLog();
                     }
