@@ -204,6 +204,9 @@ namespace UcbBack.Logic.B1
                 if (company.Connected)
                 {
                     company.StartTransaction();
+                    //var opo = (SAPbobsCOM.Documents)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                    //    .oPurchaseOrders);
+                    //opo.AuthorizationStatus = DocumentAuthorizationStatusEnum.dasPending;
                     SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
 
                     oEmployeesInfo.GetByKey(person.SAPCodeRRHH.Value);
@@ -218,6 +221,14 @@ namespace UcbBack.Logic.B1
                     oEmployeesInfo.Active = BoYesNoEnum.tYES;
 
                     // set Branch Code
+
+                    var brs = _context.Branch.ToList();
+                    foreach (var b in brs)
+                    {
+                        oEmployeesInfo.EmployeeBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        oEmployeesInfo.EmployeeBranchAssignment.Delete();
+                    }
+
                     var bplid = Int32.Parse(person.GetLastContract().Branches.CodigoSAP);
                     oEmployeesInfo.EmployeeBranchAssignment.BPLID = bplid;
                     oEmployeesInfo.EmployeeBranchAssignment.Add();
@@ -260,8 +271,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
@@ -328,8 +345,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: "+ex.Message;
+                log.ErrorMessage = "Catch: "+ex.Message + " At line: "+line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
@@ -362,6 +385,8 @@ namespace UcbBack.Logic.B1
                         businessObject.CardForeignName = person.GetFullName();
                         businessObject.CardType = SAPbobsCOM.BoCardTypes.cCustomer;
                         businessObject.CardCode = this.BPClientPrefix + person.CUNI;
+                        string currency = businessObject.Currency;
+                        businessObject.Currency = currency;
 
                         // set NIT
                         businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
@@ -370,27 +395,30 @@ namespace UcbBack.Logic.B1
                         businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
                         //add deb account
                         var contract = person.GetLastContract(_context);
-                        businessObject.DebitorAccount = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
+                        businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
 
                         // set Branch Code
-                        var brs = _context.Branch.ToList();
-                        foreach (var b in brs)
-                        {
-                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                            businessObject.BPBranchAssignment.Delete();
-                        }
+                        //var brs = _context.Branch.ToList();
+                        //foreach (var b in brs)
+                        //{
+                        //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        //    businessObject.BPBranchAssignment.Delete();
+                        //}
 
-                        foreach (var b in brs)
-                        {
-                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                            businessObject.BPBranchAssignment.Add();
-                        }
-                        // If only one Branch
-                        /*businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
-                        businessObject.BPBranchAssignment.Add();*/
+                        //foreach (var b in brs)
+                        //{
+                        //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        //    businessObject.BPBranchAssignment.Add();
+                        //}
+                        
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        var BR_COD_SAP = _context.Branch.FirstOrDefault(x => x.Id == contract.Dependency.BranchesId)
+                            .CodigoSAP;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(BR_COD_SAP);
+                        businessObject.BPBranchAssignment.Add();
+
                         // save new business partner
                         businessObject.Update();
                         // get the new code
@@ -431,8 +459,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
@@ -463,16 +497,21 @@ namespace UcbBack.Logic.B1
                     businessObject.UserFields.Fields.Item("GroupNum").Value = 6;
                     //add deb account
                     var contract = person.GetLastContract(_context);
-                    businessObject.DebitorAccount = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
+                    businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(contract.Branches.CuentaSociosRCUNI);
 
                     // set Branch Code
-                    var brs = _context.Branch.ToList();
-                    foreach (var b in brs)
-                    {
-                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                        businessObject.BPBranchAssignment.Add();
-                    }
+                    //var brs = _context.Branch.ToList();
+                    //foreach (var b in brs)
+                    //{
+                    //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                    //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                    //    businessObject.BPBranchAssignment.Delete();
+                    //}
+                    var BR_COD_SAP = _context.Branch.FirstOrDefault(x => x.Id == contract.Dependency.BranchesId)
+                        .CodigoSAP;
+                    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                    businessObject.BPBranchAssignment.BPLID = Int32.Parse(BR_COD_SAP);
+                    businessObject.BPBranchAssignment.Add();
 
                     // save new business partner
                     businessObject.Add();
@@ -508,8 +547,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
@@ -542,6 +587,9 @@ namespace UcbBack.Logic.B1
                         businessObject.CardForeignName = person.GetFullName();
                         businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
                         businessObject.CardCode = this.BPSupplierPrefix + person.CUNI;
+                        businessObject.LinkedBusinessPartner = this.BPClientPrefix + person.CUNI;
+                        string currency = businessObject.Currency;
+                        businessObject.Currency = currency;
                         
                         // set NIT
                         businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
@@ -557,26 +605,26 @@ namespace UcbBack.Logic.B1
                         // set Branch Code
                         var brs = _context.Branch.ToList();
 
-                        foreach (var b in brs)
-                        {
-                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                            businessObject.BPBranchAssignment.Delete();
-                        }
+                        //foreach (var b in brs)
+                        //{
+                        //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        //    businessObject.BPBranchAssignment.Delete();
+                        //}
 
-                        foreach (var b in brs)
-                        {
-                            businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                            businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                            // If only one Branch
-                            //businessObject.BPBranchAssignment.Delete();
-                            businessObject.BPBranchAssignment.Add();
-                        }
+                        //foreach (var b in brs)
+                        //{
+                        //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                        //    // If only one Branch
+                        //    //businessObject.BPBranchAssignment.Delete();
+                        //    businessObject.BPBranchAssignment.Add();
+                        //}
                         
                         // If only one Branch
-                        /*businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
                         businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
-                        businessObject.BPBranchAssignment.Add();*/
+                        businessObject.BPBranchAssignment.Add();
 
 
                         // save new business partner
@@ -619,8 +667,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
@@ -643,6 +697,7 @@ namespace UcbBack.Logic.B1
                     businessObject.CardForeignName = person.GetFullName();
                     businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
                     businessObject.CardCode = this.BPSupplierPrefix + person.CUNI;
+                    businessObject.LinkedBusinessPartner = this.BPClientPrefix + person.CUNI;
 
                     // set NIT
                     businessObject.UserFields.Fields.Item("LicTradNum").Value = person.Document;
@@ -656,13 +711,17 @@ namespace UcbBack.Logic.B1
                     businessObject.UserFields.Fields.Item("VatGroup").Value = contract.Branches.VatGroup;
 
                     // set Branch Code
-                    var brs = _context.Branch.ToList();
-                    foreach (var b in brs)
-                    {
-                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
-                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
-                        businessObject.BPBranchAssignment.Add();
-                    }
+                    //var brs = _context.Branch.ToList();
+                    //foreach (var b in brs)
+                    //{
+                    //    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                    //    businessObject.BPBranchAssignment.BPLID = Int32.Parse(b.CodigoSAP);
+                    //    businessObject.BPBranchAssignment.Add();
+                    //}
+
+                    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                    businessObject.BPBranchAssignment.BPLID = Int32.Parse(contract.Branches.CodigoSAP);
+                    businessObject.BPBranchAssignment.Add();
 
                     // save new business partner
                     businessObject.Add();
@@ -698,8 +757,14 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
                 log.Success = false;
-                log.ErrorMessage = "Catch: " + ex.Message;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
                 return "ERROR";
