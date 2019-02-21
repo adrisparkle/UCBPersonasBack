@@ -27,6 +27,9 @@ namespace UcbBack.Models
         [Required]
         public int BranchesId { get; set; }
         public Branches Branches { get; set; }
+        [Required]
+        public int PerformanceAreaId { get; set; }
+        public PerformanceArea PerformanceArea { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {

@@ -27,7 +27,7 @@ namespace UcbBack.Controllers
         // GET api/Positions
         public IHttpActionResult Get()
         {
-            var all = from pos in _context.Position.Include(x => x.Level)
+            var all = from pos in _context.Position.Include(x => x.Level).Include(x => x.PerformanceArea)
                 join brs in _context.BranchhasPositions on pos.Id equals brs.PositionId
                 where brs.Enabled
                 select new
@@ -36,10 +36,12 @@ namespace UcbBack.Controllers
                     pos.Name,
                     pos.Level.Cod,
                     pos.Level.Category,
-                    brs.BranchesId 
+                    brs.BranchesId,
+                    pos.PerformanceAreaId,
+                    PerformanceArea = pos.PerformanceArea.Name,
                 };
             var user = auth.getUser(Request);
-            var filtered = auth.filerByRegional(all.AsQueryable(), user);
+            var filtered = auth.filerByRegional(all.AsQueryable(), user).ToList().OrderBy(x=>x.Id);
             List<dynamic> res = new List<dynamic>();
             foreach (var p in filtered)
             {
@@ -48,6 +50,7 @@ namespace UcbBack.Controllers
                 r.Name = p.Name;
                 r.Cod = p.Cod;
                 r.Category = p.Category;
+                r.PerformanceArea = p.PerformanceArea;
                 if (!res.Any(x=>x.Id==r.Id))
                     res.Add(r);
             }
@@ -95,6 +98,7 @@ namespace UcbBack.Controllers
             positionInDB.Name = position.Name;
             positionInDB.BranchesId = position.BranchesId;
             positionInDB.LevelId = position.LevelId;
+            positionInDB.PerformanceAreaId = position.PerformanceAreaId;
 
             _context.SaveChanges();
             return Ok(positionInDB);
