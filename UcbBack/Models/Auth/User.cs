@@ -29,6 +29,7 @@ namespace UcbBack.Models.Auth
         public bool? SolicitanteCompras { get; set; }
         public bool? AutorizadorCompras { get; set; }
         public bool? Rendiciones { get; set; }
+        public bool? RendicionesDolares { get; set; }
         [ForeignKey("AuthPeopleId")]
         public People Auth { get; set; }
         public int? AuthPeopleId { get; set; }
@@ -52,8 +53,8 @@ namespace UcbBack.Models.Auth
                     nom = "CAJA_CBB-Moneda Local(BS)";
                     break;
                 case 6: //UCE
-                    id = 8;
-                    nom = "CAJA_LPZ-Moneda Local(BS)";
+                    id = 13;
+                    nom = "CAJA_UCE-Moneda Local(BS)";
                     break;
                 case 16: //SC
                     id = 10;
@@ -68,8 +69,8 @@ namespace UcbBack.Models.Auth
                     nom = "CAJA_EPC-Moneda Local(BS)";
                     break;
                 case 22: //TEO
-                    id = 9;
-                    nom = "CAJA_CBB-Moneda Local(BS)";
+                    id = 21;
+                    nom = "CAJA_TEO-Moneda Local(BS)";
                     break;
                 default:
                     id = 0;
@@ -110,6 +111,46 @@ namespace UcbBack.Models.Auth
                 case 22: //TEO
                     id = 6;
                     nom = "RENDICIONES_TEO-Moneda Local(BS)";
+                    break;
+                default:
+                    id = 0;
+                    nom = "";
+                    break;
+            }
+        }
+
+        public void GetPerfilRendicionesDolares(out int id, out string nom)
+        {
+            var reg = this.People.GetLastContract().Dependency.BranchesId;
+            switch (reg)
+            {
+                case 2: //TJA
+                    id = 16;
+                    nom = "RENDICIONES_TJA-Moneda Sistema(USD)";
+                    break;
+                case 3: //CBB
+                    id = 18;
+                    nom = "RENDICIONES_CBB-Moneda Sistema(USD)";
+                    break;
+                case 6: //UCE
+                    id = 15;
+                    nom = "RENDICIONES_UCE-Moneda Sistema(USD)";
+                    break;
+                case 16: //SC
+                    id = 19;
+                    nom = "RENDICIONES_SCZ-Moneda Sistema(USD)";
+                    break;
+                case 17: //LP
+                    id = 17;
+                    nom = "RENDICIONES_LPZ-Moneda Sistema(USD)";
+                    break;
+                case 18: //EPC
+                    id = 20;
+                    nom = "RENDICIONES_EPC-Moneda Sistema(USD)";
+                    break;
+                case 22: //TEO
+                    id = 14;
+                    nom = "RENDICIONES_TEO-Moneda Sistema(USD)";
                     break;
                 default:
                     id = 0;
@@ -199,6 +240,7 @@ namespace UcbBack.Models.Auth
             this.UpdateRendicionesAuth(_context);
             this.UpdatePerfilCajaChica(_context);
             this.UpdatePerfilRendiciones(_context);
+            this.UpdatePerfilRendicionesDolares(_context);
         }
 
         public void UpdateRendicionesAuth(ApplicationDbContext _context)
@@ -269,6 +311,21 @@ namespace UcbBack.Models.Auth
             string nomperfil;
             this.GetPerfilRendiciones(out idperfil, out nomperfil);
             if (this.Rendiciones.Value)
+            {
+                this.AddPerfilInRend(_context, idperfil, nomperfil);
+            }
+            else
+            {
+                this.RemovePerfilInRend(_context, idperfil, nomperfil);
+            }
+        }
+
+        public void UpdatePerfilRendicionesDolares(ApplicationDbContext _context)
+        {
+            int idperfil;
+            string nomperfil;
+            this.GetPerfilRendicionesDolares(out idperfil, out nomperfil);
+            if (this.RendicionesDolares.Value)
             {
                 this.AddPerfilInRend(_context, idperfil, nomperfil);
             }

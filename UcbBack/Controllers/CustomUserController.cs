@@ -48,7 +48,7 @@ namespace UcbBack.Controllers
                     x.Rendiciones
                 });
             var query = "select u.\"Id\", p.\"SAPCodeRRHH\", p.cuni, p.\"Document\", c.\"FullName\", u.\"TipoLicenciaSAP\",u.\"CajaChica\", " +
-            " u.\"SolicitanteCompras\", u.\"AutorizadorCompras\", u.\"Rendiciones\", " +
+            " u.\"SolicitanteCompras\", u.\"AutorizadorCompras\", u.\"Rendiciones\", u.\"RendicionesDolares\", " +
             " p.\"UcbEmail\",coalesce(u.\"UserPrincipalName\",'Sin Usuario') as \"UserPrincipalName\", c.\"DependencyCod\", c.\"Dependency\", ou.\"Cod\" as \"OUCod\", " +
             " ou.\"Name\" as \"OUName\", c.\"Positions\", c.\"Dedication\", c.\"Linkage\", pauth.\"SAPCodeRRHH\" as \"AuthSAPCodeRRHH\", " +
             " auth.cuni as \"AuthCUNI\", auth.\"FullName\" as \"AuthFullName\", auth.\"Positions\" as \"AuthPositions\", c.\"Branches\", u.\"AutoGenPass\" " +
@@ -235,6 +235,7 @@ namespace UcbBack.Controllers
             respose.SolicitanteCompras = userInDB.SolicitanteCompras;
             respose.AutorizadorCompras = userInDB.AutorizadorCompras;
             respose.Rendiciones = userInDB.Rendiciones;
+            respose.RendicionesDolares = userInDB.RendicionesDolares;
             respose.AuthPeopleId = userInDB.AuthPeopleId;
 
             return Ok(respose);
@@ -280,11 +281,15 @@ namespace UcbBack.Controllers
                 account.SolicitanteCompras = user.SolicitanteCompras == null ? false : user.SolicitanteCompras.Value;
                 account.AutorizadorCompras = user.AutorizadorCompras == null ? false : user.AutorizadorCompras.Value;
                 account.Rendiciones = user.Rendiciones == null ? false:user.Rendiciones.Value;
+                account.RendicionesDolares = user.RendicionesDolares == null ? false : user.RendicionesDolares.Value;
                 account.AuthPeopleId = user.AuthPeopleId;
                 _context.SaveChanges();
 
-                if(user.Rendiciones.Value)
+                if (account.Rendiciones.Value || account.CajaChica.Value || account.RendicionesDolares.Value)
+                {
                     account.CreateInRendiciones(_context);
+                    account.updatePerfilesRend(_context);
+                }
                 _context.SaveChanges();
             }
             else
@@ -314,8 +319,9 @@ namespace UcbBack.Controllers
             userInDb.SolicitanteCompras = user.SolicitanteCompras;
             userInDb.AutorizadorCompras = user.AutorizadorCompras;
             userInDb.Rendiciones = user.Rendiciones;
+            userInDb.RendicionesDolares = user.RendicionesDolares;
             userInDb.AuthPeopleId = user.AuthPeopleId;
-            if (userInDb.Rendiciones.Value || userInDb.CajaChica.Value)
+            if (userInDb.Rendiciones.Value || userInDb.CajaChica.Value || userInDb.RendicionesDolares.Value)
                 userInDb.CreateInRendiciones(_context);
             userInDb.updatePerfilesRend(_context);
             _context.SaveChanges();
