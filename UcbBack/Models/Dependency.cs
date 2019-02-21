@@ -41,6 +41,9 @@ namespace UcbBack.Models
 
         public bool Academic { get; set; }
 
+        public int PerformanceAreaId { get; set; }
+        public PerformanceArea PerformanceArea { get; set; }
+
 
         public static int GetNextId(ApplicationDbContext _context)
         {
