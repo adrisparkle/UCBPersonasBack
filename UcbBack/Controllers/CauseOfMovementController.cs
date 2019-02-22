@@ -24,7 +24,7 @@ namespace UcbBack.Controllers
         [Route("api/CauseOfMovement/Baja")]
         public IHttpActionResult GetBaja()
         {
-            var causes = _context.CauseOfMovements.Where(x => x.Type == "B");
+            var causes = _context.CauseOfMovements.Where(x => x.Type == "B" && x.Enabled);
             return Ok(causes);
         }
 
@@ -32,7 +32,7 @@ namespace UcbBack.Controllers
         [Route("api/CauseOfMovement/Movement")]
         public IHttpActionResult GetMovement()
         {
-            var causes = _context.CauseOfMovements.Where(x => x.Type == "M");
+            var causes = _context.CauseOfMovements.Where(x => x.Type == "M" && x.Enabled);
             return Ok(causes);
         }
     }
