@@ -6,6 +6,8 @@ using System.Web;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
+using System.Diagnostics;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace UcbBack.Logic
 {
@@ -168,9 +170,12 @@ namespace UcbBack.Logic
                     try
                     {
                         //try to filter bt active if table has active property
-                        res = res.ToList().Where(x => x.Active == true).AsQueryable();
+                        res = res.ToList().Where(x => x.Active == true).ToList().AsQueryable();
                     }
-                    catch (Exception){} 
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    } 
                 }
             }           
             return res;
