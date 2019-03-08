@@ -249,6 +249,10 @@ namespace UcbBack.Logic.B1
                         log.ErrorMessage = "SDK: " + errorMessage;
                         _context.SdkErrorLogs.Add(log);
                         _context.SaveChanges();
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                        }
                         return "ERROR";
                     }
                     else
@@ -271,6 +275,10 @@ namespace UcbBack.Logic.B1
             }
             catch (Exception ex)
             {
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
                 // Get stack trace for the exception with source file information
                 var st = new StackTrace(ex, true);
                 // Get the top stack frame
@@ -321,6 +329,10 @@ namespace UcbBack.Logic.B1
                         log.ErrorMessage = "SDK: " + errorMessage;
                         _context.SdkErrorLogs.Add(log);
                         _context.SaveChanges();
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                        }
                         return "ERROR";
                     }
                     else
@@ -355,6 +367,10 @@ namespace UcbBack.Logic.B1
                 log.ErrorMessage = "Catch: "+ex.Message + " At line: "+line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
                 return "ERROR";
             }
         }
@@ -431,6 +447,10 @@ namespace UcbBack.Logic.B1
                             log.ErrorMessage = "SDK: " + errorMessage;
                             _context.SdkErrorLogs.Add(log);
                             _context.SaveChanges();
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                            }
                             return "ERROR";
                         }
                         else
@@ -469,6 +489,10 @@ namespace UcbBack.Logic.B1
                 log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
                 return "ERROR";
             }
         }
@@ -525,6 +549,10 @@ namespace UcbBack.Logic.B1
                         log.ErrorMessage = "SDK: " + errorMessage;
                         _context.SdkErrorLogs.Add(log);
                         _context.SaveChanges();
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                        }
                         return "ERROR";
                     }
                     else
@@ -557,6 +585,10 @@ namespace UcbBack.Logic.B1
                 log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
                 return "ERROR";
             }
         }
@@ -639,6 +671,10 @@ namespace UcbBack.Logic.B1
                             log.ErrorMessage = "SDK: " + errorMessage;
                             _context.SdkErrorLogs.Add(log);
                             _context.SaveChanges();
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                            }
                             return "ERROR";
                         }
                         else
@@ -677,6 +713,10 @@ namespace UcbBack.Logic.B1
                 log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
                 return "ERROR";
             }
         }
@@ -773,7 +813,7 @@ namespace UcbBack.Logic.B1
 
         public string getAccountId(string accountCode)
         {
-            string query = "select \"AcctCode\" from ucatolica.oact where \"FormatCode\" = '" + accountCode + "'";
+            string query = "select \"AcctCode\" from " + DatabaseName + ".oact where \"FormatCode\" = '" + accountCode + "'";
             var res = _context.Database.SqlQuery<string>(query).ToList()[0];
             return res;
         }
@@ -966,6 +1006,7 @@ namespace UcbBack.Logic.B1
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;
 
+
                         // add lines Journal Entrie Approved:
                         businessObject.Lines.SetCurrentLine(0);
                         foreach (var line in dist1)
@@ -985,7 +1026,7 @@ namespace UcbBack.Logic.B1
                             businessObject.Lines.Add();
                         }
 
-                        businessObject.Add();
+                        var B1key = businessObject.Add();
 
                         string newKey = company.GetNewObjectKey();
                         company.GetLastError(out errorCode, out errorMessage);
@@ -1231,7 +1272,7 @@ namespace UcbBack.Logic.B1
                 {
                     ADClass auth = new ADClass();
                     var branches = auth.getUserBranches(user);
-                    string where = "where ";
+                    string where = " where a.\"validFor\" = 'Y' and (";
                     int f = 0;
                     if (branches == null)
                         where += "false";
@@ -1243,7 +1284,7 @@ namespace UcbBack.Logic.B1
                             where += "b.\"BPLId\" = " + br.CodigoSAP;
                             f++;
                         }
-
+                    where += " ) ";
                     string cl = col == "*" ? strcol : "a.\"" + col + "\"";
                     string query = "Select distinct " + cl + " from " + DatabaseName + ".OCRD a " +
                                    "inner join " + DatabaseName + ".CRD8 b " +
@@ -1272,7 +1313,7 @@ namespace UcbBack.Logic.B1
                 else if (branch != null)
                 {
                     ADClass auth = new ADClass();
-                    string where = " where b.\"BPLId\" = " + branch.CodigoSAP ;
+                    string where = " where a.\"validFor\" = 'Y' and b.\"BPLId\" = " + branch.CodigoSAP;
 
                     string cl = col == "*" ? strcol : "a.\"" + col + "\"";
 
@@ -1302,7 +1343,7 @@ namespace UcbBack.Logic.B1
                 else
                 {
                     string cl = col == "*" ? col : "\"" + col + "\"";
-                    string query = "Select " + cl + " from " + DatabaseName + ".OCRD";
+                    string query = "Select " + cl + " from " + DatabaseName + ".OCRD  where \"validFor\" = 'Y' ";
                     HanaCommand command = new HanaCommand(query, HanaConn);
                     HanaDataReader dataReader = command.ExecuteReader();
 

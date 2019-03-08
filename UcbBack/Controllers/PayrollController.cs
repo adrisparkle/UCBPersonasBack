@@ -769,13 +769,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -1165,6 +1165,21 @@ namespace UcbBack.Controllers
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".DIST_COSTS(" + process.Id + ")");
             process.State = ProcessState.PROCESSED;
             _context.SaveChanges();
+            string query = "UPDATE \"" + CustomSchema.Schema + "\".\"Dist_Cost\" dc " +
+                           " set dc.\"BussinesPartner\" = CONCAT('H',p.\"CUNI\")" +
+                           " from \"" + CustomSchema.Schema + "\".\"Dist_Cost\" dc\r\n" +
+                           " inner join (select * from \"" + CustomSchema.Schema + "\".\"Dist_Process\" where \"State\" = 'PROCESSED' and \"Id\" = " + process.Id + ") dp\r\n" +
+                           "\ton dp.\"Id\" = dc.\"DistProcessId\"\r\n" +
+                           "inner join \"" + CustomSchema.Schema + "\".\"People\" p\r\n" +
+                           "\ton p.\"Document\" = dc.\"Document\"\r\n" +
+                           "inner join (select * from \"" + CustomSchema.Schema + "\".\"Dist_File\" where \"State\" = 'UPLOADED' and \"DistFileTypeId\" = 1) df\r\n" +
+                           "\tON dp.\"Id\" = df.\"DistProcessId\"\r\n" +
+                           "inner join ( select * from \"" + CustomSchema.Schema + "\".\"Dist_Payroll\" where \"ModoPago\" = 'CHQ') dpy\r\n" +
+                           "\tON df.\"Id\" = dpy.\"DistFileId\"\r\n" +
+                           "\tand dpy.cuni = p.cuni\r\n" +
+                           "where dc.\"Columna\" = 'S_PPAGAR' \r\n" +
+                           "and dc.\"DistProcessId\" = " + process.Id + ";";
+            _context.Database.ExecuteSqlCommand(query);
 
             return Ok("Se procesó la información");
         }
@@ -1183,7 +1198,7 @@ namespace UcbBack.Controllers
                     p.Id,
                     p.gestion,
                     p.mes
-                }).OrderBy(x=>x.BranchesId).ThenByDescending(x=>x.gestion).ThenByDescending(x=>x.mes);
+                }).OrderByDescending(x => x.gestion).ThenByDescending(x => x.mes).ThenBy(x => x.BranchesId);
 
             var user = auth.getUser(Request);
             var res = auth.filerByRegional(processes, user);

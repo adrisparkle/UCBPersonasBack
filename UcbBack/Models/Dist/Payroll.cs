@@ -50,6 +50,7 @@ namespace UcbBack.Models.Dist
 
         public Dist_File DistFile { get; set; }
         public long DistFileId { get; set; }
+        public string ModoPago { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {

@@ -44,7 +44,8 @@ namespace UcbBack.Logic.ExcelFiles
             new Excelcol("Aporte Patronal SCP", typeof(double)),
             new Excelcol("Provisión Aguinaldos", typeof(double)),
             new Excelcol("Provisión Primas", typeof(double)),
-            new Excelcol("Provisión Indemnización", typeof(double))
+            new Excelcol("Provisión Indemnización", typeof(double)),
+            new Excelcol("Modo Pago", typeof(string))
         };
 
         private string mes, gestion, segmentoOrigen;
@@ -136,7 +137,9 @@ namespace UcbBack.Logic.ExcelFiles
             bool v29 = ValidateSN(25);
             bool Negativos = v10 && v11 && v12 && v13 && v14 && v15 && v16 && v17 && v18 && v19 && v20 && v21 && v22 &&
                              v23 && v24 && v25 && v26 && v27;
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9 && Negativos && v28 && v29;
+            // Cheque or Banco
+            bool v30 = VerifyColumnValueIn(30,new List<string>(){"CHQ","BCO"},comment:"Este no es un tipo valido de modo de pago");
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6  && v7 && v8 && v9 && Negativos && v28 && v29 && v30;
         }
 
         public bool ValidateSN(int col, int sheet = 1)
@@ -156,7 +159,7 @@ namespace UcbBack.Logic.ExcelFiles
                 }
             }
             valid = valid && res;
-            return valid;
+            return res;
         }
 
         public bool ValidateNoNegative(int col, int sheet = 1)
@@ -180,7 +183,7 @@ namespace UcbBack.Logic.ExcelFiles
             valid = valid && res;
             if (!res)
                 addError("Valor negativo", "Existen columnas que no pueden ser negativas");
-            return valid;
+            return res;
         }
 
         public bool ValidatenoZero(int sheet = 1)
@@ -329,6 +332,7 @@ namespace UcbBack.Logic.ExcelFiles
             payroll.ProvPrimas = Math.Round(strToDecimal(row, 28), 2);
             payroll.ProvIndeminizacion = Math.Round(strToDecimal(row, 29), 2);
             payroll.ProcedureTypeEmployee = payroll.EmployeeType;
+            payroll.ModoPago = wb.Worksheet(sheet).Cell(row, 30).Value.ToString();
 
             payroll.Porcentaje = 0m;
             payroll.mes = this.mes;
