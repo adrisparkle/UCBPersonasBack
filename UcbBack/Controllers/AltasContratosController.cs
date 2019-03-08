@@ -8,8 +8,10 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
+using UcbBack.Logic.B1;
 using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models;
+using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 using UcbBack.Models.ViewMoldes;
 
@@ -18,10 +20,12 @@ namespace UcbBack.Controllers
     public class AltasContratosController : ApiController
     {
         private ApplicationDbContext _context;
+        private B1Connection B1;
 
         public AltasContratosController()
         {
             _context = new ApplicationDbContext();
+            B1 = B1Connection.Instance();
         }
 
         // Transform Http Content to varialbes to use in excel
@@ -60,7 +64,9 @@ namespace UcbBack.Controllers
         [Route("api/ContractAltaExcelsave/{id}")]
         public IHttpActionResult saveLastAltaExcel(int id)
         {
-            var tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State == "UPLOADED");
+            var tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State == "INBANKH");
+            ValidateAuth auth = new ValidateAuth();
+            CustomUser user = auth.getUser(Request);
             if (tempAlta.Count() < 0)
                 return NotFound();
 
@@ -82,6 +88,20 @@ namespace UcbBack.Controllers
                 contract.StartDate = alta.StartDate;
                 contract.EndDate = alta.EndDate;
                 _context.ContractDetails.Add(contract);
+                alta.State = "INBANKH";
+            }
+
+            _context.SaveChanges();
+
+            foreach (var alta in tempAlta)
+            {
+                var person = new People();
+                person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
+                var res = B1.AddOrUpdatePerson(user.Id, person);
+                if (!res.Contains("ERROR"))
+                    alta.State = "INSAP";
+                else
+                    alta.State = "ERRORINSAP";
             }
 
             _context.SaveChanges();

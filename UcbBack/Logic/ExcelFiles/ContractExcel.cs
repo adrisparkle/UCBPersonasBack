@@ -8,6 +8,7 @@ using Microsoft.Ajax.Utilities;
 using UcbBack.Controllers;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Logic.ExcelFiles
 {
@@ -91,8 +92,25 @@ namespace UcbBack.Logic.ExcelFiles
                 _context.Dependencies.Where(x => x.BranchesId == this.Segment && x.Active && x.Academic).Select(m => m.Cod).Distinct().ToList(),
                 comment:
                 "Esta Dependencia no existe en la Base de Datos Nacional, o no es posible asociar docentes a esta Dependencia.");
+            bool v6 = completeDep();
+            return isValid() && v0 && v5 && v6;
+        }
 
-            return isValid() && v0 && v5;
+        public bool completeDep()
+        {
+            bool result = true;
+            IXLRange UsedRange = wb.Worksheet(1).RangeUsed();
+            for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                if (wb.Worksheet(1).Cell(i, 7).Value.ToString() == "")
+                {
+                    result = false;
+                    string oldDep = _context.Database.SqlQuery<string>("select \"DependencyCod\" from \"" + CustomSchema.Schema + "\".lastcontracts where cuni = '" + wb.Worksheet(1).Cell(i, 1).Value.ToString() + "'").ToList()[0];
+                    wb.Worksheet(1).Cell(i, 7).Value = oldDep;
+                }
+            }
+
+            return result;
         }
 
         public TempAlta ToTempAlta(int row, int sheet = 1)
