@@ -310,12 +310,12 @@ namespace UcbBack.Controllers
         public IHttpActionResult addalltoSAP()
         {
             var date = new DateTime(2017, 1, 1);
-            /*List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
+            List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
                 Where(y => (y.EndDate > date || y.EndDate == null)
-                ).Select(x => x.People).Distinct().ToList();*/
+                ).Select(x => x.People).Distinct().ToList();
 
-            string query = "SELECT p.* FROM ADMNALRRHH.\"People\" p\r\ninner join ucatolica.ocrd bp\r\non concat(\'R\', p.cuni) = bp.\"CardCode\"";
-            List<People> person = _context.Database.SqlQuery<People>(query).ToList();
+            //string query = "SELECT p.* FROM ADMNALRRHH.\"People\" p\r\ninner join ucatolica.ocrd bp\r\non concat(\'R\', p.cuni) = bp.\"CardCode\"";
+            //List<People> person = _context.Database.SqlQuery<People>(query).ToList();
 
             //person = person.Where(x => x.CUNI == "RFA940908").ToList();
             B1Connection b1 = B1Connection.Instance();
@@ -324,7 +324,7 @@ namespace UcbBack.Controllers
             foreach (var p in person)
             {
                 i++;
-                var X = b1.AddOrUpdatePersonToBusinessPartnerSUPPLIER(usr.Id, p);
+                var X = b1.AddOrUpdatePerson(usr.Id, p);
                 if (X.Contains("ERROR"))
                 {
                     X = "";
@@ -545,7 +545,7 @@ namespace UcbBack.Controllers
             personInDB.BirthDate = person.BirthDate;
             personInDB.Gender = cleanText(person.Gender);
             personInDB.Nationality = cleanText(person.Nationality);
-            personInDB.UseMariedSurName = person.UseMariedSurName;
+            personInDB.UseMariedSurName = (int) person.UseMariedSurName;
             personInDB.UseSecondSurName = person.UseSecondSurName;
             //------------------------NON REQUIRED COLS--------------------------
             personInDB.MariedSurName = cleanText(person.MariedSurName);

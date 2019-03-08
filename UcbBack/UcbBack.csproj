@@ -273,6 +273,7 @@
     <Compile Include="Models\Auth\PasswordHash.cs" />
     <Compile Include="Models\Auth\Rol.cs" />
     <Compile Include="Models\Auth\RolhasAccess.cs" />
+    <Compile Include="Models\Auth\SystemErrorLogs.cs" />
     <Compile Include="Models\Auth\User.cs" />
     <Compile Include="Models\Branches.cs" />
     <Compile Include="Models\BranchhasPosition.cs" />
