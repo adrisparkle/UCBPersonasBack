@@ -18,6 +18,7 @@ using Newtonsoft.Json.Linq;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
 using System.Data.Entity;
+using System.Diagnostics;
 
 namespace UcbBack.Logic
 {
@@ -193,32 +194,45 @@ namespace UcbBack.Logic
             string colId=null,
             bool notin=false)
         {
-            bool res = true;
-            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
-            var l = UsedRange.LastRow().RowNumber();
-            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            try
             {
-                var value = cleanText(wb.Worksheet(sheet).Cell(i, index).Value.ToString());
-                if (list.Exists(x => string.Equals(cleanText(x), value, StringComparison.OrdinalIgnoreCase))==notin)
+                bool res = true;
+                IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+                var l = UsedRange.LastRow().RowNumber();
+                for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
                 {
-                    res = false;
-                    if (paintcol)
+                    var value = cleanText(wb.Worksheet(sheet).Cell(i, index).Value.ToString());
+                    if (list.Exists(x => string.Equals(cleanText(x), value, StringComparison.OrdinalIgnoreCase)) ==
+                        notin)
                     {
-                        string aux = "";
-                        if (jaro)
+                        res = false;
+                        if (paintcol)
                         {
-                            var similarities = hanaValidator.Similarities(wb.Worksheet(sheet).Cell(i, index).Value.ToString(), colToCompare, table, colId, 0.9f);
-                            aux = similarities.Any() ? "\nNo será: '"+similarities[0].ToString()+"'?":"";
+                            string aux = "";
+                            if (jaro)
+                            {
+                                var similarities = hanaValidator.Similarities(
+                                    wb.Worksheet(sheet).Cell(i, index).Value.ToString(), colToCompare, table, colId,
+                                    0.9f);
+                                aux = similarities.Any() ? "\nNo será: '" + similarities[0].ToString() + "'?" : "";
+                            }
+
+                            paintXY(index, i, XLColor.Red, comment + aux);
                         }
-                        paintXY(index, i, XLColor.Red, comment + aux);
+
                     }
-                        
                 }
+
+                valid = valid && res;
+                if (!res)
+                    addError("Valor no valido", "Valor o valores no validos en la columna: " + index, false);
+                return res;
             }
-            valid = valid && res;
-            if(!res)
-                addError("Valor no valido", "Valor o valores no validos en la columna: "+index,false);
-            return res;
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                return false;
+            }
         }
 
         public string cleanText(string a)
@@ -579,6 +593,7 @@ namespace UcbBack.Logic
             var ms = new MemoryStream();
             if (w != null)
             {
+                w.Author = "PersoNAS UCB";
                 w.SaveAs(ms);
                 response.StatusCode = valid ? HttpStatusCode.OK : HttpStatusCode.BadRequest;
                 response.Content = new StreamContent(ms);

@@ -64,7 +64,7 @@ namespace UcbBack.Controllers
         [Route("api/ContractAltaExcelsave/{id}")]
         public IHttpActionResult saveLastAltaExcel(int id)
         {
-            var tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State == "INBANKH");
+            var tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State == "UPLOADED");
             ValidateAuth auth = new ValidateAuth();
             CustomUser user = auth.getUser(Request);
             if (tempAlta.Count() < 0)
@@ -73,26 +73,49 @@ namespace UcbBack.Controllers
             foreach (var alta in tempAlta)
             {
                 var person = new People();
+                var depId = _context.Dependencies.FirstOrDefault(x => x.Cod == alta.Dependencia).Id;
                 person = _context.Person.FirstOrDefault(x => x.CUNI == alta.CUNI);
-                var contract = new ContractDetail();
+                var exist = _context.ContractDetails.Where
+                (
+                    x => 
+                        x.CUNI == alta.CUNI && 
+                        x.PeopleId == person.Id &&
+                        x.DependencyId == depId &&
+                        x.Dedication == "TH" &&
+                        x.Linkage == 3 &&
+                        x.PositionsId == 26 &&
+                        x.StartDate == alta.StartDate &&
+                        x.EndDate == alta.EndDate
+                ).ToList().Any();
 
-                contract.Id = ContractDetail.GetNextId(_context);
-                contract.DependencyId = _context.Dependencies.FirstOrDefault(x => x.Cod == alta.Dependencia).Id;
-                contract.CUNI = person.CUNI;
-                contract.PeopleId = person.Id;
-                contract.BranchesId = alta.BranchesId;
-                contract.Dedication = "TH";
-                contract.Linkage = 3;
-                contract.PositionDescription = "Docente Tiempo Horario";
-                contract.PositionsId = 26;
-                contract.StartDate = alta.StartDate;
-                contract.EndDate = alta.EndDate;
-                _context.ContractDetails.Add(contract);
-                alta.State = "INBANKH";
+                if (!exist)
+                {
+                    var contract = new ContractDetail();
+
+                    contract.Id = ContractDetail.GetNextId(_context);
+                    contract.DependencyId = depId;
+                    contract.CUNI = person.CUNI;
+                    contract.PeopleId = person.Id;
+                    contract.BranchesId = alta.BranchesId;
+                    contract.Dedication = "TH";
+                    contract.Linkage = 3;
+                    contract.PositionDescription = "Docente Tiempo Horario";
+                    contract.PositionsId = 26;
+                    contract.StartDate = alta.StartDate;
+                    contract.EndDate = alta.EndDate;
+                    _context.ContractDetails.Add(contract);
+                    alta.State = "INBANKH";
+                }
+                else
+                {
+                    alta.State = "DUPLICATE";                    
+                }
+                
             }
 
             _context.SaveChanges();
 
+            tempAlta = _context.TempAltas.Where(x => x.BranchesId == id && x.State == "INBANKH");
             foreach (var alta in tempAlta)
             {
                 var person = new People();
@@ -135,7 +158,6 @@ namespace UcbBack.Controllers
         [Route("api/ContractAltaExcel/{id}")]
         public IHttpActionResult getLastAltaExcel(int id)
         {
-            //todo set validators state and branchId
             string query = "select 0 as \"Id\", " +
                            " person.cuni, " +
                            "person.\"Document\", " +

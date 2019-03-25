@@ -47,6 +47,9 @@
     <Reference Include="DocumentFormat.OpenXml">
       <HintPath>..\packages\DocumentFormat.OpenXml.2.5\lib\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
+    <Reference Include="EASendMail45">
+      <HintPath>..\packages\EASendMail.7.3.1.9\lib\net45\EASendMail45.dll</HintPath>
+    </Reference>
     <Reference Include="ExcelDataReader">
       <HintPath>..\packages\ExcelDataReader.3.4.0\lib\net45\ExcelDataReader.dll</HintPath>
     </Reference>
@@ -256,6 +259,7 @@
     <Compile Include="Logic\ExcelFiles\PostgradoExcel.cs" />
     <Compile Include="Logic\ExcelFiles\PregradoExcel.cs" />
     <Compile Include="Logic\HanaValidator.cs" />
+    <Compile Include="Logic\Mail\Mail.cs" />
     <Compile Include="Logic\ValidateAuth.cs" />
     <Compile Include="Logic\ExcelFiles\ValidateContractsFile.cs" />
     <Compile Include="Logic\ExcelFiles\ValidateExcelFile.cs" />
@@ -331,6 +335,7 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Images\logo.png" />
+    <Content Include="Static\Mail\MailWithActionBody.html" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Areas\HelpPage\Views\Web.config" />

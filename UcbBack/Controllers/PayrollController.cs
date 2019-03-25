@@ -333,7 +333,6 @@ namespace UcbBack.Controllers
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors",
                     "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -415,16 +414,19 @@ namespace UcbBack.Controllers
                 var req = await Request.Content.ReadAsMultipartAsync();
                 dynamic o = HttpContentToVariables(req).Result;
 
-                if (!((IDictionary<string, object>)o).ContainsKey("mes")
-                    || !((IDictionary<string, object>)o).ContainsKey("gestion")
-                    || !((IDictionary<string, object>)o).ContainsKey("segmentoOrigen")
-                    || !((IDictionary<string, object>)o).ContainsKey("fileName")
-                    || !((IDictionary<string, object>)o).ContainsKey("excelStream")
+                if (!((IDictionary<string, object>) o).ContainsKey("mes")
+                    || !((IDictionary<string, object>) o).ContainsKey("gestion")
+                    || !((IDictionary<string, object>) o).ContainsKey("segmentoOrigen")
+                    || !((IDictionary<string, object>) o).ContainsKey("fileName")
+                    || !((IDictionary<string, object>) o).ContainsKey("excelStream")
                     || !o.fileName.ToString().EndsWith(".xlsx"))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
-                    response.Content = new StringContent("Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Faltan datos\": \"Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file (en formato .xlsx)\"}");
+                    response.Content =
+                        new StringContent(
+                            "Debe enviar mes(mm), gestion(yyyy), segmentoOrigen(id) y un archivo excel llamado file");
                     return response;
                 }
 
@@ -432,23 +434,30 @@ namespace UcbBack.Controllers
                 if (!verifyName(o.fileName, o.mes, o.gestion, o.segmentoOrigen, "ACAD", out realFileName))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " + realFileName + "\"}");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Nombre Incorrecto\": \"El archivo enviado no cumple con la regla de nombres. Nombre sugerido: " +
+                        realFileName + "\"}");
                     response.Content = new StringContent("El archivo enviado no cumple con la regla de nombres.");
                     return response;
                 }
 
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
-                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen, ExcelFileType.Academic, userid, o.fileName.ToString());
+                var file = AddFileToProcess(o.mes.ToString(), o.gestion.ToString(), o.segmentoOrigen,
+                    ExcelFileType.Academic, userid, o.fileName.ToString());
 
                 if (file == null)
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("UploadErrors", "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
-                    response.Content = new StringContent("Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
+                    response.Headers.Add("UploadErrors",
+                        "{ \"Ya se Subio archivos para este mes\": \"Ya se subio  datos para este mes, si quiere volver a subir cancele el anterior archivo.\"}");
+                    response.Content =
+                        new StringContent(
+                            "Ya se subió  datos para este mes, si quiere volver a subir cancele el anterior archivo.");
                     return response;
                 }
 
-                ExcelFile = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion, o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
+                ExcelFile = new AcademicExcel(o.excelStream, _context, o.fileName, o.mes, o.gestion,
+                    o.segmentoOrigen.ToString(), file, headerin: ExcelHeaders, sheets: 1);
 
                 if (ExcelFile.ValidateFile())
                 {
@@ -459,6 +468,7 @@ namespace UcbBack.Controllers
                     response.Content = new StringContent("Se subio el archivo correctamente.");
                     return response;
                 }
+
                 file.State = FileState.ERROR;
                 _context.SaveChanges();
                 return ExcelFile.toResponse();
@@ -467,7 +477,8 @@ namespace UcbBack.Controllers
             {
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("UploadErrors", "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
+                response.Headers.Add("UploadErrors",
+                    "{ \"Formato Archivo Invalido\": \"Por favor enviar un archivo en formato excel (.xlsx)\"}");
                 ExcelFile.addError("Formato Archivo Invalido", "Por favor enviar un archivo en formato excel (.xlsx)");
                 response.Content = new StringContent("Por favor enviar un archivo en formato excel (.xlsx)" + e);
                 return response;
@@ -476,8 +487,8 @@ namespace UcbBack.Controllers
             {
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
+                response.Headers.Add("UploadErrors",
+                    "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -487,13 +498,16 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("Error en conexion con SAP",
+                        "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
+
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("Error en conexion con SAP",
+                    "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -501,8 +515,11 @@ namespace UcbBack.Controllers
             {
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("UploadErrors", "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
-                response.Content = new StringContent("Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
+                response.Headers.Add("UploadErrors",
+                    "{ \"Existen Enlaces a otros archivos\": \"Existen celdas con referencias a otros archivos.\"}");
+                response.Content =
+                    new StringContent(
+                        "Por favor enviar un archivo en formato excel sin referencias a otros libros excel o formulas(.xls, .xslx)");
                 return response;
             }
         }
@@ -618,7 +635,6 @@ namespace UcbBack.Controllers
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -759,7 +775,6 @@ namespace UcbBack.Controllers
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -898,7 +913,6 @@ namespace UcbBack.Controllers
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -1037,7 +1051,6 @@ namespace UcbBack.Controllers
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
                 response.Headers.Add("UploadErrors", "{ \"Archivo demasiado grande\": \"El archivo es demasiado grande para ser procesado.\"}");
-                ExcelFile.addError("Archivo demasiado grande", "El archivo es demasiado grande para ser procesado.");
                 response.Content = new StringContent("El archivo es demasiado grande para ser procesado.");
                 return response;
             }
@@ -1121,6 +1134,7 @@ namespace UcbBack.Controllers
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_CUADRARDESCUENTOS(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_ACADSUM(" + userid + "," + process.Id + ")");
             _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_OTHERINCOMES(" + userid + "," + process.Id + ")");
+            _context.Database.ExecuteSqlCommand("CALL \"" + CustomSchema.Schema + "\".VALIDATE_HORASTRABAJADASpi(" + userid + "," + process.Id + ")");
 
 
             var err = _context.DistLogErroreses.Where(e => e.DistProcessId == process.Id && !e.Inspected).Include(e => e.Error).Select(e => new { e.Id, e.ErrorId, e.Error.Name, e.Error.Description,e.Error.Type, e.Archivos, e.CUNI });
@@ -1212,6 +1226,11 @@ namespace UcbBack.Controllers
         {
 
             var processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State != ProcessState.CANCELED && p.State != ProcessState.INSAP ));
+            var user = auth.getUser(Request);
+            ADClass ad = new ADClass();
+            var rols = ad.getUserRols(user).FirstOrDefault(x=> x.Name == "Admin");
+            if (rols!= null)
+                processInDB = _context.DistProcesses.FirstOrDefault(p => p.Id == id && (p.State != ProcessState.CANCELED));
             if (processInDB == null)
                 return BadRequest("No se Puede borrar este Proceso.");
             processInDB.State = ProcessState.CANCELED;
@@ -1542,8 +1561,10 @@ namespace UcbBack.Controllers
             _context.SaveChanges();
             if (sendToSAP && b1conn.connectedtoB1)
             {
-                uploadedToSAP = b1conn.addVoucher(user.Id, pro) != "ERROR";
+                var newkey = b1conn.addVoucher(user.Id, pro);
+                uploadedToSAP = newkey != "ERROR";
                 response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StringContent("{\"newkey\": \"" + newkey + "\"}");
             }
             if(dowloadDataTransfer && (!uploadedToSAP || !sendToSAP)) 
             {

@@ -19,6 +19,7 @@ using System.Web.Mvc;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Ajax.Utilities;
 using UcbBack.Logic.B1;
+using UcbBack.Logic.Mail;
 
 
 namespace UcbBack.Controllers
@@ -350,6 +351,13 @@ namespace UcbBack.Controllers
             }
 
             return Ok();
+        }
+
+        [System.Web.Http.HttpGet]
+        [System.Web.Http.Route("api/sendMail/")]
+        public IHttpActionResult sendMail()
+        {
+            return Ok(Mail.SendMail());
         }
 
         [System.Web.Http.HttpGet]

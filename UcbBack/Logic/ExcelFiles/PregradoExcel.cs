@@ -59,7 +59,7 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance();
             bool v1 = VerifyPerson(ci: 1, fullname: 2, CUNI: 8, date: this.gestion + "-" + this.mes + "-01", personActive: false);
             bool v2 = VerifyColumnValueIn(7, connB1.getCostCenter(B1Connection.Dimension.PlanAcademico, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este Plan de Estudio no existe en SAP.");
-            bool v3 = VerifyColumnValueIn(9, _context.Dependencies.Select(m => m.Cod).Distinct().ToList());
+            bool v3 = VerifyColumnValueIn(9, _context.Dependencies.Where(x=>x.BranchesId==Int32.Parse(this.segmentoOrigen)).Select(m => m.Cod).Distinct().ToList());
             return isValid() && v1 && v2 && v3;
         }
 
