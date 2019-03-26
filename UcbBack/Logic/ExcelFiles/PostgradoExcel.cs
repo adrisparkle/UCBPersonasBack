@@ -64,7 +64,8 @@ namespace UcbBack.Logic.ExcelFiles
             var connB1 = B1Connection.Instance();
 
             //bool v1 = VerifyColumnValueIn(6, connB1.getProjects(col: "PrjName").ToList(), comment: "Este Proyecto no existe en SAP.");
-            bool v2 = VerifyColumnValueIn(9, _context.Dependencies.Where(x => x.BranchesId == Int32.Parse(this.segmentoOrigen)).Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
+            int brId = Int32.Parse(this.segmentoOrigen);
+            bool v2 = VerifyColumnValueIn(9, _context.Dependencies.Where(x => x.BranchesId == brId).Select(m => m.Cod).Distinct().ToList(), comment: "No existe esta dependencia.");
             bool v3 = VerifyColumnValueIn(11, _context.TipoEmpleadoDists.Select(x=>x.Name).ToList().Where(x=>new List<string>{"POST","EC","INV","FC","SA"}.Contains(x)).ToList(), comment: "No existe este tipo de proyecto.");
             bool v4 = VerifyColumnValueIn(12, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "OTR", "PAN" }, comment: "No existe este tipo de tarea asignada.");
             bool v5 = VerifyColumnValueIn(13, connB1.getCostCenter(B1Connection.Dimension.PEI, mes: this.mes, gestion: this.gestion).Cast<string>().ToList(), comment: "Este PEI no existe en SAP.");
