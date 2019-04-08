@@ -545,7 +545,7 @@ namespace UcbBack.Logic
                             paintXY(paralelo, i, XLColor.Red, "Este Paralelo no es correcto.");
                         }
 
-                        // Verify dependence
+                        // Verify dependency
                         /*if (dep == null || row.OU != dep.OrganizationalUnit.Cod)
                         {
                             paintXY(dependency, i, XLColor.Red, "Esta dependencia no esta asociada a este paralelo." + row.OU + "->" + dep.OrganizationalUnit.Cod );

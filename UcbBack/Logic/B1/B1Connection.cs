@@ -1045,6 +1045,8 @@ namespace UcbBack.Logic.B1
                             {
                                 company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                                 newKey = newKey.Replace("\t1", "");
+                                process.ComprobanteSAP = B1key.ToString();
+                                _context.DistProcesses.AddOrUpdate(process);
                                 _context.SdkErrorLogs.Add(log);
                                 _context.SaveChanges();
                                 return newKey;
@@ -1482,15 +1484,15 @@ namespace UcbBack.Logic.B1
             List<object> list = new List<object>();
             if (connectedtoHana)
             {
-                /*string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"U_CODIGO_DEPARTAMENTO\" "
+                string query = "select a.\"PrcCode\", a.\"U_PeriodoPARALELO\", a.\"U_Sigla\", a.\"U_Paralelo\", b.\"CODUNIDADORGANIZACIONAL\" "
                 + "from ucatolica.oprc a "
-                + "inner join admnal.\"T_GEN_PARALELOS\" b "
-                +   " on a.\"PrcCode\" = b.\"U_CODIGO_PARALELO\""
-                + " WHERE a.\"DimCode\" = " + 4 ;*/
+                + "inner join admnal.\"T_REG_PARALELOS\" b "
+                + " on a.\"PrcCode\" = b.\"CODIGOSAP\""
+                + " WHERE a.\"DimCode\" = " + 4 ;
 
-                string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
+                /*string query = "select \"PrcCode\", \"U_PeriodoPARALELO\", \"U_Sigla\", \"U_Paralelo\""
                                + "from " + DatabaseName + ".oprc"
-                               + " WHERE \"DimCode\" = " + 4;
+                               + " WHERE \"DimCode\" = " + 4;*/
                 HanaCommand command = new HanaCommand(query, HanaConn);
                 HanaDataReader dataReader = command.ExecuteReader();
 
@@ -1503,7 +1505,7 @@ namespace UcbBack.Logic.B1
                         o.periodo = dataReader["U_PeriodoPARALELO"].ToString();
                         o.sigla = dataReader["U_Sigla"].ToString();
                         o.paralelo = dataReader["U_Paralelo"].ToString();
-                        //o.OU = dataReader["U_CODIGO_DEPARTAMENTO"].ToString();
+                        o.OU = dataReader["CODUNIDADORGANIZACIONAL"].ToString();
                         list.Add(o);
                     }
                 }

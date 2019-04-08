@@ -21,6 +21,7 @@ namespace UcbBack.Models.Dist
         public string mes { get; set; }
         public string gestion { get; set; }
         public string State { get; set; }
+        public string ComprobanteSAP { get; set; }
         public DateTime? RegisterDate { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
