@@ -59,6 +59,7 @@ namespace UcbBack.Controllers
                 return BadRequest(ModelState);
 
             dependency.Id = Dependency.GetNextId(_context);
+            dependency.Name = dependency.Name.ToUpper();
             _context.Dependencies.Add(dependency);
             _context.SaveChanges();
             return Created(new Uri(Request.RequestUri + "/" + dependency.Id), dependency);

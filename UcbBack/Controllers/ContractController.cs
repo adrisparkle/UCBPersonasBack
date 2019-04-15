@@ -321,6 +321,7 @@ namespace UcbBack.Controllers
                 contract.CUNI = person.CUNI;
                 contract.BranchesId = _context.Dependencies.FirstOrDefault(x => x.Id == contract.DependencyId).BranchesId;
                 contract.Id = ContractDetail.GetNextId(_context);
+                contract.PositionDescription = contract.PositionDescription.ToUpper();
                 _context.ContractDetails.Add(contract);
                 _context.SaveChanges();
 
@@ -374,7 +375,7 @@ namespace UcbBack.Controllers
             contractInDB.BranchesId = _context.Dependencies.FirstOrDefault(x=>x.Id==contract.DependencyId).BranchesId;
             contractInDB.DependencyId = contract.DependencyId;
             contractInDB.PositionsId = contract.PositionsId;
-            contractInDB.PositionDescription = contract.PositionDescription;
+            contractInDB.PositionDescription = contract.PositionDescription.ToUpper();
             contractInDB.Linkage = contract.Linkage;
             contractInDB.AI = contract.AI;
             contractInDB.UpdatedAt = DateTime.Now;

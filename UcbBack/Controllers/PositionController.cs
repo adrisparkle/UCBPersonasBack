@@ -39,6 +39,8 @@ namespace UcbBack.Controllers
                     brs.BranchesId,
                     pos.PerformanceAreaId,
                     PerformanceArea = pos.PerformanceArea.Name,
+                    pos.IsDesignated,
+                    pos.DefaultLinkage,
                 };
             var user = auth.getUser(Request);
             var filtered = auth.filerByRegional(all.AsQueryable(), user).ToList().OrderBy(x=>x.Id);
@@ -51,6 +53,8 @@ namespace UcbBack.Controllers
                 r.Cod = p.Cod;
                 r.Category = p.Category;
                 r.PerformanceArea = p.PerformanceArea;
+                r.IsDesignated = p.IsDesignated;
+                r.DefaultLinkage = p.DefaultLinkage;
                 if (!res.Any(x=>x.Id==r.Id))
                     res.Add(r);
             }
@@ -99,6 +103,8 @@ namespace UcbBack.Controllers
             positionInDB.BranchesId = position.BranchesId;
             positionInDB.LevelId = position.LevelId;
             positionInDB.PerformanceAreaId = position.PerformanceAreaId;
+            positionInDB.IsDesignated = position.IsDesignated;
+            positionInDB.DefaultLinkage = position.DefaultLinkage;
 
             _context.SaveChanges();
             return Ok(positionInDB);

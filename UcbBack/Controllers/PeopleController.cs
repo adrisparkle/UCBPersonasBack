@@ -312,7 +312,7 @@ namespace UcbBack.Controllers
         {
             var date = new DateTime(2017, 1, 1);
             List<People> person = _context.ContractDetails.Include(x => x.People).Include(x => x.Positions).
-                Where(y => (y.EndDate > date || y.EndDate == null)
+                Where(y => (y.EndDate > date || y.EndDate == null) && y.DependencyId==189
                 ).Select(x => x.People).Distinct().ToList();
 
             //string query = "SELECT p.* FROM ADMNALRRHH.\"People\" p\r\ninner join ucatolica.ocrd bp\r\non concat(\'R\', p.cuni) = bp.\"CardCode\"";

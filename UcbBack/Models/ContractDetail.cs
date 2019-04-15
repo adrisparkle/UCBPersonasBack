@@ -43,6 +43,8 @@ namespace UcbBack.Models
         public bool AI { get; set; }
 
         public string Cause { get; set; }
+        public string NumDesignacion { get; set; }
+        public string CartaDesignacion { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
 
