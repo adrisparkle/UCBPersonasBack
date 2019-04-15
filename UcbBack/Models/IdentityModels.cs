@@ -55,6 +55,7 @@ namespace UcbBack.Models
         public DbSet<BranchhasPosition> BranchhasPositions { get; set; }
         public DbSet<CauseOfMovement> CauseOfMovements { get; set; }
         public DbSet<ChangesLogs> ChangesLogses { get; set; }
+        public DbSet<Civil> Civils { get; set; }
         
 
         //auth models

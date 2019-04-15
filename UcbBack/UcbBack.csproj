@@ -226,6 +226,7 @@
     <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
     <Compile Include="Controllers\CauseOfMovementController.cs" />
+    <Compile Include="Controllers\CivilController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
     <Compile Include="Controllers\CostCentersController.cs" />
     <Compile Include="Controllers\CuentasContablesController.cs" />
@@ -284,6 +285,7 @@
     <Compile Include="Models\BranchhasPosition.cs" />
     <Compile Include="Models\CauseOfMovement.cs" />
     <Compile Include="Models\ChangesLogs.cs" />
+    <Compile Include="Models\Civil.cs" />
     <Compile Include="Models\Contract.cs" />
     <Compile Include="Models\ContractDetail.cs" />
     <Compile Include="Models\Dist\CuentaContable.cs" />

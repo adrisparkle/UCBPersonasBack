@@ -27,6 +27,7 @@ namespace UcbBack.Logic.B1
         private struct BusinessObjectType
         {
             public static string BussinesPartner = "BUSINESSPARTNER";
+            public static string BussinesPartnerCivil = "BUSINESSPARTNERCIVIL";
             public static string Voucher = "VOUCHER";
             public static string Employee = "EMPLOYEE";
         }
@@ -128,17 +129,6 @@ namespace UcbBack.Logic.B1
         {
             company = new SAPbobsCOM.Company();
 
-            /*company.Server = "SAPHANA01:30015";
-            company.CompanyDB = "UCBTEST";
-            company.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
-            company.DbUserName = "DESARROLLO1";
-            company.DbPassword = "Rrhh12345";
-            company.UserName = "manager7";
-            company.Password = "sandra2018";
-            company.language = SAPbobsCOM.BoSuppLangs.ln_English_Gb;
-            company.UseTrusted = true;
-            company.LicenseServer = "SAPHANA01:30015";
-            company.SLDServer = "SAPHANA01:40000";*/
 
             company.Server = ConfigurationManager.AppSettings["B1Server"];
             company.CompanyDB = ConfigurationManager.AppSettings["B1CompanyDB"];
@@ -810,6 +800,203 @@ namespace UcbBack.Logic.B1
                 return "ERROR";
             }
         }
+
+
+        /* -----------------------------------------------------------------------------------------------------------------------------------------------------------
+          -----------------------------------------------------------------------------------------------------------------------------------------------------------
+          ----------------------------------------------------------- SOCIO DE NEGOCIO CIVIL -----------------------------------------------------------------------
+          -----------------------------------------------------------------------------------------------------------------------------------------------------------
+          ----------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+        // -----------------------------------------------------------------------UPDATE ----------------------------------------------------------------------------
+        public string updateCivilInBussinesPartner(int UserId, Civil person)
+        {
+            var log = initLog(UserId, BusinessObjectType.BussinesPartnerCivil, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject =
+                        (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                            .oBusinessPartners);
+                    //if person exist as BusinesPartner
+                    if (businessObject.GetByKey(person.SAPId))
+                    {
+                        businessObject.CardName = person.FullName;
+                        businessObject.CardForeignName = person.FullName;
+                        businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
+                        businessObject.CardCode = person.SAPId;
+                        string currency = businessObject.Currency;
+                        businessObject.Currency = currency;
+
+                        // set NIT
+                        businessObject.UserFields.Fields.Item("LicTradNum").Value = person.NIT;
+                        // Set Group RRHH
+                        businessObject.GroupCode = Int32.Parse(person.Branches.GroupCodeSocioNegocio);
+                        businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
+                        //add deb account
+                        businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(person.Branches.CuentaSociosCivil);
+                        //Indicador Impuesto
+                        businessObject.UserFields.Fields.Item("VatGroup").Value = person.Branches.VatGroup;
+
+                        businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                        var BR_COD_SAP = _context.Branch.FirstOrDefault(x => x.Id == person.BranchesId)
+                            .CodigoSAP;
+                        businessObject.BPBranchAssignment.BPLID = Int32.Parse(BR_COD_SAP);
+                        businessObject.BPBranchAssignment.Add();
+
+                        // save new business partner
+                        businessObject.Update();
+                        // get the new code
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                            }
+                            return "ERROR";
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                newKey = newKey.Replace("\t1", "");
+                                _context.SdkErrorLogs.Add(log);
+                                _context.SaveChanges();
+                                return newKey;
+                            }
+                        }
+                    }
+                    log.Success = false;
+                    log.ErrorMessage = "SDK: Not Found";
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                    return "ERROR";
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
+                return "ERROR";
+            }
+        }
+
+
+        // ----------------------------------------------------------------------- ADD ----------------------------------------------------------------------------
+        public string addCivilInBussinesPartner(int UserId, Civil person)
+        {
+            var log = initLog(UserId, BusinessObjectType.BussinesPartnerCivil, person.Id.ToString());
+            try
+            {
+                if (company.Connected)
+                {
+                    company.StartTransaction();
+                    SAPbobsCOM.BusinessPartners businessObject = (SAPbobsCOM.BusinessPartners)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oBusinessPartners);
+
+                    businessObject.CardName = person.FullName;
+                    businessObject.CardForeignName = person.FullName;
+                    businessObject.CardType = SAPbobsCOM.BoCardTypes.cSupplier;
+                    businessObject.CardCode = person.SAPId;
+
+                    // set NIT
+                    businessObject.UserFields.Fields.Item("LicTradNum").Value = person.NIT;
+                    // Set Group RRHH
+                    businessObject.GroupCode = Int32.Parse(person.Branches.GroupCodeSocioNegocio);
+                    businessObject.UserFields.Fields.Item("GroupNum").Value = 1;
+                    //add deb account
+                    businessObject.UserFields.Fields.Item("DebPayAcct").Value = this.getAccountId(person.Branches.CuentaSociosCivil);
+                    //Indicador Impuesto
+                    businessObject.UserFields.Fields.Item("VatGroup").Value = person.Branches.VatGroup;
+
+                    var BR_COD_SAP = _context.Branch.FirstOrDefault(x => x.Id == person.BranchesId)
+                        .CodigoSAP;
+                    businessObject.BPBranchAssignment.DisabledForBP = SAPbobsCOM.BoYesNoEnum.tNO;
+                    businessObject.BPBranchAssignment.BPLID = Int32.Parse(BR_COD_SAP);
+                    businessObject.BPBranchAssignment.Add();
+
+                    // save new business partner
+                    businessObject.Add();
+                    // get the new code
+                    string newKey = company.GetNewObjectKey();
+                    company.GetLastError(out errorCode, out errorMessage);
+                    if (errorCode != 0)
+                    {
+                        log.Success = false;
+                        log.ErrorCode = errorCode.ToString();
+                        log.ErrorMessage = "SDK: " + errorMessage;
+                        _context.SdkErrorLogs.Add(log);
+                        _context.SaveChanges();
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                        }
+                        return "ERROR";
+                    }
+                    else
+                    {
+                        if (company.InTransaction)
+                        {
+                            company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                            newKey = newKey.Replace("\t1", "");
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return newKey;
+                        }
+                    }
+                }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+            catch (Exception ex)
+            {
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(ex, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message + " At line: " + line;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                if (company.InTransaction)
+                {
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+                }
+                return "ERROR";
+            }
+        }
+
 
         public string getAccountId(string accountCode)
         {
