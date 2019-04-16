@@ -54,20 +54,6 @@ namespace UcbBack.Controllers
         public IHttpActionResult Get(int id)
         {
             var user = auth.getUser(Request);
-            var civil = findCivil(id,user);
-
-            if (civil == null)
-                return NotFound();
-
-            if (civil == -1)
-                return Unauthorized();
-
-            return Ok(civil);
-        }
-
-        [NonAction]
-        private dynamic findCivil(int id,CustomUser user)
-        {
             var query = "select c.*,ocrd.\"BranchesId\" from " + CustomSchema.Schema + ".\"Civil\" c" +
                         " inner join " +
                         " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
@@ -83,12 +69,58 @@ namespace UcbBack.Controllers
             var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
 
             if (rawresult.Count() == 0)
+                return NotFound();
+
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+
+            if (res.Count() == 0)
+                return Unauthorized();
+
+            return Ok(res.FirstOrDefault());
+        }
+
+        [HttpGet]
+        [Route("api/Civil/findInSAP/{id}")]
+        public IHttpActionResult findInSAP(int CardCode)
+        {
+            var user = auth.getUser(Request);
+            var BP = findBPInSAP(CardCode, user);
+
+            if (BP == null)
+                return NotFound();
+
+            if (BP == -1)
+                return Unauthorized();
+
+            return Ok(BP);
+        }
+
+        [NonAction]
+        private dynamic findBPInSAP(int CardCode,CustomUser user)
+        {
+            var query = "select c.*,ocrd.\"BranchesId\" from " + CustomSchema.Schema + ".\"Civil\" c" +
+                        " inner join " +
+                        " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
+                        " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
+                        " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
+                        " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
+                        " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
+                        " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
+                        " where ocrd.\"validFor\" = \'Y\'" +
+                        " and crd8.\"DisabledBP\" = \'N\') ocrd" +
+                        " on c.\"SAPId\" = ocrd.\"CardCode\"" +
+                        " and ocrd.\"CardType\" = 'S'" +
+                        " where c.\"Id\"= " + CardCode + ";";
+            var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
+
+            if (rawresult.Count() == 0)
                 return null;
 
             var res = auth.filerByRegional(rawresult.AsQueryable(), user);
 
             if (res.Count() == 0)
                 return -1;
+
             return res.FirstOrDefault();
         }
 
@@ -96,42 +128,21 @@ namespace UcbBack.Controllers
         [HttpPost]
         public IHttpActionResult Post([FromBody]Civil civil)
         {
+            var user = auth.getUser(Request);
+            var BP = findBPInSAP(Int32.Parse(civil.SAPId), user);
+
             if (!ModelState.IsValid)
                 return BadRequest();
+            if (BP == null)
+                return NotFound();
+            if (BP == -1)
+                return Unauthorized();
+
             civil.Id = Civil.GetNextId(_context);
             _context.Civils.Add(civil);
             _context.SaveChanges();
 
-
             return Created(new Uri(Request.RequestUri + "/" + civil.Id), civil);
-        }
-
-        // PUT api/Level/5
-        [HttpPut]
-        public IHttpActionResult Put(int id, [FromBody]Civil civil)
-        {
-            var user = auth.getUser(Request);
-            var c = findCivil(id,user);
-
-            if (c == null)
-                return NotFound();
-
-            if (c == -1)
-                return Unauthorized();
-
-            if (!ModelState.IsValid)
-                return BadRequest();
-
-            Civil civilInDB = _context.Civils.FirstOrDefault(d => d.Id == id);
-            if (civilInDB == null)
-                return NotFound();
-            civilInDB.Document = civil.Document;
-            civilInDB.FullName = civil.FullName;
-            civilInDB.NIT = civil.NIT;
-            civilInDB.CreatedBy = user.Id;
-
-            _context.SaveChanges();
-            return Ok(civilInDB);
         }
 
         // DELETE api/Level/5

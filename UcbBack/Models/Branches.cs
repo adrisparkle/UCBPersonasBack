@@ -53,7 +53,6 @@ namespace UcbBack.Models
 
         public string CuentaSociosRCUNI { get; set; }
         public string CuentaSociosHCUNI { get; set; }
-        public string CuentaSociosCivil { get; set; }
         public string GroupCodeSocioNegocio { get; set; }
         public string VatGroup { get; set; }
 
