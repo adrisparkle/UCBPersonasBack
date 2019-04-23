@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web.Http;
+using ClosedXML.Excel;
+using Newtonsoft.Json.Linq;
 using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
+using UcbBack.Models.Not_Mapped;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
-using UcbBack.Models.ViewMoldes;
 
 namespace UcbBack.Controllers
 {
@@ -27,7 +31,9 @@ namespace UcbBack.Controllers
         }
 
         // GET api/Level
-        public IHttpActionResult Get()
+        [HttpGet]
+        [Route("api/CivilbyBranch/{id}")]
+        public IHttpActionResult CivilbyBranch(int id)
         {
             // we get the Branches from SAP
             var query = "select c.*,ocrd.\"BranchesId\" from " + CustomSchema.Schema + ".\"Civil\" c" +
@@ -40,7 +46,8 @@ namespace UcbBack.Controllers
                         " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
                         " where ocrd.\"validFor\" = \'Y\'" +
                         " and crd8.\"DisabledBP\" = \'N\') ocrd" +
-                        " on c.\"SAPId\" = ocrd.\"CardCode\";";
+                        " on c.\"SAPId\" = ocrd.\"CardCode\"" +
+                        " where \"BranchesId\"=" + id + ";";
             var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
 
             var user = auth.getUser(Request);
@@ -79,47 +86,40 @@ namespace UcbBack.Controllers
             return Ok(res.FirstOrDefault());
         }
 
-        [HttpGet]
-        [Route("api/Civil/findInSAP/{id}")]
-        public IHttpActionResult findInSAP(int CardCode)
+        [HttpPost]
+        [Route("api/CivilfindInSAP/")]
+        public IHttpActionResult findInSAP(JObject CardCode)
         {
             var user = auth.getUser(Request);
-            var BP = findBPInSAP(CardCode, user);
-
+            var BP = findBPInSAP(CardCode["CardCode"].ToString(), user);
+            
             if (BP == null)
                 return NotFound();
-
-            if (BP == -1)
-                return Unauthorized();
 
             return Ok(BP);
         }
 
         [NonAction]
-        private dynamic findBPInSAP(int CardCode,CustomUser user)
+        private dynamic findBPInSAP(string CardCode,CustomUser user)
         {
-            var query = "select c.*,ocrd.\"BranchesId\" from " + CustomSchema.Schema + ".\"Civil\" c" +
-                        " inner join " +
-                        " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
+            var query = "select 0 \"Id\",0 \"CreatedBy\",null \"Document\", ocrd.\"CardCode\" \"SAPId\", ocrd.\"CardName\" \"FullName\",ocrd.\"LicTradNum\" \"NIT\", br.\"Id\" \"BranchesId\"" +
                         " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
                         " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
                         " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
                         " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
                         " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
-                        " where ocrd.\"validFor\" = \'Y\'" +
-                        " and crd8.\"DisabledBP\" = \'N\') ocrd" +
-                        " on c.\"SAPId\" = ocrd.\"CardCode\"" +
+                        " where ocrd.\"validFor\" = 'Y'" +
+                        " and crd8.\"DisabledBP\" = 'N'" +
                         " and ocrd.\"CardType\" = 'S'" +
-                        " where c.\"Id\"= " + CardCode + ";";
+                        " and ocrd.\"CardCode\"= '" + CardCode + "';";
             var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
 
             if (rawresult.Count() == 0)
                 return null;
 
             var res = auth.filerByRegional(rawresult.AsQueryable(), user);
-
             if (res.Count() == 0)
-                return -1;
+                return null;
 
             return res.FirstOrDefault();
         }
@@ -129,16 +129,15 @@ namespace UcbBack.Controllers
         public IHttpActionResult Post([FromBody]Civil civil)
         {
             var user = auth.getUser(Request);
-            var BP = findBPInSAP(Int32.Parse(civil.SAPId), user);
+            var BP = findBPInSAP(civil.SAPId, user);
 
             if (!ModelState.IsValid)
                 return BadRequest();
             if (BP == null)
-                return NotFound();
-            if (BP == -1)
                 return Unauthorized();
 
             civil.Id = Civil.GetNextId(_context);
+            civil.CreatedBy = user.Id;
             _context.Civils.Add(civil);
             _context.SaveChanges();
 
