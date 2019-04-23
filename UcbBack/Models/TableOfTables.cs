@@ -31,5 +31,7 @@ namespace UcbBack.Models
         public static string AFP = "AFP";
         public static string ProcessState = "PROCESS STATE";
         public static string FileState = "FILE STATE";
+        public static string Serv_FileState = "SERV FILE STATE";
+        public static string Serv_FileType = "SERV FILE TYPE";
     }
 }
