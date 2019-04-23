@@ -149,7 +149,7 @@ namespace UcbBack.Logic
                 for (int i = 1; i <= columns.Length; i++)
                 {
                     var comp = String.Compare(
-                        Regex.Replace(sheet.Cell(headerin, i).Value.ToString().Trim().ToUpper(), @"\t|\n|\r", " "),
+                        Regex.Replace(sheet.Cell(headerin, i).Value.ToString().Trim().ToUpper().Replace("_"," "), @"\t|\n|\r", " "),
                         columns[i - 1].headers.Trim().ToUpper(), CultureInfo.CurrentCulture, CompareOptions.IgnoreNonSpace);
                     if (comp!=0)
                     {
