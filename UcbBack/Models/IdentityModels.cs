@@ -6,6 +6,7 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Dist;
+using UcbBack.Models.Serv;
 
 namespace UcbBack.Models
 {
@@ -55,7 +56,14 @@ namespace UcbBack.Models
         public DbSet<BranchhasPosition> BranchhasPositions { get; set; }
         public DbSet<CauseOfMovement> CauseOfMovements { get; set; }
         public DbSet<ChangesLogs> ChangesLogses { get; set; }
+
+        // Civil and Services
         public DbSet<Civil> Civils { get; set; }
+        public DbSet<Serv_Pregrado> ServPregrados { get; set; }
+        public DbSet<Serv_Proyectos> ServProyectoses { get; set; }
+        public DbSet<Serv_Reemplazo> ServReemplazos { get; set; }
+        public DbSet<Serv_Varios> ServVarioses { get; set; }
+        public DbSet<ServProcess> ServProcesses { get; set; }
         
 
         //auth models
