@@ -196,6 +196,7 @@ namespace UcbBack.Controllers
             return res;
         }
 
+        [NonAction]
         private bool verifyName(string fileName, string mes, string gestion, int branchId, string fileType,
             out string realfileName)
         {
