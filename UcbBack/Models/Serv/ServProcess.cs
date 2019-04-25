@@ -18,7 +18,9 @@ namespace UcbBack.Models.Serv
         public int BranchesId { get; set; }
         public string FileType { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime InSAPAt { get; set; }
+        public int CreatedBy { get; set; }
+        public int LastUpdatedBy { get; set; }
+        public DateTime? InSAPAt { get; set; }
         public string State { get; set; }
         public string SAPId { get; set; }
 
@@ -37,6 +39,11 @@ namespace UcbBack.Models.Serv
             public const string Proyectos = "PROYECTOS";
             public const string Pregrado = "PREGRADO";
             public const string Reemplazo = "REEMPLAZO";
+        }
+
+        public int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Serv_Process_sqs\".nextval FROM DUMMY;").ToList()[0];
         }
     }
 }

@@ -15,6 +15,8 @@ namespace UcbBack.Models.Serv
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
 
+        public int Serv_ProcessId { get; set; }
+
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public int DependencyId { get; set; }

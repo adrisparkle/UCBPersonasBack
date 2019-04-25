@@ -18,6 +18,7 @@ namespace UcbBack.Models.Serv
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public int DependencyId { get; set; }
+        public int Serv_ProcessId { get; set; }
         public string PEI { get; set; }
         public string Memo { get; set; }
         public string LineMemo { get; set; }
@@ -28,5 +29,9 @@ namespace UcbBack.Models.Serv
         public Decimal TotalAmount { get; set; }
         public string Comments { get; set; }
 
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Serv_Varios_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }
