@@ -8,8 +8,8 @@ using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models.Serv
 {
-    [CustomSchema("Serv_Reemplazo")]
-    public class Serv_Reemplazo
+    [CustomSchema("Serv_Carrera")]
+    public class Serv_Carrera
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -20,16 +20,23 @@ namespace UcbBack.Models.Serv
         public string CardName { get; set; }
         public int DependencyId { get; set; }
         public string PEI { get; set; }
-        public string Memo { get; set; }
-        public string Periodo { get; set; }
-        public string Sigla { get; set; }
-        public string ParalelNumber { get; set; }
-        public string ParalelSAP { get; set; }
-        public string ServiceType { get; set; }
+
+        public string ServiceName { get; set; }
+        public string Carrera { get; set; }
+        public string DocumentNumber { get; set; }
+        public string Student { get; set; }
+        public string AssignedJob { get; set; }
+
+        public string AssignedAccount { get; set; }
         public Decimal ContractAmount { get; set; }
         public Decimal IUE { get; set; }
         public Decimal IT { get; set; }
         public Decimal TotalAmount { get; set; }
         public string Comments { get; set; }
+
+        public static int GetNextId(ApplicationDbContext _context)
+        {
+            return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Serv_Carrera_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
     }
 }

@@ -14,15 +14,17 @@ namespace UcbBack.Models.Serv
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
+        public int Serv_ProcessId { get; set; }
 
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public int DependencyId { get; set; }
-        public int Serv_ProcessId { get; set; }
         public string PEI { get; set; }
-        public string Memo { get; set; }
-        public string LineMemo { get; set; }
-        public string ServiceType { get; set; }
+
+        public string ServiceName { get; set; }
+        // line Memo
+        public string ContractObjective { get; set; }
+        public string AssignedAccount { get; set; }
         public Decimal ContractAmount { get; set; }
         public Decimal IUE { get; set; }
         public Decimal IT { get; set; }
