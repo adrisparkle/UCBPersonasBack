@@ -13,15 +13,19 @@ namespace UcbBack.Logic.ExcelFiles.Serv
     {
         private static Excelcol[] cols = new[]
         {
-            new Excelcol("Codigo Socio de Negocio", typeof(string)), 
-            new Excelcol("Nombre Socio de Negocio", typeof(string)),
+            new Excelcol("Codigo Socio", typeof(string)), 
+            new Excelcol("Nombre Socio", typeof(string)),
             new Excelcol("Cod Dependencia", typeof(string)),
             new Excelcol("PEI PO", typeof(string)),
-            new Excelcol("Glosa", typeof(string)),
-            new Excelcol("Tipo de Servicio", typeof(string)),
-            new Excelcol("Importe del Contrato", typeof(double)),
-            new Excelcol("Importe Deducción IUE", typeof(double)),
-            new Excelcol("Importe Deducción IT", typeof(double)),
+            new Excelcol("Nombre del Servicio", typeof(string)),
+            new Excelcol("Codigo Carrera", typeof(string)),
+            new Excelcol("Documento Base", typeof(string)),
+            new Excelcol("Postulante", typeof(string)),
+            new Excelcol("Tipo Tarea Asignada", typeof(string)),
+            new Excelcol("Cuenta Asignada", typeof(string)),
+            new Excelcol("Monto Contrato", typeof(double)),
+            new Excelcol("Monto IUE", typeof(double)),
+            new Excelcol("Monto IT", typeof(double)),
             new Excelcol("Monto a Pagar", typeof(double)),
             new Excelcol("Observaciones", typeof(string)),
         };
@@ -53,10 +57,10 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             _context.SaveChanges();
         }
 
-        public Serv_Pregrado ToServVarios(int row, int sheet = 1)
+        public Serv_Carrera ToServVarios(int row, int sheet = 1)
         {
-            Serv_Pregrado data = new Serv_Pregrado();
-            data.Id = Serv_Varios.GetNextId(_context);
+            Serv_Carrera data = new Serv_Carrera();
+            data.Id = Serv_Carrera.GetNextId(_context);
 
             data.CardCode = wb.Worksheet(sheet).Cell(row, 1).Value.ToString();
             data.CardName = wb.Worksheet(sheet).Cell(row, 2).Value.ToString();
@@ -65,19 +69,18 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                 .FirstOrDefault(x => x.Cod == cod);
             data.DependencyId = depId.Id;
             data.PEI = wb.Worksheet(sheet).Cell(row, 4).Value.ToString();
-            data.Memo = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
+            data.ServiceName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
             data.Carrera = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
             data.DocumentNumber = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
             data.Student = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
-            data.JobType = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
-            data.Hours = Int32.Parse(wb.Worksheet(sheet).Cell(row, 10).Value.ToString());
-            data.CostPerHour = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
-            data.ServiceType = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
-            data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 7).Value.ToString());
-            data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 8).Value.ToString());
-            data.IT = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 9).Value.ToString());
-            data.TotalAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 10).Value.ToString());
-            data.Comments = wb.Worksheet(sheet).Cell(row, 11).Value.ToString();
+            data.AssignedJob = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
+
+            data.AssignedAccount = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
+            data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
+            data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 12).Value.ToString());
+            data.IT = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 13).Value.ToString());
+            data.TotalAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 14).Value.ToString());
+            data.Comments = wb.Worksheet(sheet).Cell(row, 15).Value.ToString();
             data.Serv_ProcessId = process.Id;
             return data;
         }
