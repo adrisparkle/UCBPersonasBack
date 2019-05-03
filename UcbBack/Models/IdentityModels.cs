@@ -59,9 +59,9 @@ namespace UcbBack.Models
 
         // Civil and Services
         public DbSet<Civil> Civils { get; set; }
-        public DbSet<Serv_Carrera> ServPregrados { get; set; }
+        public DbSet<Serv_Carrera> ServCarreras { get; set; }
         public DbSet<Serv_Proyectos> ServProyectoses { get; set; }
-        public DbSet<Serv_Paralelo> ServReemplazos { get; set; }
+        public DbSet<Serv_Paralelo> ServParalelos { get; set; }
         public DbSet<Serv_Varios> ServVarioses { get; set; }
         public DbSet<ServProcess> ServProcesses { get; set; }
         

@@ -37,8 +37,8 @@ namespace UcbBack.Models.Serv
         {
             public const string Varios = "VARIOS";
             public const string Proyectos = "PROYECTOS";
-            public const string Pregrado = "PREGRADO";
-            public const string Reemplazo = "REEMPLAZO";
+            public const string Carrera = "CARRERA";
+            public const string Paralelo = "PARALELO";
         }
 
         public int GetNextId(ApplicationDbContext _context)
