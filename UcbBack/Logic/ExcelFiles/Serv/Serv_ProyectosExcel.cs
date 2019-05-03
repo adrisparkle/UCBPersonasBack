@@ -74,15 +74,15 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             data.ProjectSAPCode = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
             data.ProjectSAPName = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
             data.Version = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
-            data.Periodo = wb.Worksheet(sheet).Cell(row, 8).Value.ToString();
-            data.AssignedJob = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
+            data.Periodo = wb.Worksheet(sheet).Cell(row, 9).Value.ToString();
+            data.AssignedJob = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
 
-            data.AssignedAccount = wb.Worksheet(sheet).Cell(row, 10).Value.ToString();
-            data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
-            data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 12).Value.ToString());
-            data.IT = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 13).Value.ToString());
-            data.TotalAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 14).Value.ToString());
-            data.Comments = wb.Worksheet(sheet).Cell(row, 15).Value.ToString();
+            data.AssignedAccount = wb.Worksheet(sheet).Cell(row, 11).Value.ToString();
+            data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 12).Value.ToString());
+            data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 13).Value.ToString());
+            data.IT = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 14).Value.ToString());
+            data.TotalAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 15).Value.ToString());
+            data.Comments = wb.Worksheet(sheet).Cell(row, 16).Value.ToString();
             data.Serv_ProcessId = process.Id;
             return data;
         }

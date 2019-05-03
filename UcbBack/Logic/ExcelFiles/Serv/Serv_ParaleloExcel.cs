@@ -9,7 +9,7 @@ using UcbBack.Models.Serv;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
 {
-    public class Serv_ReemplazoExcel : ValidateExcelFile
+    public class Serv_ParaleloExcel : ValidateExcelFile
     {
         private static Excelcol[] cols = new[]
         {
@@ -33,12 +33,12 @@ namespace UcbBack.Logic.ExcelFiles.Serv
         private ApplicationDbContext _context;
         private ServProcess process;
 
-        public Serv_ReemplazoExcel(string fileName, int headerin = 1)
+        public Serv_ParaleloExcel(string fileName, int headerin = 1)
             : base(cols, fileName, headerin)
         {
         }
 
-        public Serv_ReemplazoExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process,
+        public Serv_ParaleloExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process,
             int headerin = 1, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName, context)
         {
@@ -53,7 +53,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
             for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                _context.ServReemplazos.Add(ToServVarios(i));
+                _context.ServParalelos.Add(ToServVarios(i));
             }
 
             _context.SaveChanges();

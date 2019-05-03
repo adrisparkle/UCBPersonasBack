@@ -9,7 +9,7 @@ using UcbBack.Models.Serv;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
 {
-    public class Serv_PregradoExcel : ValidateExcelFile
+    public class Serv_CarreraExcel : ValidateExcelFile
     {
         private static Excelcol[] cols = new[]
         {
@@ -33,11 +33,11 @@ namespace UcbBack.Logic.ExcelFiles.Serv
         private ApplicationDbContext _context;
         private ServProcess process;
 
-        public Serv_PregradoExcel(string fileName, int headerin = 1)
+        public Serv_CarreraExcel(string fileName, int headerin = 1)
             : base(cols, fileName, headerin)
         { }
 
-        public Serv_PregradoExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process, int headerin = 1, int sheets = 1, string resultfileName = "Result")
+        public Serv_CarreraExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process, int headerin = 1, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName, context)
         {
             this.process = process;
@@ -51,7 +51,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
             for (int i = 1 + headerin; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                _context.ServPregrados.Add(ToServVarios(i));
+                _context.ServCarreras.Add(ToServVarios(i));
             }
 
             _context.SaveChanges();
