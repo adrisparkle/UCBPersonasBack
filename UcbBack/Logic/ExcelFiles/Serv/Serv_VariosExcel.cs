@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
+using UcbBack.Logic.B1;
 using UcbBack.Models;
 using UcbBack.Models.Dist;
 using UcbBack.Models.Serv;
@@ -68,10 +70,10 @@ namespace UcbBack.Logic.ExcelFiles.Serv
             data.ServiceName = wb.Worksheet(sheet).Cell(row, 5).Value.ToString();
             data.ContractObjective = wb.Worksheet(sheet).Cell(row, 6).Value.ToString();
             data.AssignedAccount = wb.Worksheet(sheet).Cell(row, 7).Value.ToString();
-            data.ContractAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 8).Value.ToString());
-            data.IUE = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 9).Value.ToString());
-            data.IT = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 10).Value.ToString());
-            data.TotalAmount = Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString());
+            data.ContractAmount = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(row, 8).Value.ToString()), 2);
+            data.IUE = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(row, 9).Value.ToString()), 2);
+            data.IT = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(row, 10).Value.ToString()), 2);
+            data.TotalAmount = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(row, 11).Value.ToString()), 2);
             data.Comments = wb.Worksheet(sheet).Cell(row, 12).Value.ToString();
             data.Serv_ProcessId = process.Id;
             return data;
@@ -79,7 +81,73 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
         public override bool ValidateFile()
         {
-            return true;
+            var connB1 = B1Connection.Instance();
+
+            if (!connB1.connectedtoHana)
+            {
+                addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
+            }
+
+            bool v1 = VerifyColumnValueIn(1, _context.Civils.Select(x => x.SAPId).ToList(),comment:"Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+            bool v2 = VerifyColumnValueIn(2, _context.Civils.Select(x => x.FullName).ToList(),comment:"Este Nombre de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+            bool v3 = VerifyColumnValueIn(3, _context.Dependencies.Where(x=>x.BranchesId==this.process.BranchesId).Select(x => x.Cod).ToList(),comment:"Esta Dependencia no es Válida");
+            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
+            bool v4 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
+            bool v5 = VerifyLength(5,50);
+            bool v6 = VerifyLength(6,50);
+            bool v7 = VerifyColumnValueIn(7, new List<string> { "CC_ACADEMICA", "CC_SOCIAL", "CC_DEPORTIVA", "CC_CULTURAL", "CC_PASTORAL", "CC_OTROS", "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+            bool v8 = VerifyTotal();
+
+            return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8;
         }
+
+        private bool VerifyLength(int col, int length, int sheet = 1)
+        {
+            bool res = true;
+            string commnet = "Este Campo es demasiado Grande. El limite es: "+length+" caracteres.";
+
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                var a = wb.Worksheet(sheet).Cell(i, col).Value.ToString();
+                if (a.Length > length)
+                {
+                    res = false;
+                    paintXY(col, i, XLColor.Red, commnet);
+                }
+            }
+
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "Valor o valores muy largos en la columna: " + col, false);
+            return res;
+        }
+
+        private bool VerifyTotal()
+        {
+            bool res = true;
+            int sheet = 1;
+
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                decimal contrato = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 8).Value.ToString()), 2);
+                decimal IUE = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 9).Value.ToString()), 2);
+                decimal IT = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 10).Value.ToString()), 2);
+                decimal total = Math.Round(Decimal.Parse(wb.Worksheet(sheet).Cell(i, 11).Value.ToString()), 2);
+
+                if (contrato-IUE-IT != total)
+                {
+                    res = false;
+                    paintXY(11, i, XLColor.Red, "Este valor no cuadra (Contrato - IUE - IT != Monto a Pagar)");
+                }
+            }
+
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "Monto a Pagar no cuadra." , false);
+            return res;
+        }
+
     }
 }

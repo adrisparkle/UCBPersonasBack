@@ -613,6 +613,28 @@ namespace UcbBack.Logic
             return response;
         }
 
+        public bool VerifyLength(int col, int length, int sheet = 1)
+        {
+            bool res = true;
+            string commnet = "Este Campo es demasiado Grande. El limite es: " + length + " caracteres.";
+
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                var a = wb.Worksheet(sheet).Cell(i, col).Value.ToString();
+                if (a.Length > length)
+                {
+                    res = false;
+                    paintXY(col, i, XLColor.Red, commnet);
+                }
+            }
+
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "Valor o valores muy largos en la columna: " + col, false);
+            return res;
+        }
+
         public XLWorkbook setExcelFile(Stream stream)
         {
             wb = new XLWorkbook(stream);
