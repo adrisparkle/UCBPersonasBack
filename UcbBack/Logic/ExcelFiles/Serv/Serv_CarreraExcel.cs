@@ -88,26 +88,31 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
         public override bool ValidateFile()
         {
-            var connB1 = B1Connection.Instance();
-
-            if (!connB1.connectedtoHana)
+            if (isValid())
             {
-                addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
+                var connB1 = B1Connection.Instance();
+
+                if (!connB1.connectedtoHana)
+                {
+                    addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
+                }
+
+                bool v1 = VerifyColumnValueIn(1, _context.Civils.Select(x => x.SAPId).ToList(), comment: "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+                bool v2 = VerifyColumnValueIn(2, _context.Civils.Select(x => x.FullName).ToList(), comment: "Este Nombre de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+                bool v3 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
+                var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
+                bool v4 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
+                bool v5 = VerifyLength(5, 50);
+                var carrera = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList();
+                bool v6 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
+                bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
+                bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v9 = VerifyTotal();
+
+                return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
             }
 
-            bool v1 = VerifyColumnValueIn(1, _context.Civils.Select(x => x.SAPId).ToList(), comment: "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-            bool v2 = VerifyColumnValueIn(2, _context.Civils.Select(x => x.FullName).ToList(), comment: "Este Nombre de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-            bool v3 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
-            var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
-            bool v4 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
-            bool v5 = VerifyLength(5, 50);
-            var carrera = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList();
-            bool v6 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
-            bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
-            bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
-            bool v9 = VerifyTotal();
-
-            return isValid() && v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
+            return false;
         }
 
         private bool VerifyTotal()
