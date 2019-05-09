@@ -14,12 +14,14 @@ using UcbBack.Models;
 using UcbBack.Models.Not_Mapped;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 using System.Data;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Sap.Data.Hana;
 using UcbBack.Logic.ExcelFiles;
 using UcbBack.Logic.ExcelFiles.Serv;
 using UcbBack.Models.Not_Mapped.ViewMoldes;
 using UcbBack.Models.Serv;
+using System.Data.Entity;
 
 namespace UcbBack.Controllers
 {
@@ -246,6 +248,206 @@ namespace UcbBack.Controllers
             res.id = process.Id;
             res.state = process.State;
             return Ok(res);
+        }
+
+
+        [HttpGet]
+        [Route("api/ServContract/GetDistribution/{id}")]
+        public HttpResponseMessage GetDistribution(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            var process = _context.ServProcesses.FirstOrDefault(p => p.Id == id);
+
+            if (process == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+            switch (process.FileType)
+            {
+                case ServProcess.Serv_FileType.Varios:
+                    var dist = _context.ServVarioses.Include(x=>x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    {
+                        x.CardCode,
+                        x.CardName,
+                        Dependency =x.Dependency.Cod,
+                        x.PEI,
+                        x.ServiceName,
+                        x.ContractObjective,
+                        x.AssignedAccount,
+                        x.ContractAmount,
+                        x.IUE,
+                        x.IT,
+                        x.TotalAmount,
+                        x.Comments,
+                    });
+                    ex.Worksheets.Add(d.CreateDataTable(dist), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Carrera:
+                    var dist1 = _context.ServCarreras.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    {
+                        x.CardCode,
+                        x.CardName,
+                        Dependency = x.Dependency.Cod,
+                        x.PEI,
+                        x.ServiceName,
+                        x.Carrera,
+                        x.DocumentNumber,
+                        x.Student,
+                        x.AssignedJob,
+                        x.AssignedAccount,
+                        x.ContractAmount,
+                        x.IUE,
+                        x.IT,
+                        x.TotalAmount,
+                        x.Comments,
+                    });
+                    ex.Worksheets.Add(d.CreateDataTable(dist1), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Paralelo:
+                    var dist2 = _context.ServParalelos.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    {
+                        x.CardCode,
+                        x.CardName,
+                        Dependency = x.Dependency.Cod,
+                        x.PEI,
+                        x.ServiceName,
+                        x.Periodo,
+                        x.Sigla,
+                        x.ParalelNumber,
+                        x.ParalelSAP,
+                        x.AssignedAccount,
+                        x.ContractAmount,
+                        x.IUE,
+                        x.IT,
+                        x.TotalAmount,
+                        x.Comments,
+                    });
+                    ex.Worksheets.Add(d.CreateDataTable(dist2), "TotalDetalle");
+                    break;
+                case ServProcess.Serv_FileType.Proyectos:
+                    var dist3 = _context.ServProyectoses.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                    {
+                        x.CardCode,
+                        x.CardName,
+                        Dependency = x.Dependency.Cod,
+                        x.PEI,
+                        x.ServiceName,
+                        x.ProjectSAPCode,
+                        x.ProjectSAPName,
+                        x.Version,
+                        x.Periodo,
+                        x.AssignedJob,
+                        x.AssignedAccount,
+                        x.ContractAmount,
+                        x.IUE,
+                        x.IT,
+                        x.TotalAmount,
+                        x.Comments,
+                    });
+                    ex.Worksheets.Add(d.CreateDataTable(dist3), "TotalDetalle");
+                    break;
+            }
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "Detalle" + process.FileType + ".xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
+            return response;
+            
+        }
+
+        [HttpGet]
+        [Route("api/ServContractToSAP/{id}")]
+        public HttpResponseMessage ToSAP(int id)
+        {
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            //todo check permisions per branch
+            var process = _context.ServProcesses.FirstOrDefault(f => f.Id == id);
+            if (process == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                return response;
+            }
+
+            var data = process.getVoucherData(_context);
+
+            var memos = data.Select(x => x.Memo).Distinct().ToList();
+            var ex = new XLWorkbook();
+            var d = new Distribution();
+
+            foreach (var memo in memos)
+            {
+                var goodMemo = Regex.Replace(memo, "[^\\w\\._]", "");
+                var dist1 = (
+                    data.Where(g => g.Concept == "PPAGAR" && g.Memo==memo).Select(g => new
+                    {
+                        g.Concept,
+                        g.Memo,
+                        g.LineMemo,
+                        g.Account,
+                        g.CardCode,
+                        g.OU,
+                        g.PEI,
+                        g.Carrera,
+                        g.Paralelo,
+                        g.Periodo,
+                        g.ProjectCode,
+                        Credit = Double.Parse(g.Credit),
+                        Debit = Double.Parse(g.Debit)
+                    })
+                ).Union(
+                    data.Where(g => g.Concept != "PPAGAR" && g.Memo == memo).GroupBy(g => new
+                    {
+                        g.Concept,
+                        g.Memo,
+                        g.LineMemo,
+                        g.Account,
+                        g.CardCode,
+                        g.OU,
+                        g.PEI,
+                        g.Carrera,
+                        g.Paralelo,
+                        g.Periodo,
+                        g.ProjectCode
+                    }).Select(g => new
+                    {
+                        g.Key.Concept,
+                        g.Key.Memo,
+                        g.Key.LineMemo,
+                        g.Key.Account,
+                        g.Key.CardCode,
+                        g.Key.OU,
+                        g.Key.PEI,
+                        g.Key.Carrera,
+                        g.Key.Paralelo,
+                        g.Key.Periodo,
+                        g.Key.ProjectCode,
+                        Credit = g.Sum(s => Double.Parse(s.Credit)),
+                        Debit = g.Sum(s => Double.Parse(s.Debit))
+                    })
+                ).OrderBy(z => z.Debit == 0.00d ? 1 : 0).ThenBy(z => z.Account);
+                ex.Worksheets.Add(d.CreateDataTable(dist1), goodMemo.Substring(0,goodMemo.Length>30?30:goodMemo.Length));
+            }
+
+            var ms = new MemoryStream();
+            ex.SaveAs(ms);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+            response.Content.Headers.ContentDisposition.FileName = "VoucherServ.xlsx";
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.Content.Headers.ContentLength = ms.Length;
+            ms.Seek(0, SeekOrigin.Begin);
+            return response;
         }
 
         [NonAction]
