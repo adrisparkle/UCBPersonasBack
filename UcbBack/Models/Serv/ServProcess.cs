@@ -47,14 +47,14 @@ namespace UcbBack.Models.Serv
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Serv_Process_sqs\".nextval FROM DUMMY;").ToList()[0];
         }
 
-        public IEnumerable<Serv_Voucher> getVoucherData(string FileType, ServProcess process, ApplicationDbContext _context)
+        public IEnumerable<Serv_Voucher> getVoucherData(ApplicationDbContext _context)
         {
             string query = null;
-            switch (FileType)
+            switch (this.FileType)
             {
                 case ServProcess.Serv_FileType.Varios:
                     query =
-                        "select sv.\"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
                         " sv.\"ServiceName\" as \"Memo\", sv.\"ContractObjective\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\",  " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
@@ -72,11 +72,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
                         " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"ContractObjective\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
@@ -93,11 +93,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"ContractObjective\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\",sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
@@ -114,11 +114,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"ContractObjective\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\",sv.\"CardName\",null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
@@ -135,11 +135,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id;
+                        " and \"Serv_ProcessId\" = " + this.Id;
                     break;
                 case ServProcess.Serv_FileType.Carrera:
                     query =
-                        "select sv.\"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",sv.\"Carrera\" as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
                         " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
@@ -157,11 +157,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
                         " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",sv.\"Carrera\" as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
@@ -178,11 +178,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",sv.\"Carrera\" as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
@@ -199,11 +199,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",sv.\"Carrera\" as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
@@ -220,12 +220,12 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id;
+                        " and \"Serv_ProcessId\" = " + this.Id;
                     break;
                 case ServProcess.Serv_FileType.Proyectos:
                     query =
-                        "select sv.\"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",\"ProjectSAPCode\" as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", null as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ProjectSAPName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
@@ -242,11 +242,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'PPAGAR\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
                         " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",\"ProjectSAPCode\" as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", null as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
@@ -263,11 +263,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'CONTRATO\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",\"ProjectSAPCode\" as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", null as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
@@ -284,11 +284,11 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IT\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
+                        " and \"Serv_ProcessId\" = " + this.Id +
                         "  " +
                         " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",null as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",\"ProjectSAPCode\" as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", null as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                        " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                        " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
                         " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
                         " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
                         " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
@@ -305,93 +305,93 @@ namespace UcbBack.Models.Serv
                         " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
                         " where gc.\"Id\">11 " +
                         " and \"Concept\" = \'IUE\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id;
+                        " and \"Serv_ProcessId\" = " + this.Id;
 
                     break;
                 case ServProcess.Serv_FileType.Paralelo:
                     query =
-                        "select sv.\"CardCode\",sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",sv.\"ParalelSAP\" as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
-                        " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
-                        " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
-                        " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
-                        " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
-                        " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
-                        " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
-                        " where gc.\"Id\">11 " +
-                        " and \"Concept\" = \'PPAGAR\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
-                        "  " +
-                        " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",sv.\"ParalelSAP\" as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
-                        " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
-                        " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
-                        " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
-                        " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
-                        " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
-                        " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
-                        " where gc.\"Id\">11 " +
-                        " and \"Concept\" = \'CONTRATO\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
-                        "  " +
-                        " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",sv.\"ParalelSAP\" as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
-                        " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
-                        " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
-                        " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
-                        " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
-                        " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
-                        " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
-                        " where gc.\"Id\">11 " +
-                        " and \"Concept\" = \'IT\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id +
-                        "  " +
-                        " union all " +
-                        " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",sv.\"ParalelSAP\" as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",null as \"Proyecto\",  " +
-                        " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
-                        " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
-                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
-                        " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
-                        " on sv.\"AssignedAccount\"= gc.\"Name\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
-                        " on cc.\"GrupoContableId\" = gc.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
-                        " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
-                        " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
-                        " on sv.\"DependencyId\" = d.\"Id\" " +
-                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
-                        " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
-                        " where gc.\"Id\">11 " +
-                        " and \"Concept\" = \'IUE\' " +
-                        " and \"Serv_ProcessId\" = " + process.Id;
+                        "select sv.\"CardCode\",sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                    " sv.\"ServiceName\" as \"Memo\", sv.\"Sigla\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"TotalAmount\" else 0 end as \"Debit\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"TotalAmount\"else 0 end as \"Credit\" " +
+                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
+                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " on sv.\"AssignedAccount\"= gc.\"Name\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " on cc.\"GrupoContableId\" = gc.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
+                    " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " on sv.\"DependencyId\" = d.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
+                    " where gc.\"Id\">11 " +
+                    " and \"Concept\" = \'PPAGAR\' " +
+                    " and \"Serv_ProcessId\" = " + this.Id +
+                    "  " +
+                    " union all " +
+                    " select null as \"CardCode\", sv.\"CardName\", ou.\"Cod\" as \"OU\",sv.\"PEI\",sv.\"ParalelSAP\" as \"Paralelo\",null as \"Carrera\",sv.\"Periodo\" as \"Periodo\",null as \"Proyecto\",  " +
+                    " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"ContractAmount\" else 0 end as \"Debit\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"ContractAmount\"else 0 end as \"Credit\" " +
+                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
+                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " on sv.\"AssignedAccount\"= gc.\"Name\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " on cc.\"GrupoContableId\" = gc.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
+                    " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " on sv.\"DependencyId\" = d.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
+                    " where gc.\"Id\">11 " +
+                    " and \"Concept\" = \'CONTRATO\' " +
+                    " and \"Serv_ProcessId\" = " + this.Id +
+                    "  " +
+                    " union all " +
+                    " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                    " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IT\" else 0 end as \"Debit\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IT\"else 0 end as \"Credit\" " +
+                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
+                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " on sv.\"AssignedAccount\"= gc.\"Name\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " on cc.\"GrupoContableId\" = gc.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
+                    " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " on sv.\"DependencyId\" = d.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
+                    " where gc.\"Id\">11 " +
+                    " and \"Concept\" = \'IT\' " +
+                    " and \"Serv_ProcessId\" = " + this.Id +
+                    "  " +
+                    " union all " +
+                    " select null as \"CardCode\", sv.\"CardName\", null as \"OU\",null as \"PEI\",null as \"Paralelo\",null as \"Carrera\",null as \"Periodo\",null as \"Proyecto\",  " +
+                    " sv.\"ServiceName\" as \"Memo\", sv.\"ServiceName\" as \"LineMemo\",sv.\"AssignedAccount\",\"Concept\",cc.\"Name\" as \"Account\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'D\' then sv.\"IUE\" else 0 end as \"Debit\", " +
+                    " CASE WHEN cc.\"Indicator\"=\'H\' then sv.\"IUE\"else 0 end as \"Credit\" " +
+                    " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
+                    " inner join \"ADMNALRRHHOLD\".\"GrupoContable\" gc " +
+                    " on sv.\"AssignedAccount\"= gc.\"Name\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"CuentasContables\" cc " +
+                    " on cc.\"GrupoContableId\" = gc.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Serv_Process\" sp " +
+                    " on sv.\"Serv_ProcessId\" = sp.\"Id\" " +
+                    " and cc.\"BranchesId\" = sp.\"BranchesId\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                    " on sv.\"DependencyId\" = d.\"Id\" " +
+                    " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                    " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
+                    " where gc.\"Id\">11 " +
+                    " and \"Concept\" = \'IUE\' " +
+                    " and \"Serv_ProcessId\" = " + this.Id;
                     break;
             }
 

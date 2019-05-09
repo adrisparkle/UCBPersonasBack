@@ -19,6 +19,8 @@ namespace UcbBack.Models.Serv
         public string CardCode { get; set; }
         public string CardName { get; set; }
         public int DependencyId { get; set; }
+        public Dependency Dependency { get; set; }
+
         public string PEI { get; set; }
         public string ServiceName { get; set; }
         public string Periodo { get; set; }
