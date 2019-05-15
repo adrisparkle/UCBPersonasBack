@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Configuration;
 using System.Linq;
 using System.Web;
+using UcbBack.Logic;
+using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
 
 namespace UcbBack.Models
@@ -19,12 +22,36 @@ namespace UcbBack.Models
         public string NIT { get; set; }
         public string Document { get; set; }
         public int CreatedBy { get; set; }
-        [NotMapped] public int BranchesId { get; set; }
+        public int BranchesId { get; set; }
         [NotMapped] public Branches Branches { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {
             return _context.Database.SqlQuery<int>("SELECT \"" + CustomSchema.Schema + "\".\"rrhh_Civil_sqs\".nextval FROM DUMMY;").ToList()[0];
+        }
+        public static IQueryable<Civil> findBPInSAP(string CardCode, CustomUser user, ApplicationDbContext _context)
+        {
+            var auth = new ValidateAuth();
+            var query = "select 0 \"Id\",0 \"CreatedBy\",null \"Document\", ocrd.\"CardCode\" \"SAPId\", ocrd.\"CardName\" \"FullName\",ocrd.\"LicTradNum\" \"NIT\", br.\"Id\" \"BranchesId\"" +
+                        " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
+                        " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
+                        " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
+                        " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
+                        " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
+                        " where ocrd.\"validFor\" = 'Y'" +
+                        " and crd8.\"DisabledBP\" = 'N'" +
+                        " and ocrd.\"CardType\" = 'S'" +
+                        " and ocrd.\"CardCode\"= '" + CardCode + "';";
+            var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
+
+            if (rawresult.Count() == 0)
+                return null;
+
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+            if (res.Count() == 0)
+                return null;
+
+            return res.Cast<Civil>();
         }
     }
 }
