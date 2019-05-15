@@ -19,6 +19,8 @@ using UcbBack.Logic.B1;
 using UcbBack.Models;
 using System.Data.Entity;
 using System.Diagnostics;
+using UcbBack.Controllers;
+using UcbBack.Models.Auth;
 
 namespace UcbBack.Logic
 {
@@ -526,7 +528,7 @@ namespace UcbBack.Logic
                 var dep = _context.Dependencies.Include(x => x.OrganizationalUnit)
                     .FirstOrDefault(x => x.Cod == strdependency);
 
-                if (dep == null || !list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo/* && x.OU == dep.OrganizationalUnit.Cod*/))
+                if (/*dep == null ||*/ !list.Any(x => x.cod == strcod && x.periodo == strperiodo && x.sigla == strsigla && x.paralelo == strparalelo/* && x.OU == dep.OrganizationalUnit.Cod*/))
                 {
                     res = false;
                     if (list.Any(x => x.cod==strcod))
@@ -632,6 +634,66 @@ namespace UcbBack.Logic
             valid = valid && res;
             if (!res)
                 addError("Valor no valido", "Valor o valores muy largos en la columna: " + col, false);
+            return res;
+        }
+
+        public bool VerifyNotEmpty(int col, int sheet = 1)
+        {
+            bool res = true;
+            string commnet = "Este Campo no puede ser vacio";
+
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                var a = wb.Worksheet(sheet).Cell(i, col).Value.ToString();
+                if (a.Replace(" ","").Replace("0","").Replace(".","") == "")
+                {
+                    res = false;
+                    paintXY(col, i, XLColor.Red, commnet);
+                }
+            }
+
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "La columna: " + col + " no puede tener valores vacios",false);
+            return res;
+        }
+
+        public bool VerifyBP(int iCardCode,int iCardName,int BranchesId, CustomUser user, int sheet = 1)
+        {
+            bool res = true;
+
+            IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
+            for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
+            {
+                var CardCode = wb.Worksheet(sheet).Cell(i, iCardCode).Value.ToString();
+                var CardName = wb.Worksheet(sheet).Cell(i, iCardName).Value.ToString();
+                var BP = _context.Civils.FirstOrDefault(x => x.SAPId == CardCode);
+
+                if (BP == null)
+                {
+                    res = false;
+                    paintXY(iCardCode, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+                    paintXY(iCardName, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
+                }
+                var BPInSAP = Civil.findBPInSAP(BP.SAPId, user, _context).FirstOrDefault(x=>x.BranchesId==BranchesId);
+                if (BPInSAP == null)
+                {
+                    res = false;
+                    paintXY(iCardCode, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
+                    paintXY(iCardName, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
+                }
+                else if (cleanText(BP.FullName) != cleanText(CardName))
+                {
+                    res = false;
+                    paintXY(iCardName, i, XLColor.Red, "El nombre de este Socio de Negocio es incorrecto, no será: "+BP.FullName);
+                }
+
+            }
+
+            valid = valid && res;
+            if (!res)
+                addError("Valor no valido", "Valor o valores no validos en la Columna: " + iCardCode, false);
             return res;
         }
 
