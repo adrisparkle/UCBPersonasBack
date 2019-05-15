@@ -22,6 +22,9 @@ using UcbBack.Logic.ExcelFiles.Serv;
 using UcbBack.Models.Not_Mapped.ViewMoldes;
 using UcbBack.Models.Serv;
 using System.Data.Entity;
+using System.Data.Entity.Migrations;
+using UcbBack.Logic.B1;
+using UcbBack.Models.Auth;
 
 namespace UcbBack.Controllers
 {
@@ -37,24 +40,57 @@ namespace UcbBack.Controllers
             auth = new ValidateAuth();
         }
 
-        public IHttpActionResult Get(int id)
+        [HttpGet]
+        [Route("api/ServContract/History/")]
+        public IHttpActionResult History()
         {
             var user = auth.getUser(Request);
             var query = "select * from " + CustomSchema.Schema + ".\"Serv_Process\" " +
                         " order by (" +
-                        "   case when \"State\" = " + ServProcess.Serv_FileState.PendingApproval + " then 1 " +
-                        " when \"State\" = " + ServProcess.Serv_FileState.Started + " then 2 " +
-                        " when \"State\" = " + ServProcess.Serv_FileState.INSAP + " then 3 " +
-                        " when \"State\" = " + ServProcess.Serv_FileState.Canceled + " then 4 " +
-                        " when \"State\" = " + ServProcess.Serv_FileState.ERROR + " then 5 " +
+                        "   case when \"State\" = '" + ServProcess.Serv_FileState.PendingApproval + "' then 1 " +
+                        " when \"State\" = '" + ServProcess.Serv_FileState.Started + "' then 2 " +
+                        " when \"State\" = '" + ServProcess.Serv_FileState.INSAP + "' then 3 " +
+                        " when \"State\" = '" + ServProcess.Serv_FileState.Canceled + "' then 4 " +
+                        " when \"State\" = '" + ServProcess.Serv_FileState.ERROR + "' then 5 " +
                         " end) asc, " +
                         " \"CreatedAt\" desc;";
-            var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
+            var rawresult = _context.Database.SqlQuery<ServProcess>(query).ToList();
 
             if (rawresult.Count() == 0)
                 return NotFound();
 
-            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user).Cast<ServProcess>();
+
+            if (res.Count() == 0)
+                return Unauthorized();
+
+            var res2 = (from r in res
+                join b in _context.Branch.ToList()
+                    on r.BranchesId equals b.Id
+                select new
+                {
+                    r.Id,
+                    r.BranchesId,
+                    Branches = b.Name,
+                    r.FileType,
+                    r.State,
+                    r.SAPId,
+                    CreatedAt = r.CreatedAt.ToString("dd MMMM yyyy HH:mm")
+                }).ToList();
+            return Ok(res2);
+        }
+
+        [HttpGet]
+        [Route("api/ServContract/{id}")]
+        public IHttpActionResult Get(int id)
+        {
+            var user = auth.getUser(Request);
+            var rawresult = _context.ServProcesses.Where(x=>x.Id==id);
+
+            if (rawresult.Count() == 0)
+                return NotFound();
+
+            var res = auth.filerByRegional(rawresult, user).Cast<ServProcess>();
 
             if (res.Count() == 0)
                 return Unauthorized();
@@ -87,7 +123,7 @@ namespace UcbBack.Controllers
 
         [HttpDelete]
         [Route("api/ServContract/UploadFile")]
-        public IHttpActionResult DeleteProcess(JObject data)
+        public IHttpActionResult DeleteFile(JObject data)
         {
             var user = auth.getUser(Request);
             //todo add validation of user by branch
@@ -144,6 +180,8 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
+                var user = auth.getUser(Request);
+
                 int userid = Int32.Parse(Request.Headers.GetValues("id").First());
                 ServProcess file = AddFileToProcess(Int32.Parse(o.BranchesId.ToString()), o.FileType.ToString(), userid);
 
@@ -155,7 +193,7 @@ namespace UcbBack.Controllers
                     return response;
                 }
 
-                DynamicExcelToDB(o.FileType,o,file,out response);
+                DynamicExcelToDB(o.FileType,o,file,user,out response);
                 return response;
             }
             catch (System.ArgumentException e)
@@ -179,13 +217,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("UploadErrors", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("UploadErrors", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -204,24 +242,70 @@ namespace UcbBack.Controllers
         public IHttpActionResult GetDetail(int id)
         {
             var process = _context.ServProcesses.FirstOrDefault(p => p.Id == id);
-            
             if (process == null)
                 return NotFound();
+            string query = null;
             switch (process.FileType)
             {
                 case ServProcess.Serv_FileType.Varios:
-                    return Ok(_context.ServVarioses.Where(x => x.Serv_ProcessId == process.Id));
+                    query =
+                        "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
+                        " sv.\"ContractObjective\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " from \"ADMNALRRHHOLD\".\"Serv_Varios\" sv " +
+                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " on sv.\"DependencyId\" = d.\"Id\" " +
+                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " on d.\"OrganizationalUnitId\" = ou.\"Id\" " +
+                        " where \"Serv_ProcessId\" = " + process.Id +
+                        " order by sv.\"Id\" asc;";
+
+                    break;
                 case ServProcess.Serv_FileType.Carrera:
-                    return Ok(_context.ServCarreras.Where(x => x.Serv_ProcessId == process.Id));
+                    query =
+                        "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
+                        " sv.\"AssignedJob\"||\' \'||sv.\"Carrera\"||\' \'||sv.\"Student\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " from \"ADMNALRRHHOLD\".\"Serv_Carrera\" sv " +
+                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " on sv.\"DependencyId\" = d.\"Id\" " +
+                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
+                        " where \"Serv_ProcessId\" = " + process.Id +
+                        " order by sv.\"Id\" asc;";
 
-                case ServProcess.Serv_FileType.Paralelo:
-                    return Ok(_context.ServParalelos.Where(x => x.Serv_ProcessId == process.Id));
-
+                    break;
                 case ServProcess.Serv_FileType.Proyectos:
-                    return Ok(_context.ServProyectoses.Where(x => x.Serv_ProcessId == process.Id));
+                    query =
+                        "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
+                        " sv.\"ProjectSAPName\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " from \"ADMNALRRHHOLD\".\"Serv_Proyectos\" sv " +
+                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " on sv.\"DependencyId\" = d.\"Id\" " +
+                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
+                        " where \"Serv_ProcessId\" = " + process.Id +
+                        " order by sv.\"Id\" asc;";
 
+                    break;
+                case ServProcess.Serv_FileType.Paralelo:
+                    query =
+                        "select sv.\"CardName\", ou.\"Cod\" as \"OU\", sv.\"PEI\", sv.\"ServiceName\" as \"Memo\",  " +
+                        " sv.\"Sigla\" as \"LineMemo\", sv.\"AssignedAccount\", sv.\"TotalAmount\" as \"Debit\"" +
+                        " from \"ADMNALRRHHOLD\".\"Serv_Paralelo\" sv " +
+                        " inner join \"ADMNALRRHHOLD\".\"Dependency\" d " +
+                        " on sv.\"DependencyId\" = d.\"Id\" " +
+                        " inner join \"ADMNALRRHHOLD\".\"OrganizationalUnit\" ou " +
+                        " on d.\"OrganizationalUnitId\" = ou.\"Id\"" +
+                        " where \"Serv_ProcessId\" = " + process.Id +
+                        " order by sv.\"Id\" asc;";
+
+                    break;
             }
-            return Ok();
+            if (query == null)
+                return NotFound();
+
+            IEnumerable<Serv_Voucher> voucher = _context.Database.SqlQuery<Serv_Voucher>(query).ToList();
+
+            return Ok(voucher);
         }
 
         [HttpPost]
@@ -269,85 +353,98 @@ namespace UcbBack.Controllers
             switch (process.FileType)
             {
                 case ServProcess.Serv_FileType.Varios:
-                    var dist = _context.ServVarioses.Include(x=>x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    var dist = _context.ServVarioses.Include(x=>x.Dependency).Include(x=>x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
                     {
-                        x.CardCode,
-                        x.CardName,
-                        Dependency =x.Dependency.Cod,
-                        x.PEI,
-                        x.ServiceName,
-                        x.ContractObjective,
-                        x.AssignedAccount,
-                        x.ContractAmount,
-                        x.IUE,
-                        x.IT,
-                        x.TotalAmount,
-                        x.Comments,
-                    });
+                        Id = x.Id,
+                        Codigo_Socio=x.CardCode,
+                        Nombre_Socio=x.CardName,
+                        Cod_Dependencia=x.Dependency.Cod,
+                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                        PEI_PO=x.PEI,
+                        Nombre_del_Servicio=x.ServiceName,
+                        Objeto_del_Contrato=x.ContractObjective,
+                        Cuenta_Asignada=x.AssignedAccount,
+                        Monto_Contrato=x.ContractAmount,
+                        Monto_IUE=x.IUE,
+                        Monto_IT=x.IT,
+                        Monto_a_Pagar=x.TotalAmount,
+                        Observaciones=x.Comments,
+                    }).OrderBy(x=>x.Id);
                     ex.Worksheets.Add(d.CreateDataTable(dist), "TotalDetalle");
                     break;
                 case ServProcess.Serv_FileType.Carrera:
-                    var dist1 = _context.ServCarreras.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    var dist1 = _context.ServCarreras.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
                     {
-                        x.CardCode,
-                        x.CardName,
-                        Dependency = x.Dependency.Cod,
-                        x.PEI,
-                        x.ServiceName,
-                        x.Carrera,
-                        x.DocumentNumber,
-                        x.Student,
-                        x.AssignedJob,
-                        x.AssignedAccount,
-                        x.ContractAmount,
-                        x.IUE,
-                        x.IT,
-                        x.TotalAmount,
-                        x.Comments,
-                    });
+                        Id = x.Id,
+                        Codigo_Socio = x.CardCode,
+                        Nombre_Socio = x.CardName,
+                        Cod_Dependencia = x.Dependency.Cod,
+                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                        PEI_PO = x.PEI,
+                        Nombre_del_Servicio = x.ServiceName,
+                        Codigo_Carrera=x.Carrera,
+                        Documento_Base=x.DocumentNumber,
+                        Postulante=x.Student,
+                        Tipo_Tarea_Asignada=x.AssignedJob,
+                        Cuenta_Asignada = x.AssignedAccount,
+                        Monto_Contrato = x.ContractAmount,
+                        Monto_IUE = x.IUE,
+                        Monto_IT = x.IT,
+                        Monto_a_Pagar = x.TotalAmount,
+                        Observaciones = x.Comments,
+                    }).OrderBy(x => x.Id);
                     ex.Worksheets.Add(d.CreateDataTable(dist1), "TotalDetalle");
                     break;
                 case ServProcess.Serv_FileType.Paralelo:
-                    var dist2 = _context.ServParalelos.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
+                    var dist2 = _context.ServParalelos.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x=>new
                     {
-                        x.CardCode,
-                        x.CardName,
-                        Dependency = x.Dependency.Cod,
-                        x.PEI,
-                        x.ServiceName,
-                        x.Periodo,
-                        x.Sigla,
-                        x.ParalelNumber,
-                        x.ParalelSAP,
-                        x.AssignedAccount,
-                        x.ContractAmount,
-                        x.IUE,
-                        x.IT,
-                        x.TotalAmount,
-                        x.Comments,
-                    });
+                        Id = x.Id,
+                        Codigo_Socio = x.CardCode,
+                        Nombre_Socio = x.CardName,
+                        Cod_Dependencia = x.Dependency.Cod,
+                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                        PEI_PO = x.PEI,
+                        Nombre_del_Servicio = x.ServiceName,
+                        Periodo_Academico = x.Periodo,
+                        Sigla_Asignatura = x.Sigla,
+                        Paralelo = x.ParalelNumber,
+                        Codigo_Paralelo_SAP = x.ParalelSAP,
+                        Cuenta_Asignada = x.AssignedAccount,
+                        Monto_Contrato = x.ContractAmount,
+                        Monto_IUE = x.IUE,
+                        Monto_IT = x.IT,
+                        Monto_a_Pagar = x.TotalAmount,
+                        Observaciones = x.Comments,
+                    }).OrderBy(x => x.Id);
+
                     ex.Worksheets.Add(d.CreateDataTable(dist2), "TotalDetalle");
                     break;
                 case ServProcess.Serv_FileType.Proyectos:
-                    var dist3 = _context.ServProyectoses.Include(x => x.Dependency).Where(x => x.Serv_ProcessId == process.Id).Select(x => new
+                    var dist3 = _context.ServProyectoses.Include(x => x.Dependency).Include(x => x.Dependency.OrganizationalUnit).
+                        Where(x => x.Serv_ProcessId == process.Id).Select(x => new
                     {
-                        x.CardCode,
-                        x.CardName,
-                        Dependency = x.Dependency.Cod,
-                        x.PEI,
-                        x.ServiceName,
-                        x.ProjectSAPCode,
-                        x.ProjectSAPName,
+                        Id = x.Id,
+                        Codigo_Socio = x.CardCode,
+                        Nombre_Socio = x.CardName,
+                        Cod_Dependencia = x.Dependency.Cod,
+                        Cod_UO = x.Dependency.OrganizationalUnit.Cod,
+                        PEI_PO = x.PEI,
+                        Nombre_del_Servicio = x.ServiceName,
+                        Codigo_Proyecto_SAP=x.ProjectSAPCode,
+                        Nombre_del_Proyecto=x.ProjectSAPName,
                         x.Version,
-                        x.Periodo,
-                        x.AssignedJob,
-                        x.AssignedAccount,
-                        x.ContractAmount,
-                        x.IUE,
-                        x.IT,
-                        x.TotalAmount,
-                        x.Comments,
-                    });
+                        Periodo_Academico = x.Periodo,
+                        Tipo_Tarea_Asignada = x.AssignedJob,
+                        Cuenta_Asignada = x.AssignedAccount,
+                        Monto_Contrato = x.ContractAmount,
+                        Monto_IUE = x.IUE,
+                        Monto_IT = x.IT,
+                        Monto_a_Pagar = x.TotalAmount,
+                        Observaciones = x.Comments,
+                    }).OrderBy(x => x.Id);
                     ex.Worksheets.Add(d.CreateDataTable(dist3), "TotalDetalle");
                     break;
             }
@@ -361,93 +458,168 @@ namespace UcbBack.Controllers
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);
             return response;
-            
         }
 
         [HttpGet]
-        [Route("api/ServContractToSAP/{id}")]
-        public HttpResponseMessage ToSAP(int id)
+        [Route("api/ServContractToApproval/{id}")]
+        public IHttpActionResult ToApproval(int id)
         {
-            HttpResponseMessage response = new HttpResponseMessage();
-
-            //todo check permisions per branch
-            var process = _context.ServProcesses.FirstOrDefault(f => f.Id == id);
-            if (process == null)
+            var user = auth.getUser(Request);
+            var processes = _context.ServProcesses.Where(f =>
+                f.Id == id && f.State == ServProcess.Serv_FileState.Started);
+            if (processes.Count() == 0)
             {
-                response.StatusCode = HttpStatusCode.NotFound;
-                return response;
+                return NotFound();
             }
 
-            var data = process.getVoucherData(_context);
+            processes = auth.filerByRegional(processes, user).Cast<ServProcess>();
+            var process = processes.FirstOrDefault();
 
+            if (process==null)
+                return Unauthorized();
+
+            process.State = ServProcess.Serv_FileState.PendingApproval;
+            _context.ServProcesses.AddOrUpdate(process);
+            _context.SaveChanges();
+
+            return Ok();
+        }
+
+        [HttpDelete]
+        [Route("api/ServContract/{id}")]
+        public IHttpActionResult DeleteProcess(int id)
+        {
+            var user = auth.getUser(Request);
+            var processes = _context.ServProcesses.Where(x =>
+                x.Id == id && (x.State == ServProcess.Serv_FileState.Started || x.State == ServProcess.Serv_FileState.PendingApproval));
+            if (processes.Count() == 0)
+                return NotFound();
+
+            processes = auth.filerByRegional(processes, user).Cast<ServProcess>();
+            var process = processes.FirstOrDefault();
+
+            if (process == null)
+                return Unauthorized();
+
+            switch (process.State)
+            {
+                case ServProcess.Serv_FileState.Started:
+                    process.State = ServProcess.Serv_FileState.Canceled;
+                    break;
+                case ServProcess.Serv_FileState.PendingApproval:
+                    process.State = ServProcess.Serv_FileState.Rejected;
+                    break;
+            }
+            process.LastUpdatedBy = user.Id;
+            _context.ServProcesses.AddOrUpdate(process);
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("api/ServContractToSAP/{id}")]
+        public IHttpActionResult ToSAP(int id, JObject webdata)
+        {
+            if (webdata == null || webdata["date"] == null)
+            {
+                return BadRequest();
+            }
+
+            var B1 = B1Connection.Instance();
+            HttpResponseMessage response = new HttpResponseMessage();
+            var user = auth.getUser(Request);
+            var processes = _context.ServProcesses.Include(x=>x.Branches).Where(f =>
+                f.Id == id && f.State == ServProcess.Serv_FileState.PendingApproval);
+
+            if (processes.Count() == 0)
+            {
+                return NotFound();
+            }
+
+            processes = auth.filerByRegional(processes, user).Cast<ServProcess>();
+            var process = processes.FirstOrDefault();
+
+            if (process == null)
+            {
+                return Unauthorized();
+            }
+
+            DateTime date = DateTime.Parse(webdata["date"].ToString());
+            process.InSAPAt = date;
+            var data = process.getVoucherData(_context);
             var memos = data.Select(x => x.Memo).Distinct().ToList();
-            var ex = new XLWorkbook();
-            var d = new Distribution();
 
             foreach (var memo in memos)
             {
+                //remove special chars
                 var goodMemo = Regex.Replace(memo, "[^\\w\\._]", "");
-                var dist1 = (
-                    data.Where(g => g.Concept == "PPAGAR" && g.Memo==memo).Select(g => new
-                    {
-                        g.Concept,
-                        g.Memo,
-                        g.LineMemo,
-                        g.Account,
-                        g.CardCode,
-                        g.OU,
-                        g.PEI,
-                        g.Carrera,
-                        g.Paralelo,
-                        g.Periodo,
-                        g.ProjectCode,
-                        Credit = Double.Parse(g.Credit),
-                        Debit = Double.Parse(g.Debit)
-                    })
-                ).Union(
-                    data.Where(g => g.Concept != "PPAGAR" && g.Memo == memo).GroupBy(g => new
-                    {
-                        g.Concept,
-                        g.Memo,
-                        g.LineMemo,
-                        g.Account,
-                        g.CardCode,
-                        g.OU,
-                        g.PEI,
-                        g.Carrera,
-                        g.Paralelo,
-                        g.Periodo,
-                        g.ProjectCode
-                    }).Select(g => new
-                    {
-                        g.Key.Concept,
-                        g.Key.Memo,
-                        g.Key.LineMemo,
-                        g.Key.Account,
-                        g.Key.CardCode,
-                        g.Key.OU,
-                        g.Key.PEI,
-                        g.Key.Carrera,
-                        g.Key.Paralelo,
-                        g.Key.Periodo,
-                        g.Key.ProjectCode,
-                        Credit = g.Sum(s => Double.Parse(s.Credit)),
-                        Debit = g.Sum(s => Double.Parse(s.Debit))
-                    })
-                ).OrderBy(z => z.Debit == 0.00d ? 1 : 0).ThenBy(z => z.Account);
-                ex.Worksheets.Add(d.CreateDataTable(dist1), goodMemo.Substring(0,goodMemo.Length>30?30:goodMemo.Length));
+                //remove new line characters
+                goodMemo = Regex.Replace(goodMemo, @"\t|\n|\r", "");
+
+                var ppagar = data.Where(g => g.Concept == "PPAGAR" && g.Memo == memo).Select(g => new Serv_Voucher()
+                {
+                    CardName=g.CardName,
+                    CardCode=g.CardCode,
+                    OU=g.OU,
+                    PEI=g.PEI,
+                    Carrera=g.Carrera,
+                    Paralelo=g.Paralelo,
+                    Periodo=g.Periodo,
+                    ProjectCode=g.ProjectCode,
+                    Memo=g.Memo,
+                    LineMemo=g.LineMemo,
+                    Concept=g.Concept,
+                    AssignedAccount=g.AssignedAccount,
+                    Account=g.Account,
+                    Credit = g.Credit,
+                    Debit = g.Debit
+                }).ToList();
+
+                List<Serv_Voucher> rest = data.Where(g => g.Concept != "PPAGAR" && g.Memo == memo).GroupBy(g => new
+                {
+                    g.CardCode,
+                    g.OU,
+                    g.PEI,
+                    g.Carrera,
+                    g.Paralelo,
+                    g.Periodo,
+                    g.ProjectCode,
+                    g.Memo,
+                    g.LineMemo,
+                    g.Concept,
+                    g.AssignedAccount,
+                    g.Account,
+                }).Select(g => new Serv_Voucher()
+                {
+                    CardName = "",
+                    CardCode=g.Key.CardCode,
+                    OU=g.Key.OU,
+                    PEI=g.Key.PEI,
+                    Carrera=g.Key.Carrera,
+                    Paralelo=g.Key.Paralelo,
+                    Periodo=g.Key.Periodo,
+                    ProjectCode=g.Key.ProjectCode,
+                    Memo=g.Key.Memo,
+                    LineMemo=g.Key.LineMemo,
+                    Concept=g.Key.Concept,
+                    AssignedAccount=g.Key.AssignedAccount,
+                    Account=g.Key.Account,
+                    Credit = g.Sum(s => s.Credit),
+                    Debit = g.Sum(s => s.Debit)
+                }).ToList();
+
+                List<Serv_Voucher> dist1 = ppagar.Union(rest).OrderBy(z => z.Debit == 0.00M ? 1 : 0).ThenBy(z => z.Account).ToList();
+                B1.addServVoucher(user.Id,dist1.ToList(),process);
             }
 
-            var ms = new MemoryStream();
-            ex.SaveAs(ms);
-            response.StatusCode = HttpStatusCode.OK;
-            response.Content = new StreamContent(ms);
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "VoucherServ.xlsx";
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.Content.Headers.ContentLength = ms.Length;
-            ms.Seek(0, SeekOrigin.Begin);
-            return response;
+            if(memos.Count()>1)
+                process.SAPId = "Multiples.";
+            process.State = ServProcess.Serv_FileState.INSAP;
+            process.LastUpdatedBy = user.Id;
+            _context.ServProcesses.AddOrUpdate(process);
+            _context.SaveChanges();
+
+            return Ok(process.SAPId);
         }
 
         [NonAction]
@@ -578,7 +750,7 @@ namespace UcbBack.Controllers
             out string realfileName)
         {
             string Abr = _context.Branch.Where(x => x.Id == branchId).Select(x => x.Abr).FirstOrDefault();
-            realfileName = Abr + "-" + fileType;
+            realfileName = Abr + "-CC_" + fileType;
             return fileName.Split('.')[0].Equals(realfileName);
         }
 
@@ -608,13 +780,13 @@ namespace UcbBack.Controllers
         }
 
         [NonAction]
-        private void DynamicExcelToDB(string FileType, dynamic o, ServProcess file,  out HttpResponseMessage response)
+        private void DynamicExcelToDB(string FileType, dynamic o, ServProcess file,CustomUser user,  out HttpResponseMessage response)
         {
             response = new HttpResponseMessage();
             switch (FileType)
             {
                 case ServProcess.Serv_FileType.Varios:
-                    Serv_VariosExcel ExcelFile = new Serv_VariosExcel(o.excelStream, _context, o.fileName, file,headerin:1,sheets:1);
+                    Serv_VariosExcel ExcelFile = new Serv_VariosExcel(o.excelStream, _context, o.fileName,file,user,headerin:1,sheets:1);
                     if (ExcelFile.ValidateFile())
                     {
                         ExcelFile.toDataBase();
@@ -633,7 +805,7 @@ namespace UcbBack.Controllers
                     break;
 
                 case ServProcess.Serv_FileType.Carrera:
-                    Serv_CarreraExcel ExcelFile2 = new Serv_CarreraExcel(o.excelStream, _context, o.fileName, file, headerin: 1, sheets: 1);
+                    Serv_CarreraExcel ExcelFile2 = new Serv_CarreraExcel(o.excelStream, _context, o.fileName, file,user, headerin: 1, sheets: 1);
                     if (ExcelFile2.ValidateFile())
                     {
                         ExcelFile2.toDataBase();
@@ -652,7 +824,7 @@ namespace UcbBack.Controllers
                     break;
 
                 case ServProcess.Serv_FileType.Proyectos:
-                    Serv_ProyectosExcel ExcelFile3 = new Serv_ProyectosExcel(o.excelStream, _context, o.fileName, file, headerin: 1, sheets: 1);
+                    Serv_ProyectosExcel ExcelFile3 = new Serv_ProyectosExcel(o.excelStream, _context, o.fileName, file, user,headerin: 1, sheets: 1);
                     if (ExcelFile3.ValidateFile())
                     {
                         ExcelFile3.toDataBase();
@@ -670,7 +842,7 @@ namespace UcbBack.Controllers
                     }
                     break;
                 case ServProcess.Serv_FileType.Paralelo:
-                    Serv_ParaleloExcel ExcelFile4 = new Serv_ParaleloExcel(o.excelStream, _context, o.fileName, file, headerin: 1, sheets: 1);
+                    Serv_ParaleloExcel ExcelFile4 = new Serv_ParaleloExcel(o.excelStream, _context, o.fileName, file,user, headerin: 1, sheets: 1);
                     if (ExcelFile4.ValidateFile())
                     {
                         ExcelFile4.toDataBase();
