@@ -9,7 +9,9 @@ using System.Net.Http.Headers;
 using System.Web.Http;
 using ClosedXML.Excel;
 using Newtonsoft.Json.Linq;
+using SAPbouiCOM;
 using UcbBack.Logic;
+using UcbBack.Logic.B1;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped;
@@ -22,12 +24,14 @@ namespace UcbBack.Controllers
 
         private ApplicationDbContext _context;
         private ValidateAuth auth;
+        private ADClass AD;
 
 
         public CivilController()
         {
             _context = new ApplicationDbContext();
             auth = new ValidateAuth();
+            AD = new ADClass();
         }
 
         // GET api/Level
@@ -35,26 +39,64 @@ namespace UcbBack.Controllers
         [Route("api/CivilbyBranch/{id}")]
         public IHttpActionResult CivilbyBranch(int id)
         {
-            // we get the Branches from SAP
-            var query = "select c.*,ocrd.\"BranchesId\" from " + CustomSchema.Schema + ".\"Civil\" c" +
-                        " inner join " +
-                        " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
-                        " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
-                        " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
-                        " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
-                        " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
-                        " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
-                        " where ocrd.\"validFor\" = \'Y\'" +
-                        " and crd8.\"DisabledBP\" = \'N\') ocrd" +
-                        " on c.\"SAPId\" = ocrd.\"CardCode\"" +
-                        " where \"BranchesId\"=" + id + ";";
-            var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
+            var B1 = B1Connection.Instance();
+            if (id != 0)
+            {
+                // we get the Branches from SAP
+                var query = "select c.\"Id\", c.\"FullName\",c.\"SAPId\",c.\"NIT\",c.\"Document\",c.\"CreatedBy\",ocrd.\"BranchesId\" " +
+                            "from " + CustomSchema.Schema + ".\"Civil\" c" +
+                            " inner join " +
+                            " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
+                            " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
+                            " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
+                            " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
+                            " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
+                            " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
+                            " where ocrd.\"validFor\" = \'Y\'" +
+                            " and crd8.\"DisabledBP\" = \'N\') ocrd" +
+                            " on c.\"SAPId\" = ocrd.\"CardCode\"" +
+                            " where ocrd.\"BranchesId\"=" + id + ";";
+                var rawresult = _context.Database.SqlQuery<Civil>(query);
 
-            var user = auth.getUser(Request);
+                var user = auth.getUser(Request);
 
-            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+                var res = auth.filerByRegional(rawresult.AsQueryable(), user);
 
-            return Ok(res);
+                return Ok(res);
+            }
+            else
+            {
+                var user = auth.getUser(Request);
+                var brs = AD.getUserBranches(user);
+                var brsIds = brs.Select(x => x.Id);
+                string StrIds = "";
+                int n = brsIds.Count();
+                int i = 0;
+                foreach (var brid in brsIds)
+                {
+                    i++;
+                    StrIds += brid + "" + (i==n?"":", ");
+                    
+                }
+
+
+                var query = "select c.\"Id\", c.\"FullName\",c.\"SAPId\",c.\"NIT\",c.\"Document\",c.\"CreatedBy\",ocrd.\"BranchesId\" " +
+                            "from " + CustomSchema.Schema + ".\"Civil\" c" +
+                            " inner join " +
+                            " (select ocrd.\"CardCode\", br.\"Id\" \"BranchesId\"" +
+                            " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
+                            " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
+                            " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
+                            " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
+                            " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
+                            " where ocrd.\"validFor\" = \'Y\'" +
+                            " and crd8.\"DisabledBP\" = \'N\') ocrd" +
+                            " on c.\"SAPId\" = ocrd.\"CardCode\"" +
+                            " where ocrd.\"BranchesId\" in (" + StrIds + ");";
+                var rawresult = _context.Database.SqlQuery<Civil>(query);
+                var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+                return Ok(res);
+            }
         }
 
         // GET api/Level/5
@@ -91,37 +133,12 @@ namespace UcbBack.Controllers
         public IHttpActionResult findInSAP(JObject CardCode)
         {
             var user = auth.getUser(Request);
-            var BP = findBPInSAP(CardCode["CardCode"].ToString(), user);
+            var BP = Civil.findBPInSAP(CardCode["CardCode"].ToString(), user,_context);
             
             if (BP == null)
                 return NotFound();
 
-            return Ok(BP);
-        }
-
-        [NonAction]
-        private dynamic findBPInSAP(string CardCode,CustomUser user)
-        {
-            var query = "select 0 \"Id\",0 \"CreatedBy\",null \"Document\", ocrd.\"CardCode\" \"SAPId\", ocrd.\"CardName\" \"FullName\",ocrd.\"LicTradNum\" \"NIT\", br.\"Id\" \"BranchesId\"" +
-                        " from " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".ocrd" +
-                        " inner join " + ConfigurationManager.AppSettings["B1CompanyDB"] + ".crd8" +
-                        " on ocrd.\"CardCode\" = crd8.\"CardCode\"" +
-                        " inner join " + CustomSchema.Schema + ".\"Branches\" br" +
-                        " on br.\"CodigoSAP\" = crd8.\"BPLId\"" +
-                        " where ocrd.\"validFor\" = 'Y'" +
-                        " and crd8.\"DisabledBP\" = 'N'" +
-                        " and ocrd.\"CardType\" = 'S'" +
-                        " and ocrd.\"CardCode\"= '" + CardCode + "';";
-            var rawresult = _context.Database.SqlQuery<Civil>(query).ToList();
-
-            if (rawresult.Count() == 0)
-                return null;
-
-            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
-            if (res.Count() == 0)
-                return null;
-
-            return res.FirstOrDefault();
+            return Ok(BP.FirstOrDefault());
         }
 
         // POST api/Level
@@ -129,12 +146,27 @@ namespace UcbBack.Controllers
         public IHttpActionResult Post([FromBody]Civil civil)
         {
             var user = auth.getUser(Request);
-            var BP = findBPInSAP(civil.SAPId, user);
+            var BP = Civil.findBPInSAP(civil.SAPId, user,_context);
 
             if (!ModelState.IsValid)
                 return BadRequest();
+
+            //todo validate BranchesId here
+
             if (BP == null)
                 return Unauthorized();
+            var a =AD.getUserBranches(user).Select(x => x.Id);
+            var b = BP.Select(x => x.BranchesId);
+
+            if (!a.Intersect(b).Any())
+            {
+                return Unauthorized();
+            }
+
+            var exists = _context.Civils.FirstOrDefault(x => x.SAPId == civil.SAPId);
+            if (exists != null)
+                //return Ok("Este Socio de Negocios ya existe como Civil.");
+                return Conflict();
 
             civil.Id = Civil.GetNextId(_context);
             civil.CreatedBy = user.Id;
