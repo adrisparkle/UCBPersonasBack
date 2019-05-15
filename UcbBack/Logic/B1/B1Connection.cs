@@ -16,6 +16,8 @@ using UcbBack.Models.Auth;
 using UcbBack.Models.Dist;
 using UcbBack.Models.Not_Mapped;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
+using UcbBack.Models.Not_Mapped.ViewMoldes;
+using UcbBack.Models.Serv;
 using Resource = SAPbobsCOM.Resource;
 
 namespace UcbBack.Logic.B1
@@ -625,7 +627,7 @@ namespace UcbBack.Logic.B1
                         businessObject.UserFields.Fields.Item("VatGroup").Value = contract.Branches.VatGroup;
 
                         // set Branch Code
-                        var brs = _context.Branch.ToList();
+                        //var brs = _context.Branch.ToList();
 
                         //foreach (var b in brs)
                         //{
@@ -1101,6 +1103,109 @@ namespace UcbBack.Logic.B1
                         }
                     }
                 }
+                log.Success = false;
+                log.ErrorMessage = "SDK: Not Connected or Voucher/Journal Entrie Data Error";
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+
+            catch (Exception ex)
+            {
+                log.Success = false;
+                log.ErrorMessage = "Catch: " + ex.Message;
+                _context.SdkErrorLogs.Add(log);
+                _context.SaveChanges();
+                return "ERROR";
+            }
+        }
+
+        public string addServVoucher(int UserId, List<Serv_Voucher> voucher,ServProcess process)
+        {
+            var log = initLog(UserId, BusinessObjectType.Voucher, voucher.FirstOrDefault().Memo);
+            bool approved = true;
+            try
+            {
+                
+                var debe = voucher.Sum(x => x.Debit);
+                var haber = voucher.Sum(x => x.Credit);
+                if (debe != haber)
+                {
+                    // no cuadra debe y haber
+                    log.Success = false;
+                    log.ErrorCode = errorCode.ToString();
+                    log.ErrorMessage = "System: Diferencia entre deba y haber. Debe(" + debe + ") - Haber(" + haber + ")";
+                    _context.SdkErrorLogs.Add(log);
+                    _context.SaveChanges();
+                    return "ERROR";
+                }
+
+                // If process Date is null set last day of the month in proccess
+                DateTime date = process.InSAPAt == null ? DateTime.Now : process.InSAPAt.Value;
+
+                    if (approved)
+                    {
+                        SAPbobsCOM.JournalEntries businessObject =
+                            (SAPbobsCOM.JournalEntries) company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
+                                .oJournalEntries);
+
+                        // add header Journal Entrie Approved:
+                        businessObject.ReferenceDate = date;
+                        businessObject.Memo = voucher.FirstOrDefault().Memo;
+                        businessObject.TaxDate = date;
+                        businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
+                        businessObject.DueDate = date;
+
+
+                        // add lines Journal Entrie Approved:
+                        businessObject.Lines.SetCurrentLine(0);
+                        foreach (var line in voucher)
+                        {
+                            businessObject.Lines.LineMemo = line.LineMemo;
+                            businessObject.Lines.AccountCode = this.getAccountId(line.Account);
+                            businessObject.Lines.Credit = (double)line.Credit;
+                            businessObject.Lines.Debit = (double)line.Debit;
+                            if (line.CardCode != null)
+                                businessObject.Lines.ShortName = line.CardCode;
+                            businessObject.Lines.CostingCode = line.OU;
+                            businessObject.Lines.CostingCode2 = line.PEI;
+                            businessObject.Lines.CostingCode3 = line.Carrera;
+                            businessObject.Lines.CostingCode4 = line.Paralelo;
+                            businessObject.Lines.CostingCode5 = line.Periodo;
+                            businessObject.Lines.ProjectCode = line.ProjectCode;
+                            businessObject.Lines.BPLID = Int32.Parse(process.Branches.CodigoSAP);
+                            businessObject.Lines.Add();
+                        }
+
+                        var B1key = businessObject.Add();
+
+                        string newKey = company.GetNewObjectKey();
+                        company.GetLastError(out errorCode, out errorMessage);
+                        if (errorCode != 0)
+                        {
+                            log.Success = false;
+                            log.ErrorCode = errorCode.ToString();
+                            log.ErrorMessage = "SDK: " + errorMessage;
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return "ERROR";
+                        }
+                        else
+                        {
+                            if (company.InTransaction)
+                            {
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
+                                
+                            }
+                            newKey = newKey.Replace("\t1", "");
+                            process.SAPId = B1key.ToString();
+                            _context.ServProcesses.AddOrUpdate(process);
+                            _context.SdkErrorLogs.Add(log);
+                            _context.SaveChanges();
+                            return newKey;
+                        }
+                    }
+                
                 log.Success = false;
                 log.ErrorMessage = "SDK: Not Connected or Voucher/Journal Entrie Data Error";
                 _context.SdkErrorLogs.Add(log);
