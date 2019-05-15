@@ -17,6 +17,7 @@ namespace UcbBack.Models.Serv
         public int Id { set; get; }
 
         public int BranchesId { get; set; }
+        public Branches Branches { get; set; }
         public string FileType { get; set; }
         public DateTime CreatedAt { get; set; }
         public int CreatedBy { get; set; }
@@ -28,10 +29,11 @@ namespace UcbBack.Models.Serv
         public struct Serv_FileState
         {
             public const string Started = "INICIADO";
-            public const string PendingApproval = "ESPERANDO APROVACION";
+            public const string PendingApproval = "ESPERANDO APROBACION";
             public const string INSAP = "IN SAP";
             public const string ERROR = "ERROR";
-            public const string Canceled = "RECHAZADO";
+            public const string Rejected = "RECHAZADO";
+            public const string Canceled = "CANCELADO";
         }
 
         public struct Serv_FileType

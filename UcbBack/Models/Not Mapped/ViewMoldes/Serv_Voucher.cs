@@ -26,8 +26,8 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         public string LineMemo { get; set; }
         public string Concept { get; set; }
         public string AssignedAccount { get; set; }
-        public string AccountCode { get; set; }
-        public string Debit { get; set; }
-        public string Credit { get; set; }
+        public string Account { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
     }
 }
