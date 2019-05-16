@@ -6,6 +6,7 @@ using System.Web;
 using ClosedXML.Excel;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using UcbBack.Models.Auth;
 using UcbBack.Models.Serv;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
@@ -34,15 +35,17 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
         private ApplicationDbContext _context;
         private ServProcess process;
+        private CustomUser user;
 
         public Serv_ProyectosExcel(string fileName, int headerin = 1)
             : base(cols, fileName, headerin)
         { }
 
-        public Serv_ProyectosExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process, int headerin = 1, int sheets = 1, string resultfileName = "Result")
+        public Serv_ProyectosExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process, CustomUser user,int headerin = 1, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName, context)
         {
             this.process = process;
+            this.user = user;
             _context = context;
             isFormatValid();
         }
@@ -99,24 +102,26 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                     addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
                 }
 
-                bool v1 = VerifyColumnValueIn(1, _context.Civils.Select(x => x.SAPId).ToList(), comment: "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-                bool v2 = VerifyColumnValueIn(2, _context.Civils.Select(x => x.FullName).ToList(), comment: "Este Nombre de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-                bool v3 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
-                var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
-                bool v4 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
-                bool v5 = VerifyLength(5, 50);
-                bool v6 = verifyproject();
-
-                var proy = connB1.getProjects().Cast<string>().ToList();
-                bool v7 = VerifyColumnValueIn(6, proy, comment: "Este Proyecto no existe en SAP.");
+                bool v1 = VerifyBP(1, 2,process.BranchesId,user);
+                bool v2 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
+                var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<String>().ToList();
+                bool v3 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
+                bool v4 = VerifyLength(5, 50);
+                bool v5 = verifyproject();
 
                 var periodo = connB1.getCostCenter(B1Connection.Dimension.Periodo).Cast<string>().ToList();
-                bool v8 = VerifyColumnValueIn(9, periodo, comment: "Este Periodo no existe en SAP.");
+                bool v6 = VerifyColumnValueIn(9, periodo, comment: "Este Periodo no existe en SAP.");
 
-                bool v9 = VerifyColumnValueIn(10, new List<string> { "CC_POST", "CC_EC", "CC_FC", "CC_INV", "CC_SA" }, comment: "No existe este tipo de Cuenta Asignada.");
-                bool v10 = VerifyColumnValueIn(11, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "PAN", "OTR" }, comment: "No existe este tipo de Tarea Asignada.");
+                bool v7 = VerifyColumnValueIn(10, new List<string> { "PROF", "TG", "REL", "LEC", "REV", "PAN", "OTR" }, comment: "No existe este tipo de Tarea Asignada.");
+                bool v8 = VerifyColumnValueIn(11, new List<string> { "CC_POST", "CC_EC", "CC_FC", "CC_INV", "CC_SA" }, comment: "No existe este tipo de Cuenta Asignada.");
 
-                return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9 && v10;
+                bool v9 = true;
+                foreach (var i in new List<int>(){1,2,3,4,5  ,7  ,9,10,11,12,13,14,15})
+                {
+                    v9 = VerifyNotEmpty(i) && v9;
+                }
+
+                return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
             }
 
             return false;
@@ -127,23 +132,24 @@ namespace UcbBack.Logic.ExcelFiles.Serv
         {
             string commnet = "Este proyecto no existe en SAP.";
             var connB1 = B1Connection.Instance();
-            List<string> list = connB1.getProjects().Cast<String>().ToList();
+            var br = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
+            var list = connB1.getProjects("*").Where(x => x.U_Sucursal == br.Abr).Select(x => x.PrjCode).ToList();
             int index = 6;
-            int tipoproy = 10;
+            int tipoproy = 11;
             bool res = true;
             IXLRange UsedRange = wb.Worksheet(sheet).RangeUsed();
             var l = UsedRange.LastRow().RowNumber();
             for (int i = headerin + 1; i <= UsedRange.LastRow().RowNumber(); i++)
             {
-                if (!list.Exists(x => string.Equals(x, wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
+                if (!list.Exists(x => string.Equals(x.ToString(), wb.Worksheet(sheet).Cell(i, index).Value.ToString(), StringComparison.OrdinalIgnoreCase)))
                 {
                     var a1 = wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString();
                     var a2 = wb.Worksheet(sheet).Cell(i, index).Value.ToString();
                     if (!(
                         (
-                            wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "EC"
-                            || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "FC"
-                            || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "SA"
+                            wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "CC_EC"
+                            || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "CC_FC"
+                            || wb.Worksheet(sheet).Cell(i, tipoproy).Value.ToString() == "CC_SA"
                         )
                         &&
                         wb.Worksheet(sheet).Cell(i, index).Value.ToString() == ""

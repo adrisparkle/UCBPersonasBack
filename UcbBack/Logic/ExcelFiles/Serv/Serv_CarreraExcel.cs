@@ -6,6 +6,7 @@ using System.Web;
 using ClosedXML.Excel;
 using UcbBack.Logic.B1;
 using UcbBack.Models;
+using UcbBack.Models.Auth;
 using UcbBack.Models.Serv;
 
 namespace UcbBack.Logic.ExcelFiles.Serv
@@ -33,15 +34,17 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
         private ApplicationDbContext _context;
         private ServProcess process;
+        private CustomUser user;
 
         public Serv_CarreraExcel(string fileName, int headerin = 1)
             : base(cols, fileName, headerin)
         { }
 
-        public Serv_CarreraExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process, int headerin = 1, int sheets = 1, string resultfileName = "Result")
+        public Serv_CarreraExcel(Stream data, ApplicationDbContext context, string fileName, ServProcess process,CustomUser user, int headerin = 1, int sheets = 1, string resultfileName = "Result")
             : base(cols, data, fileName, headerin, sheets, resultfileName, context)
         {
             this.process = process;
+            this.user = user;
             _context = context;
             isFormatValid();
         }
@@ -97,17 +100,23 @@ namespace UcbBack.Logic.ExcelFiles.Serv
                     addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
                 }
 
-                bool v1 = VerifyColumnValueIn(1, _context.Civils.Select(x => x.SAPId).ToList(), comment: "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-                bool v2 = VerifyColumnValueIn(2, _context.Civils.Select(x => x.FullName).ToList(), comment: "Este Nombre de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
-                bool v3 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
+                bool v1 = VerifyBP(1, 2,process.BranchesId,user);
+                bool v2 = VerifyColumnValueIn(3, _context.Dependencies.Where(x => x.BranchesId == this.process.BranchesId).Select(x => x.Cod).ToList(), comment: "Esta Dependencia no es Válida");
                 var pei = connB1.getCostCenter(B1Connection.Dimension.PEI).Cast<string>().ToList();
-                bool v4 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
-                bool v5 = VerifyLength(5, 50);
-                var carrera = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList();
-                bool v6 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
-                bool v7 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
-                bool v8 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
-                bool v9 = VerifyTotal();
+                bool v3 = VerifyColumnValueIn(4, pei, comment: "Este PEI no existe en SAP.");
+                bool v4 = VerifyLength(5, 50);
+                var brs = _context.Branch.FirstOrDefault(x => x.Id == process.BranchesId);
+                var carrera = connB1.getCostCenter(B1Connection.Dimension.PlanAcademico).Cast<string>().ToList().Where(x => x.Contains(brs.Abr)).ToList();
+                bool v5 = VerifyColumnValueIn(6, carrera, comment: "Esta Carrera no existe en SAP.");
+                bool v6 = VerifyColumnValueIn(9, new List<string> { "TG", "REL", "LEC", "REV", "PAN", "EXA", "OTR" }, comment: "No existe esta tipo de Tarea Asignada.");
+                bool v7 = VerifyColumnValueIn(10, new List<string> { "CC_TEMPORAL" }, comment: "No existe este tipo de Cuenta Asignada.");
+                bool v8 = VerifyTotal();
+
+                bool v9 = true;
+                foreach (var i in new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 })
+                {
+                    v9 = VerifyNotEmpty(i) && v9;
+                }
 
                 return v1 && v2 && v3 && v4 && v5 && v6 && v7 && v8 && v9;
             }
