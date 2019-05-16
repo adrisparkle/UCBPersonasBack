@@ -33,7 +33,7 @@ namespace UcbBack.Models.Serv
             public const string INSAP = "IN SAP";
             public const string ERROR = "ERROR";
             public const string Rejected = "RECHAZADO";
-            public const string Canceled = "CANCELADO";
+            public const string Canceled = "ANULADO";
         }
 
         public struct Serv_FileType
