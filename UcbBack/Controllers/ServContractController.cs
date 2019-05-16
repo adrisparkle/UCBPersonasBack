@@ -46,12 +46,13 @@ namespace UcbBack.Controllers
         {
             var user = auth.getUser(Request);
             var query = "select * from " + CustomSchema.Schema + ".\"Serv_Process\" " +
+                        " where \"State\" = '" + ServProcess.Serv_FileState.PendingApproval + "' " +
+                        " or \"State\" = '" + ServProcess.Serv_FileState.INSAP + "' " +
+                        " or \"State\" = '" + ServProcess.Serv_FileState.Rejected + "' " +
                         " order by (" +
                         "   case when \"State\" = '" + ServProcess.Serv_FileState.PendingApproval + "' then 1 " +
-                        " when \"State\" = '" + ServProcess.Serv_FileState.Started + "' then 2 " +
                         " when \"State\" = '" + ServProcess.Serv_FileState.INSAP + "' then 3 " +
-                        " when \"State\" = '" + ServProcess.Serv_FileState.Canceled + "' then 4 " +
-                        " when \"State\" = '" + ServProcess.Serv_FileState.ERROR + "' then 5 " +
+                        " when \"State\" = '" + ServProcess.Serv_FileState.Rejected + "' then 5 " +
                         " end) asc, " +
                         " \"CreatedAt\" desc;";
             var rawresult = _context.Database.SqlQuery<ServProcess>(query).ToList();
@@ -313,14 +314,28 @@ namespace UcbBack.Controllers
         public IHttpActionResult CheckUpload([FromBody] JObject upload)
         {
             int branchid = 0;
-            if (upload["FileType"] == null || upload["BranchesId"] == null || !Int32.TryParse(upload["BranchesId"].ToString(), out branchid))
+            int processid = 0;
+            if (upload["FileType"] == null || upload["BranchesId"] == null || !Int32.TryParse(upload["BranchesId"].ToString(), out branchid) || upload["ProcessId"] == null)
                 return BadRequest("Debes enviar Tipo de Archivo y segmentoOrigen");
+
+
 
             var FileType = upload["FileType"].ToString();
 
-            var process = _context.ServProcesses.FirstOrDefault(f => f.BranchesId == branchid
-                                                                     && f.State == ServProcess.Serv_FileState.Started
+            ServProcess process = null;
+
+
+            if (Int32.TryParse(upload["ProcessId"].ToString(), out processid))
+            {
+                process = _context.ServProcesses.FirstOrDefault(f => f.BranchesId == branchid
+                                                                     && f.Id == processid);
+            }
+            else
+            {
+                process = _context.ServProcesses.FirstOrDefault(f => f.BranchesId == branchid
+                                                                     && (f.State == ServProcess.Serv_FileState.Started)
                                                                      && f.FileType == FileType);
+            }
             if (process == null)
                 return Ok();
 
@@ -341,7 +356,7 @@ namespace UcbBack.Controllers
         {
             HttpResponseMessage response = new HttpResponseMessage();
 
-            var process = _context.ServProcesses.FirstOrDefault(p => p.Id == id);
+            var process = _context.ServProcesses.Include(x=>x.Branches).FirstOrDefault(p => p.Id == id);
 
             if (process == null)
             {
@@ -453,7 +468,7 @@ namespace UcbBack.Controllers
             response.StatusCode = HttpStatusCode.OK;
             response.Content = new StreamContent(ms);
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-            response.Content.Headers.ContentDisposition.FileName = "Detalle" + process.FileType + ".xlsx";
+            response.Content.Headers.ContentDisposition.FileName = process.Branches.Abr + "-Lote_" + process.Id + "-" + process.FileType + ".xlsx";
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.Content.Headers.ContentLength = ms.Length;
             ms.Seek(0, SeekOrigin.Begin);
