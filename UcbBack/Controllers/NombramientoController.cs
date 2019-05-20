@@ -7,7 +7,7 @@ using System.Web.Http;
 using UcbBack.Logic;
 using UcbBack.Models;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
-using UcbBack.Models.ViewMoldes;
+using UcbBack.Models.Not_Mapped.ViewMoldes;
 
 namespace UcbBack.Controllers
 {

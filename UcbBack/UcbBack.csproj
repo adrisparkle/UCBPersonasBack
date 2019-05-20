@@ -261,7 +261,10 @@
     <Compile Include="Logic\ExcelFiles\PayrollExcel.cs" />
     <Compile Include="Logic\ExcelFiles\PostgradoExcel.cs" />
     <Compile Include="Logic\ExcelFiles\PregradoExcel.cs" />
-    <Compile Include="Logic\ExcelFiles\Serv_VariosExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\Serv\Serv_CarreraExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\Serv\Serv_ProyectosExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\Serv\Serv_ParaleloExcel.cs" />
+    <Compile Include="Logic\ExcelFiles\Serv\Serv_VariosExcel.cs" />
     <Compile Include="Logic\HanaValidator.cs" />
     <Compile Include="Logic\Mail\Mail.cs" />
     <Compile Include="Logic\ValidateAuth.cs" />
@@ -292,10 +295,11 @@
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ProyectosViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ReemplazoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_VariosViewModel.cs" />
+    <Compile Include="Models\Not Mapped\ViewMoldes\Serv_Voucher.cs" />
     <Compile Include="Models\Serv\ServProcess.cs" />
-    <Compile Include="Models\Serv\Serv_Pregrado.cs" />
+    <Compile Include="Models\Serv\Serv_Carrera.cs" />
     <Compile Include="Models\Serv\Serv_Proyectos.cs" />
-    <Compile Include="Models\Serv\Serv_Reemplazo.cs" />
+    <Compile Include="Models\Serv\Serv_Paralelo.cs" />
     <Compile Include="Models\Serv\Serv_Varios.cs" />
     <Compile Include="Models\Contract.cs" />
     <Compile Include="Models\ContractDetail.cs" />

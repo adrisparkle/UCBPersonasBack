@@ -14,7 +14,7 @@ using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json.Linq;
 using UcbBack.Logic.B1;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
-using UcbBack.Models.ViewMoldes;
+using UcbBack.Models.Not_Mapped.ViewMoldes;
 
 
 namespace UcbBack.Controllers
@@ -41,7 +41,7 @@ namespace UcbBack.Controllers
         public IHttpActionResult Get()
         {
             var query ="select * from " + CustomSchema.Schema + ".lastcontracts "+
-                        " where \"EndDate\" is null or \"EndDate\"> current_date";
+                        " where \"EndDate\" is null or add_months(\"EndDate\",1)> current_date";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);

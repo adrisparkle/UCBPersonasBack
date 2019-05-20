@@ -13,7 +13,7 @@ using UcbBack.Logic.ExcelFiles;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
-using UcbBack.Models.ViewMoldes;
+using UcbBack.Models.Not_Mapped.ViewMoldes;
 
 namespace UcbBack.Controllers
 {
