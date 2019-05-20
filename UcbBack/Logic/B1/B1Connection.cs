@@ -1177,9 +1177,7 @@ namespace UcbBack.Logic.B1
                             businessObject.Lines.Add();
                         }
 
-                        var B1key = businessObject.Add();
-
-                        string newKey = company.GetNewObjectKey();
+                        businessObject.Add();
                         company.GetLastError(out errorCode, out errorMessage);
                         if (errorCode != 0)
                         {
@@ -1197,8 +1195,11 @@ namespace UcbBack.Logic.B1
                                 company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_Commit);
                                 
                             }
+                            string newKey = company.GetNewObjectKey();
+
+
                             newKey = newKey.Replace("\t1", "");
-                            process.SAPId = B1key.ToString();
+                            process.SAPId = newKey;
                             _context.ServProcesses.AddOrUpdate(process);
                             _context.SdkErrorLogs.Add(log);
                             _context.SaveChanges();
