@@ -474,6 +474,76 @@ namespace UcbBack.Controllers
             ms.Seek(0, SeekOrigin.Begin);
             return response;
         }
+        [HttpGet]
+        [Route("api/ServContractprocessRows/{id}")]
+        public IHttpActionResult GetSAPResumeRows(int id)
+        {
+            var processes = _context.ServProcesses.Include(x => x.Branches).FirstOrDefault(f =>
+                f.Id == id);
+            if (processes == null)
+            {
+                return NotFound();
+            }
+            var data = processes.getVoucherData(_context);
+            var ppagar = data.Where(g => g.Concept == "PPAGAR").Select(g => new Serv_Voucher()
+            {
+                CardName = g.CardName,
+                CardCode = g.CardCode,
+                OU = g.OU,
+                PEI = g.PEI,
+                Carrera = g.Carrera,
+                Paralelo = g.Paralelo,
+                Periodo = g.Periodo,
+                ProjectCode = g.ProjectCode,
+                Memo = g.Memo,
+                LineMemo = g.LineMemo,
+                Concept = g.Concept,
+                AssignedAccount = g.AssignedAccount,
+                Account = g.Account,
+                Credit = g.Credit,
+                Debit = g.Debit
+            }).ToList();
+
+            List<Serv_Voucher> rest = data.Where(g => g.Concept != "PPAGAR").GroupBy(g => new
+            {
+                g.CardCode,
+                g.OU,
+                g.PEI,
+                g.Carrera,
+                g.Paralelo,
+                g.Periodo,
+                g.ProjectCode,
+                g.Memo,
+                g.LineMemo,
+                g.Concept,
+                g.AssignedAccount,
+                g.Account,
+            }).Select(g => new Serv_Voucher()
+            {
+                CardName = "",
+                CardCode = g.Key.CardCode,
+                OU = g.Key.OU,
+                PEI = g.Key.PEI,
+                Carrera = g.Key.Carrera,
+                Paralelo = g.Key.Paralelo,
+                Periodo = g.Key.Periodo,
+                ProjectCode = g.Key.ProjectCode,
+                Memo = g.Key.Memo,
+                LineMemo = g.Key.LineMemo,
+                Concept = g.Key.Concept,
+                AssignedAccount = g.Key.AssignedAccount,
+                Account = g.Key.Account,
+                Credit = g.Sum(s => s.Credit),
+                Debit = g.Sum(s => s.Debit)
+            }).ToList();
+
+            List<Serv_Voucher> dist1 = ppagar.Union(rest).OrderBy(z => z.Debit == 0.00M ? 1 : 0).ThenBy(z => z.Account).ToList();
+
+            dynamic res = new JObject();
+
+            res.rowCount = dist1.Count();
+            return Ok(res);
+        }
 
         [HttpGet]
         [Route("api/ServContractToApproval/{id}")]
