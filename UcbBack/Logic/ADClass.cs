@@ -372,8 +372,10 @@ namespace UcbBack.Logic
         {
             List<Rol> roles = new List<Rol>();
             DirectoryEntry obEntry = new DirectoryEntry("LDAP://UCB.BO",
-                "ADMNALRRHH",
+                "ADMNALRRHH@UCB.BO",
                 "Rrhh1234");
+            // obEntry.Username = "ADMNALRRHH";
+            // obEntry.Password = "Rrhh1234";
             DirectorySearcher srch = new DirectorySearcher(obEntry,
                 "(sAMAccountName=" + customUser.UserPrincipalName.Split('@')[0] + ")");
 
