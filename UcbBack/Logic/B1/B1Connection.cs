@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Entity.Migrations;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json.Linq;
@@ -1120,6 +1121,15 @@ namespace UcbBack.Logic.B1
             }
         }
 
+        private string CleanAndTrunk(string text,int size)
+        {
+            //remove special chars
+            var goodText = Regex.Replace(text, "[^\\w\\._]", "");
+            //remove new line characters
+            goodText = Regex.Replace(goodText, @"\t|\n|\r", "");
+            return goodText.Substring(goodText.Length > size ? size : goodText.Length);
+        }
+
         public string addServVoucher(int UserId, List<Serv_Voucher> voucher,ServProcess process)
         {
             var log = initLog(UserId, BusinessObjectType.Voucher, voucher.FirstOrDefault().Memo);
@@ -1151,7 +1161,8 @@ namespace UcbBack.Logic.B1
 
                         // add header Journal Entrie Approved:
                         businessObject.ReferenceDate = date;
-                        businessObject.Memo = voucher.FirstOrDefault().Memo;
+
+                        businessObject.Memo = CleanAndTrunk(voucher.FirstOrDefault().Memo,49);
                         businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;
@@ -1161,7 +1172,7 @@ namespace UcbBack.Logic.B1
                         businessObject.Lines.SetCurrentLine(0);
                         foreach (var line in voucher)
                         {
-                            businessObject.Lines.LineMemo = line.LineMemo;
+                            businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo,49);
                             businessObject.Lines.AccountCode = this.getAccountId(line.Account);
                             businessObject.Lines.Credit = (double)line.Credit;
                             businessObject.Lines.Debit = (double)line.Debit;
