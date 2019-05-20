@@ -654,7 +654,7 @@ namespace UcbBack.Controllers
                     Memo=g.Memo,
                     LineMemo=g.LineMemo,
                     Concept=g.Concept,
-                    AssignedAccount=g.AssignedAccount,
+                    //AssignedAccount=g.AssignedAccount,
                     Account=g.Account,
                     Credit = g.Credit,
                     Debit = g.Debit
@@ -672,7 +672,7 @@ namespace UcbBack.Controllers
                     g.Memo,
                     g.LineMemo,
                     g.Concept,
-                    g.AssignedAccount,
+                    //g.AssignedAccount,
                     g.Account,
                 }).Select(g => new Serv_Voucher()
                 {
@@ -687,7 +687,7 @@ namespace UcbBack.Controllers
                     Memo=g.Key.Memo,
                     LineMemo=g.Key.LineMemo,
                     Concept=g.Key.Concept,
-                    AssignedAccount=g.Key.AssignedAccount,
+                    //AssignedAccount=g.Key.AssignedAccount,
                     Account=g.Key.Account,
                     Credit = g.Sum(s => s.Credit),
                     Debit = g.Sum(s => s.Debit)
