@@ -28,7 +28,7 @@ namespace UcbBack.Controllers
         // GET api/Rol
         public IHttpActionResult Get()
         {
-            return Ok(_context.Rols.Include("Resource").Select(r => new { r.Id, r.Name, r.Level, r.ResourceId, Resource=r.Resource.Name,r.ADGroupName }).ToList());
+            return Ok(_context.Rols.Include("Resource").Select(r => new { r.Id, r.Name, r.Level, r.ResourceId, Resource=r.Resource.Name,r.ADGroupName }).OrderBy(x=>x.Id).ToList());
         }
 
         // GET api/Rol/5
