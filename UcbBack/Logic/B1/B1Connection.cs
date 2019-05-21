@@ -1124,7 +1124,7 @@ namespace UcbBack.Logic.B1
         private string CleanAndTrunk(string text,int size)
         {
             //remove special chars
-            var goodText = Regex.Replace(text, "[^0-9A-Za-z ,]", "");
+            var goodText = Regex.Replace(text, "[^0-9A-Za-z ,-]", "");
             //remove new line characters
             goodText = Regex.Replace(goodText, @"\n|\r", "");
             return goodText.Substring(0,goodText.Length > size ? size : goodText.Length);
