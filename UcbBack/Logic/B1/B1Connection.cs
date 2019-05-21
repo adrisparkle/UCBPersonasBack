@@ -1124,10 +1124,10 @@ namespace UcbBack.Logic.B1
         private string CleanAndTrunk(string text,int size)
         {
             //remove special chars
-            var goodText = Regex.Replace(text, "[^\\w\\._]", "");
+            var goodText = Regex.Replace(text, "[^0-9A-Za-z ,]", "");
             //remove new line characters
-            goodText = Regex.Replace(goodText, @"\t|\n|\r", "");
-            return goodText.Substring(goodText.Length > size ? size : goodText.Length);
+            goodText = Regex.Replace(goodText, @"\n|\r", "");
+            return goodText.Substring(0,goodText.Length > size ? size : goodText.Length);
         }
 
         public string addServVoucher(int UserId, List<Serv_Voucher> voucher,ServProcess process)
@@ -1172,6 +1172,7 @@ namespace UcbBack.Logic.B1
                         businessObject.Lines.SetCurrentLine(0);
                         foreach (var line in voucher)
                         {
+                            // var xx = CleanAndTrunk(line.LineMemo,49);
                             businessObject.Lines.LineMemo = CleanAndTrunk(line.LineMemo,49);
                             businessObject.Lines.AccountCode = this.getAccountId(line.Account);
                             businessObject.Lines.Credit = (double)line.Credit;
