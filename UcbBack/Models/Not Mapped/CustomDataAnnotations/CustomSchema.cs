@@ -9,7 +9,7 @@ namespace UcbBack.Models.Not_Mapped.CustomDataAnnotations
 {
     public class CustomSchema : System.ComponentModel.DataAnnotations.Schema.TableAttribute
     {
-        public new static String Schema = "ADMNALRRHH";
+        public new static String Schema = ConfigurationManager.AppSettings["SystemSchema"];
         public static String PreFix = "";
 
         public CustomSchema(string name) : base(addSchema(name))
