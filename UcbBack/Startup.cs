@@ -21,7 +21,7 @@ namespace UcbBack
 
         public void Configuration(IAppBuilder app)
         {
-            bool debugmode = false;
+            bool debugmode = true;
             app.Use(async (environment, next) =>
                 {
                     long logId=0;
