@@ -939,8 +939,8 @@ namespace UcbBack.Logic.B1
                 IEnumerable<SapVoucher> dist = _context.Database.SqlQuery<SapVoucher>(query).ToList();
                  var Auxdate = new DateTime(
                     Int32.Parse(process.gestion),
-                    Int32.Parse(process.mes),
-                    DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes))
+                    Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes),
+                    DateTime.DaysInMonth(Int32.Parse(process.gestion), Int32.Parse(process.mes) > 12 ? (Int32.Parse(process.mes) - 12) : Int32.Parse(process.mes))
                 );
                 var debe = dist.Sum(x => decimal.Parse(x.Debit));
                 var haber = dist.Sum(x => decimal.Parse(x.Credit));
@@ -994,7 +994,26 @@ namespace UcbBack.Logic.B1
 
                         // add header Journal Entrie Approved:
                         businessObject.ReferenceDate = date;
-                        businessObject.Memo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + process.mes + "-" + process.gestion;
+                        string strmes = "";
+                        switch (process.mes)
+                        {
+                            case "13":
+                                strmes = "RETROACTIVO - ENE";
+                                break;
+                            case "14":
+                                strmes = "RETROACTIVO - FEB";
+                                break;
+                            case "15":
+                                strmes = "RETROACTIVO - MAR";
+                                break;
+                            case "16":
+                                strmes = "RETROACTIVO - ABR";
+                                break;
+                            default:
+                                strmes = process.mes;
+                                break;
+                        }
+                        businessObject.Memo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + strmes + "-" + process.gestion;
                         businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;

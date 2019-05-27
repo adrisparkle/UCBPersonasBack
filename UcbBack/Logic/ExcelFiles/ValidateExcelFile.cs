@@ -676,19 +676,21 @@ namespace UcbBack.Logic
                     paintXY(iCardCode, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
                     paintXY(iCardName, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido como Civil, ¿No olvidó registrarlo?");
                 }
-                var BPInSAP = Civil.findBPInSAP(BP.SAPId, user, _context).FirstOrDefault(x=>x.BranchesId==BranchesId);
-                if (BPInSAP == null)
+                else
                 {
-                    res = false;
-                    paintXY(iCardCode, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
-                    paintXY(iCardName, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
+                    var BPInSAP = Civil.findBPInSAP(BP.SAPId, user, _context).FirstOrDefault(x => x.BranchesId == BranchesId);
+                    if (BPInSAP == null)
+                    {
+                        res = false;
+                        paintXY(iCardCode, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
+                        paintXY(iCardName, i, XLColor.Red, "Este Codigo de Socio de Negocio no es valido para esta Regional.");
+                    }
+                    else if (cleanText(BP.FullName) != cleanText(CardName))
+                    {
+                        res = false;
+                        paintXY(iCardName, i, XLColor.Red, "El nombre de este Socio de Negocio es incorrecto, no será: " + BP.FullName);
+                    }
                 }
-                else if (cleanText(BP.FullName) != cleanText(CardName))
-                {
-                    res = false;
-                    paintXY(iCardName, i, XLColor.Red, "El nombre de este Socio de Negocio es incorrecto, no será: "+BP.FullName);
-                }
-
             }
 
             valid = valid && res;

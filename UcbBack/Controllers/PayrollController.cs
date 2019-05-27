@@ -343,13 +343,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -499,7 +499,7 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP",
+                    response.Headers.Add("ErrorSAP",
                         "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
@@ -507,7 +507,7 @@ namespace UcbBack.Controllers
 
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP",
+                response.Headers.Add("ErrorSAP",
                     "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
@@ -645,13 +645,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -923,13 +923,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }
@@ -1061,13 +1061,13 @@ namespace UcbBack.Controllers
                 {
                     Console.WriteLine(e);
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                    response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                     response.Content = new StringContent("Error conexion SAP");
                     return response;
                 }
                 Console.WriteLine(e);
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Headers.Add("Error en conexion con SAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
+                response.Headers.Add("ErrorSAP", "{ \"La conexion con SAP se perdio\": \"No se pudo validar el archivo con con SAP.\"}");
                 response.Content = new StringContent("Error conexion SAP");
                 return response;
             }

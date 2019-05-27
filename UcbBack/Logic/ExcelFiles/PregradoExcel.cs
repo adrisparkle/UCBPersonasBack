@@ -32,7 +32,24 @@ namespace UcbBack.Logic.ExcelFiles
         {
             this.segmentoOrigen = segmentoOrigen;
             this.gestion = gestion;
-            this.mes = mes;
+            switch (mes)
+            {
+                case "13":
+                    this.mes = "01";
+                    break;
+                case "14":
+                    this.mes = "02";
+                    break;
+                case "15":
+                    this.mes = "03";
+                    break;
+                case "16":
+                    this.mes = "04";
+                    break;
+                default:
+                    this.mes = mes;
+                    break;
+            }
             this.file = file;
             _context = context;
             isFormatValid();
