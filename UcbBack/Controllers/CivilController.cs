@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Entity.Migrations;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -146,6 +147,8 @@ namespace UcbBack.Controllers
         public IHttpActionResult Post([FromBody]Civil civil)
         {
             var user = auth.getUser(Request);
+
+
             var BP = Civil.findBPInSAP(civil.SAPId, user,_context);
 
             if (!ModelState.IsValid)
