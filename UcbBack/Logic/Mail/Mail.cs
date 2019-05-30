@@ -1,7 +1,9 @@
 ﻿using System;
-using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Web;
 using EASendMail;
+using SAPbouiCOM;
 
 namespace UcbBack.Logic.Mail
 {

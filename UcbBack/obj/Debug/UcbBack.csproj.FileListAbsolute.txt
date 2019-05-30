@@ -140,3 +140,5 @@ C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\ClosedXML.dll
 C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\DocumentFormat.OpenXml.dll
 C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\ClosedXML.xml
 C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\EASendMail45.dll
+C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\HtmlRenderer.dll
+C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack\bin\HtmlRenderer.pdb
