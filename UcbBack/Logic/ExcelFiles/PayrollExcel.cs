@@ -113,7 +113,7 @@ namespace UcbBack.Logic.ExcelFiles
             bool v6 = VerifyColumnValueIn(25, connB1.getBusinessPartners().Cast<string>().ToList(), comment: "Este seguro no esta registrado como un Bussines Partner en SAP");
             bool v7 = ValidateLiquidoPagable();
             bool v8 = ValidatenoZero();
-            bool v9 = validateAllPeopleInPayroll();
+            bool v9 = true;//validateAllPeopleInPayroll();
             // HB
             bool v10 = ValidateNoNegative(6);
             // Bono
