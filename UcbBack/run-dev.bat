@@ -2,52 +2,53 @@
 
 set rootpath=%~dp0
 set destinationprod="C:\inetpub\wwwroot\RRHH"
-set destination="C:\Users\Adrian\Desktop\dev\www2"
+set destination=""C:\Users\Adrian Rojas\Desktop\dev\www2""
 
 call :strLen rootpath strlen
 set /a strlen=%strlen%-8
 
 CALL SET prevpath=%%rootpath:~0,%strlen%%%
-C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe  "C:\Users\Adrian\Desktop\dev\UcbBack - 4.5.2\UcbBack.sln" /p:Configuration=Debug /p:Platform="Any CPU" /p:VisualStudioVersion=12.0 /t:Rebuild
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe  "C:\Users\Adrian Rojas\Desktop\dev\Ucb.Back.net\UcbBack.sln" /p:Configuration=Debug /p:Platform="Any CPU" /p:VisualStudioVersion=12.0 /t:Rebuild
+
 
 :: rmdir /s /q "%destination%\"
 
 mkdir "%destination%\Areas"
-robocopy "%rootpath%\Areas" "%destination%\Areas" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Areas" "C:\Users\Adrian Rojas\Desktop\dev\www2\Areas" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\bin"
-robocopy "%rootpath%\bin" "%destination%\bin" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\bin" "C:\Users\Adrian Rojas\Desktop\dev\www2\bin" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Content"
-robocopy "%rootpath%\Content" "%destination%\Content" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Content" "C:\Users\Adrian Rojas\Desktop\dev\www2\Content" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\fonts"
-robocopy "%rootpath%\fonts" "%destination%\fonts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\fonts" "C:\Users\Adrian Rojas\Desktop\dev\www2\fonts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Images"
-robocopy "%rootpath%\Images" "%destination%\Images" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Images" "C:\Users\Adrian Rojas\Desktop\dev\www2\Images" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Scripts"
-robocopy "%rootpath%\Scripts" "%destination%\Scripts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Scripts" "C:\Users\Adrian Rojas\Desktop\dev\www2\Scripts" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 mkdir "%destination%\Views"
-robocopy "%rootpath%\Views" "%destination%\Views" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\Views" "C:\Users\Adrian Rojas\Desktop\dev\www2\Views" /E /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
-robocopy "%rootpath%\" "%destination%\\" favicon.ico /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" Global.asax /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" "packages.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%rootpath%\" "%destination%\\" "Web.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "C:\Users\Adrian Rojas\Desktop\dev\www2\\" favicon.ico /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "C:\Users\Adrian Rojas\Desktop\dev\www2\\" Global.asax /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "C:\Users\Adrian Rojas\Desktop\dev\www2\\" "packages.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%rootpath%\" "C:\Users\Adrian Rojas\Desktop\dev\www2\\" "Web.config" /COPYALL /it /NFL /NDL /NJH /NJS /nc /ns /np
 
 
 
 
 mkdir "%destination%\Static"
-robocopy "%prevpath%\Front\dist\static" "%destination%\Static" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "%prevpath%\Front\dist\\" "%destination%\Views\Home\\" "index.html" /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%prevpath%\Front\dist\static" "C:\Users\Adrian Rojas\Desktop\dev\www2\Static" /E /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "%prevpath%\Front\dist\\" "C:\Users\Adrian Rojas\Desktop\dev\www2\Views\Home\\" "index.html" /COPYALL /is /NFL /NDL /NJH /NJS /nc /ns /np
 
 
-echo "@{    Layout = "";   }" > "%destination%\Views\Home\Index.cshtml"
-type "%destination%\Views\Home\index.html" >> "%destination%\Views\Home\Index.cshtml"
+echo "@{    Layout = "";   }" > "C:\Users\Adrian Rojas\Desktop\dev\www2\Views\Home\Index.cshtml"
+type "C:\Users\Adrian Rojas\Desktop\dev\www2\Views\Home\index.html" >> "C:\Users\Adrian Rojas\Desktop\dev\www2\Views\Home\Index.cshtml"
 
 ECHO ON
 exit /b
