@@ -1044,6 +1044,8 @@ namespace UcbBack.Logic.B1
                         company.GetLastError(out errorCode, out errorMessage);
                         if (errorCode != 0)
                         {
+                            if (company.InTransaction)
+                                company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
                             log.Success = false;
                             log.ErrorCode = errorCode.ToString();
                             log.ErrorMessage = "SDK: " + errorMessage;
