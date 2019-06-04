@@ -998,16 +998,16 @@ namespace UcbBack.Logic.B1
                         switch (process.mes)
                         {
                             case "13":
-                                strmes = "RETROACTIVO - ENE";
+                                strmes = "RETROACTIVO1";
                                 break;
                             case "14":
-                                strmes = "RETROACTIVO - FEB";
+                                strmes = "RETROACTIVO2";
                                 break;
                             case "15":
-                                strmes = "RETROACTIVO - MAR";
+                                strmes = "RETROACTIVO3";
                                 break;
                             case "16":
-                                strmes = "RETROACTIVO - ABR";
+                                strmes = "RETROACTIVO4";
                                 break;
                             default:
                                 strmes = process.mes;
