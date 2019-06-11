@@ -1013,7 +1013,8 @@ namespace UcbBack.Logic.B1
                                 strmes = process.mes;
                                 break;
                         }
-                        businessObject.Memo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + strmes + "-" + process.gestion;
+                        string strMemo = "Planilla Sueldos y Salarios " + process.Branches.Abr + "-" + strmes + "-" + process.gestion;
+                        businessObject.Memo = strMemo.Substring(0,strMemo.Length<50?strMemo.Length:49);
                         businessObject.TaxDate = date;
                         businessObject.Series = Int32.Parse(process.Branches.SerieComprobanteContalbeSAP);
                         businessObject.DueDate = date;
@@ -1136,9 +1137,9 @@ namespace UcbBack.Logic.B1
             {
                 log.Success = false;
 
-                if (company.InTransaction)
+                /*if (company.InTransaction)
                     company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
-
+                */
                 log.ErrorMessage = "Catch: " + ex.Message;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
