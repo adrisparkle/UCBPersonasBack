@@ -1135,6 +1135,10 @@ namespace UcbBack.Logic.B1
             catch (Exception ex)
             {
                 log.Success = false;
+
+                if (company.InTransaction)
+                    company.EndTransaction(SAPbobsCOM.BoWfTransOpt.wf_RollBack);
+
                 log.ErrorMessage = "Catch: " + ex.Message;
                 _context.SdkErrorLogs.Add(log);
                 _context.SaveChanges();
