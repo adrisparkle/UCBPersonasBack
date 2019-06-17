@@ -63,7 +63,7 @@ namespace UcbBack.Controllers
             "   on u.\"AuthPeopleId\" = auth.\"PeopleId\" " +
             " left join " + CustomSchema.Schema + ".\"People\" pauth " +
             "    on auth.\"PeopleId\" = pauth.\"Id\"" +
-            " where c.\"EndDate\" is null or c.\"EndDate\" > current_date" +
+            //" where c.\"EndDate\" is null or c.\"EndDate\" > current_date" +
             " order by (case when u.\"UserPrincipalName\" is null then 1 else 0 end) asc," +
             "    c.\"FullName\"";
             var rawresult = _context.Database.SqlQuery<UserViewModel>(query).ToList();

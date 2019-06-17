@@ -321,7 +321,8 @@ namespace UcbBack.Controllers
                 contract.CUNI = person.CUNI;
                 contract.BranchesId = _context.Dependencies.FirstOrDefault(x => x.Id == contract.DependencyId).BranchesId;
                 contract.Id = ContractDetail.GetNextId(_context);
-                contract.PositionDescription = contract.PositionDescription.ToUpper();
+                contract.PositionDescription = contract.PositionDescription!=null?contract.PositionDescription.ToUpper():null;
+                contract.Active = true;
                 _context.ContractDetails.Add(contract);
                 _context.SaveChanges();
 
@@ -349,9 +350,26 @@ namespace UcbBack.Controllers
             log.AddChangesLog(contractInDB, contract, new List<string>() { "EndDate", "Cause" });
             contractInDB.EndDate = contract.EndDate;
             contractInDB.Cause = contract.Cause;
+            contractInDB.Active = false;
             contractInDB.UpdatedAt = DateTime.Now;
             _context.SaveChanges();
             return Ok(contractInDB);
+        }
+        //Bajas
+        // POST api/Contract/Baja/5
+        [HttpGet]
+        [Route("api/Contract/BajaPendiente")]
+        public IHttpActionResult BajaPendiente()
+        {
+            var query = "select * from " + CustomSchema.Schema + ".lastcontracts " +
+                        " where \"EndDate\" is not null and \"EndDate\" <= current_date and \"Active\" = true ";
+            var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
+
+            var user = auth.getUser(Request);
+
+            var res = auth.filerByRegional(rawresult.AsQueryable(), user);
+
+            return Ok(res);
         }
 
         // PUT api/Contract/5

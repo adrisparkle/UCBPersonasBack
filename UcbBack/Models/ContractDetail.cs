@@ -40,6 +40,7 @@ namespace UcbBack.Models
         public DateTime StartDate { get; set; }
         [Column(TypeName = "date")]
         public DateTime? EndDate { get; set; }
+        public Boolean Active { get; set; }
         public bool AI { get; set; }
 
         public string Cause { get; set; }
