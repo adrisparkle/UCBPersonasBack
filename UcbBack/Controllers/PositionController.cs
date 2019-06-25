@@ -100,7 +100,6 @@ namespace UcbBack.Controllers
                 return NotFound();
 
             positionInDB.Name = position.Name;
-            positionInDB.BranchesId = position.BranchesId;
             positionInDB.LevelId = position.LevelId;
             positionInDB.PerformanceAreaId = position.PerformanceAreaId;
             positionInDB.IsDesignated = position.IsDesignated;

@@ -15,7 +15,9 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         public bool? SolicitanteCompras { get; set; }
         public bool? AutorizadorCompras { get; set; }
         public bool? Rendiciones { get; set; }
+        public bool? RendicionesDolares { get; set; }
         public string UcbEmail { get; set; }
+        public string PersonalEmail { get; set; }
         public string UserPrincipalName { get; set; }
 
         public string Dependency { get; set; }
@@ -28,6 +30,7 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         public string Linkage { get; set; }
 
         public int? AuthSAPCodeRRHH { get; set; }
+        public int? AuthPeopleId { get; set; }
         public string AuthCUNI { get; set; }
         public string AuthFullName { get; set; }
         public string AuthPositions { get; set; }

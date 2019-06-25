@@ -32,7 +32,7 @@ namespace UcbBack.Controllers
         [Route("api/user/")]
         public IHttpActionResult Get()
         {
-            var userlist = _context.CustomUsers.Include(x=>x.People)
+            /*var userlist = _context.CustomUsers.Include(x=>x.People)
                 .ToList().
                 Select(x => new
                 {
@@ -46,10 +46,10 @@ namespace UcbBack.Controllers
                     x.SolicitanteCompras,
                     x.AutorizadorCompras,
                     x.Rendiciones
-                });
+                });*/
             var query = "select u.\"Id\", p.\"SAPCodeRRHH\", p.cuni, p.\"Document\", c.\"FullName\", u.\"TipoLicenciaSAP\",u.\"CajaChica\", " +
             " u.\"SolicitanteCompras\", u.\"AutorizadorCompras\", u.\"Rendiciones\", u.\"RendicionesDolares\", " +
-            " p.\"UcbEmail\",coalesce(u.\"UserPrincipalName\",'Sin Usuario') as \"UserPrincipalName\", c.\"DependencyCod\", c.\"Dependency\", ou.\"Cod\" as \"OUCod\", " +
+            " p.\"UcbEmail\",p.\"PersonalEmail\",coalesce(u.\"UserPrincipalName\",'Sin Usuario') as \"UserPrincipalName\", c.\"DependencyCod\", c.\"Dependency\", ou.\"Cod\" as \"OUCod\", " +
             " ou.\"Name\" as \"OUName\", c.\"Positions\", c.\"Dedication\", c.\"Linkage\", pauth.\"SAPCodeRRHH\" as \"AuthSAPCodeRRHH\", " +
             " auth.cuni as \"AuthCUNI\", auth.\"FullName\" as \"AuthFullName\", auth.\"Positions\" as \"AuthPositions\", c.\"Branches\", u.\"AutoGenPass\" " +
             " from " + CustomSchema.Schema + ".lastcontracts c " +
@@ -237,6 +237,7 @@ namespace UcbBack.Controllers
             respose.Rendiciones = userInDB.Rendiciones;
             respose.RendicionesDolares = userInDB.RendicionesDolares;
             respose.AuthPeopleId = userInDB.AuthPeopleId;
+            respose.UcbEmail = userInDB.People.UcbEmail;
 
             return Ok(respose);
         }
@@ -309,7 +310,7 @@ namespace UcbBack.Controllers
         // GET api/user
         [HttpPut]
         [Route("api/user/{id}")]
-        public IHttpActionResult Put(int id, CustomUser user)
+        public IHttpActionResult Put(int id, UserViewModel user)
         {
             var userInDb = _context.CustomUsers.Include(x=>x.People).FirstOrDefault(x => x.Id == id);
             if (userInDb == null)
@@ -321,6 +322,8 @@ namespace UcbBack.Controllers
             userInDb.Rendiciones = user.Rendiciones;
             userInDb.RendicionesDolares = user.RendicionesDolares;
             userInDb.AuthPeopleId = user.AuthPeopleId;
+            userInDb.People.UcbEmail = user.UcbEmail;
+            userInDb.People.PersonalEmail = user.PersonalEmail;
             if (userInDb.Rendiciones.Value || userInDb.CajaChica.Value || userInDb.RendicionesDolares.Value)
                 userInDb.CreateInRendiciones(_context);
             userInDb.updatePerfilesRend(_context);

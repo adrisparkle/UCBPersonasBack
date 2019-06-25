@@ -41,7 +41,7 @@ namespace UcbBack.Controllers
         public IHttpActionResult Get()
         {
             var query ="select * from " + CustomSchema.Schema + ".lastcontracts "+
-                        " where \"EndDate\" is null or add_months(\"EndDate\",1)> current_date";
+                        " where (\"EndDate\" is null or \"EndDate\"> current_date) and \"Active\"=true;";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
@@ -356,13 +356,13 @@ namespace UcbBack.Controllers
             return Ok(contractInDB);
         }
         //Bajas
-        // POST api/Contract/Baja/5
+        // GET api/Contract/BajaPendiente/
         [HttpGet]
         [Route("api/Contract/BajaPendiente")]
         public IHttpActionResult BajaPendiente()
         {
             var query = "select * from " + CustomSchema.Schema + ".lastcontracts " +
-                        " where \"EndDate\" is not null and \"EndDate\" <= current_date and \"Active\" = true ";
+                        " where \"EndDate\" is not null and year(\"EndDate\")*100+month(\"EndDate\") <= year(current_date)*100+month(current_date) and \"Active\" = true ";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
@@ -370,6 +370,27 @@ namespace UcbBack.Controllers
             var res = auth.filerByRegional(rawresult.AsQueryable(), user);
 
             return Ok(res);
+        }
+
+        // GET api/Contract/BajaPendiente/
+        [HttpPost]
+        [Route("api/Contract/ConfirmBajaPendiente")]
+        public IHttpActionResult ConfirmBajaPendiente(JObject data)
+        {
+            var list = data.Values().ToList()[0].ToList();
+            foreach (var d in list)
+            {
+                var id = Int32.Parse(d.ToString());
+                var contract = _context.ContractDetails.FirstOrDefault(x => x.Id == id);
+                if (contract != null)
+                {
+                    contract.Cause = "5";
+                    contract.Active = false;
+                    contract.UpdatedAt = DateTime.Now;
+                }
+            }
+            _context.SaveChanges();
+            return Ok();
         }
 
         // PUT api/Contract/5
