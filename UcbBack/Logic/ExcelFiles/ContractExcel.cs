@@ -56,7 +56,7 @@ namespace UcbBack.Logic.ExcelFiles
             isFormatValid();
         }
 
-        public ContractExcel(string fileName, int headerin = 1)
+        public ContractExcel(string fileName, int headerin = 1, string resultfileName = "AltasTHExcelResult")
             : base(AltaCols, fileName, headerin)
         {
         }

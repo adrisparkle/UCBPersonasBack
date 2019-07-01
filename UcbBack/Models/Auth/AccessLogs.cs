@@ -16,8 +16,8 @@ namespace UcbBack.Models.Auth
         public long Id { get; set; }
         public string Method { get; set; }
         public string Path { get; set; }
-        public int UserId { get; set; }
-        public int AccessId { get; set; }
+        public int? UserId { get; set; }
+        public int? AccessId { get; set; }
         public bool Success { get; set; }
         public string ResponseCode { get; set; }
 

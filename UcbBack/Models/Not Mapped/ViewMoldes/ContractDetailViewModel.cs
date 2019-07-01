@@ -21,5 +21,6 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public string Status { get; set; }
     }
 }

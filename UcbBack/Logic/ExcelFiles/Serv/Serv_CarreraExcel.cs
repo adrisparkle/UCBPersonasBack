@@ -97,7 +97,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
                 if (!connB1.connectedtoHana)
                 {
-                    addError("Error en SAP", "No se puedo conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
+                    addError("ErrorenSAP", "No se puede conectar con SAP B1, es posible que algunas validaciones cruzadas con SAP no sean ejecutadas");
                 }
 
                 bool v1 = VerifyBP(1, 2,process.BranchesId,user);
@@ -147,7 +147,7 @@ namespace UcbBack.Logic.ExcelFiles.Serv
 
             valid = valid && res;
             if (!res)
-                addError("Valor no valido", "Monto a Pagar no cuadra.", false);
+                addError("ValorNoValido", "Monto a Pagar no cuadra.", false);
             return res;
         }
     }

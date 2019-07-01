@@ -73,6 +73,7 @@ namespace UcbBack.Models
         public DbSet<CustomUser> CustomUsers { get; set; }
         public DbSet<SystemErrorLogs> SystemErrorLogses { get; set; }
 
+
         
         
 

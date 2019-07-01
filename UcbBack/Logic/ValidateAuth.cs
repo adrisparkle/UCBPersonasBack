@@ -7,6 +7,7 @@ using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace UcbBack.Logic
@@ -120,9 +121,9 @@ namespace UcbBack.Logic
                 log.Id = AccessLogs.GetNextId(_context);
                 log.Method = method;
                 log.Path = path;
-                log.UserId = id;
+                log.UserId = (id == 0 ? null : (int?)id);
                 log.Success = pass;
-                log.AccessId = access == null ? 0 : access.Id;
+                log.AccessId = access == null ? null : (int?)access.Id;
                 _context.AccessLogses.Add(log);
                 _context.SaveChanges();
             }
@@ -151,7 +152,7 @@ namespace UcbBack.Logic
             return user;
         }
 
-        public IQueryable<dynamic> filerByRegional(IQueryable<dynamic> list, CustomUser user,bool isBranchtable=false)
+        public IQueryable<dynamic> filerByRegional(IQueryable<dynamic> list, CustomUser user,bool isBranchtable=false, bool onlyActive = true)
         {
             IQueryable<dynamic> res=list;
             if (!activeDirectory.memberOf(user, "Personas.Admin"))
@@ -170,7 +171,8 @@ namespace UcbBack.Logic
                     try
                     {
                         //try to filter bt active if table has active property
-                        res = res.ToList().Where(x => x.Active == true).ToList().AsQueryable();
+                        if (onlyActive)
+                            res = res.ToList().Where(x => x.Active == true).ToList().AsQueryable();
                     }
                     catch (Exception e)
                     {

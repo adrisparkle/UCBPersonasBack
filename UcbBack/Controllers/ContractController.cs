@@ -41,7 +41,7 @@ namespace UcbBack.Controllers
         public IHttpActionResult Get()
         {
             var query ="select * from " + CustomSchema.Schema + ".lastcontracts "+
-                        " where (\"EndDate\" is null or \"EndDate\"> current_date) and \"Active\"=true;";
+                        " where (\"Active\"=true or \"EndDate\">=current_date) ;";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
@@ -414,9 +414,11 @@ namespace UcbBack.Controllers
             contractInDB.BranchesId = _context.Dependencies.FirstOrDefault(x=>x.Id==contract.DependencyId).BranchesId;
             contractInDB.DependencyId = contract.DependencyId;
             contractInDB.PositionsId = contract.PositionsId;
-            contractInDB.PositionDescription = contract.PositionDescription.ToUpper();
+            contractInDB.PositionDescription = contract.PositionDescription == null ? null : contract.PositionDescription.ToUpper();
             contractInDB.Linkage = contract.Linkage;
             contractInDB.AI = contract.AI;
+            contractInDB.NumDesignacion = contract.NumDesignacion;
+            contractInDB.ComentariosDesignacion = contract.ComentariosDesignacion;
             contractInDB.UpdatedAt = DateTime.Now;
 
             var person = _context.Person.FirstOrDefault(x => x.CUNI == contractInDB.CUNI);

@@ -20,6 +20,8 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Ajax.Utilities;
 using UcbBack.Logic.B1;
 using UcbBack.Logic.Mail;
+using UcbBack.Models.Not_Mapped.CustomDataAnnotations;
+using UcbBack.Models.Not_Mapped.ViewMoldes;
 
 
 namespace UcbBack.Controllers
@@ -42,7 +44,34 @@ namespace UcbBack.Controllers
         // GET api/People
         public IHttpActionResult Get()
         {
-            return Ok(_context.Person.ToList()); 
+            string query = "select p.\"Id\",p.CUNI,p.\"Document\",lc.\"FullName\", case when (lc.\"Active\"=false and lc.\"EndDate\"<current_date) then 'Inactivo' else 'Activo' end as \"Status\", lc.\"BranchesId\"  " +
+                           "from " + CustomSchema.Schema + ".\"People\" p " +
+                           "inner join " + CustomSchema.Schema + ".\"LASTCONTRACTS\" lc " +
+                           "on p.cuni = lc.cuni " +
+                           " order by \"FullName\";";
+
+            var rawResult = _context.Database.SqlQuery<ContractDetailViewModel>(query).Select(x=>new
+            {
+                x.Id,
+                x.CUNI,
+                x.Document,
+                x.FullName,
+                x.Status,
+                x.BranchesId
+            }).AsQueryable();
+
+            var user = auth.getUser(Request);
+
+            var result = auth.filerByRegional(rawResult, user).ToList().Select(x=>new
+            {
+                x.Id,
+                x.CUNI,
+                x.Document,
+                x.FullName,
+                x.Status
+            }).ToList();
+
+            return Ok(result);
         }
 
         
@@ -202,7 +231,7 @@ namespace UcbBack.Controllers
                 .ToList()
                 .Where(x=> now == "NO" || (x.EndDate == null || x.EndDate.Value > DateTime.Now))
                 .OrderByDescending(x => x.EndDate == null ? DateTime.MaxValue : DateTime.MinValue)
-                .ThenByDescending(x => x.StartDate)
+                .ThenByDescending(x => x.EndDate)
                 .Select(x => new
                 {
                     x.Id,

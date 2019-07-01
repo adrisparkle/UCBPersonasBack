@@ -37,5 +37,9 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
 
         public string Branches { get; set; }
         public string AutoGenPass { get; set; }
+
+        public string Rol { get; set; }
+        public string MensajeAprobacion { get; set; }
+        public string State { get; set; }
     }
 }

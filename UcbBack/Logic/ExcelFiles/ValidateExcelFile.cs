@@ -595,12 +595,14 @@ namespace UcbBack.Logic
             var ms = new MemoryStream();
             if (w != null)
             {
+                resultfileName = resultfileName == null ? fileName: resultfileName;
+                resultfileName = resultfileName.Replace(".xlsx", "");
                 w.Author = "PersoNAS UCB";
                 w.SaveAs(ms);
                 response.StatusCode = valid ? HttpStatusCode.OK : HttpStatusCode.BadRequest;
                 response.Content = new StreamContent(ms);
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                response.Content.Headers.ContentDisposition.FileName = resultfileName + ".xlsx";
+                response.Content.Headers.ContentDisposition.FileName = resultfileName;
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
                 response.Content.Headers.ContentLength = ms.Length;
                 response.Headers.Add("UploadErrors",errors.ToString().Replace("\r\n",""));

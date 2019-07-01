@@ -47,12 +47,16 @@ namespace UcbBack.Controllers
                     x.AutorizadorCompras,
                     x.Rendiciones
                 });*/
-            var query = "select u.\"Id\", p.\"SAPCodeRRHH\", p.cuni, p.\"Document\", c.\"FullName\", u.\"TipoLicenciaSAP\",u.\"CajaChica\", " +
-            " u.\"SolicitanteCompras\", u.\"AutorizadorCompras\", u.\"Rendiciones\", u.\"RendicionesDolares\", " +
+            var query = "select u.\"Id\", p.\"SAPCodeRRHH\", p.cuni, p.\"Document\", c.\"FullName\", " +
+            " case when u.\"AutorizadorCompras\" = true then 'APROBADOR' when u.\"SolicitanteCompras\" = true then 'SOLICITANTE' when u.\"CajaChica\" = true then 'CAJA CHICA' when u.\"Rendiciones\" = true then 'RENDICIONES' ELSE 'SIN ROL' END AS \"Rol\"," +
+            " case when auth.\"FullName\" is null then null else 'Las solicitudes que usted realice deberan ser aprobadas por: ' end as \"MensajeAprobacion\"," +
             " p.\"UcbEmail\",p.\"PersonalEmail\",coalesce(u.\"UserPrincipalName\",'Sin Usuario') as \"UserPrincipalName\", c.\"DependencyCod\", c.\"Dependency\", ou.\"Cod\" as \"OUCod\", " +
-            " ou.\"Name\" as \"OUName\", c.\"Positions\", c.\"Dedication\", c.\"Linkage\", pauth.\"SAPCodeRRHH\" as \"AuthSAPCodeRRHH\", " +
-            " auth.cuni as \"AuthCUNI\", auth.\"FullName\" as \"AuthFullName\", auth.\"Positions\" as \"AuthPositions\", c.\"Branches\", u.\"AutoGenPass\" " +
+            " ou.\"Name\" as \"OUName\", c.\"Positions\", " +
+            " auth.\"FullName\" as \"AuthFullName\", br.\"Name\" as \"Branches\", u.\"AutoGenPass\", " +
+            " case when (c.\"Active\" = false and c.\"EndDate\" < current_date) then 'INACTIVO' else 'ACTIVO' end as \"State\" " +
             " from " + CustomSchema.Schema + ".lastcontracts c " +
+            " inner join " + CustomSchema.Schema + ".\"Branches\" br " +
+            "    on c.\"BranchesId\" = br.\"Id\" " +
             " left join " + CustomSchema.Schema + ".\"User\" u " +
             "    on c.\"PeopleId\" = u.\"PeopleId\" " +
             " inner join " + CustomSchema.Schema + ".\"People\" p " +
@@ -66,7 +70,28 @@ namespace UcbBack.Controllers
             //" where c.\"EndDate\" is null or c.\"EndDate\" > current_date" +
             " order by (case when u.\"UserPrincipalName\" is null then 1 else 0 end) asc," +
             "    c.\"FullName\"";
-            var rawresult = _context.Database.SqlQuery<UserViewModel>(query).ToList();
+            var rawresult = _context.Database.SqlQuery<UserViewModel>(query).Select(x=>new
+            {
+                x.Id,
+                x.CUNI,
+                x.Document,
+                x.FullName,
+                x.Rol,
+                x.UcbEmail,
+                x.PersonalEmail,
+                x.UserPrincipalName,
+                x.DependencyCod,
+                x.Dependency,
+                x.OUName,
+                x.OUCod,
+                x.Positions,
+                x.AuthFullName,
+                x.Branches,
+                x.AutoGenPass,
+                x.MensajeAprobacion,
+                x.State
+
+            }).ToList();
             return Ok(rawresult);
         }
 

@@ -45,6 +45,7 @@ namespace UcbBack.Models
 
         public string Cause { get; set; }
         public string NumDesignacion { get; set; }
+        public string ComentariosDesignacion { get; set; }
         public string CartaDesignacion { get; set; }
 
         public DateTime? UpdatedAt { get; set; }

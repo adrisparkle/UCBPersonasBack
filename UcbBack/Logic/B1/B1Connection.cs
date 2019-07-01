@@ -183,6 +183,7 @@ namespace UcbBack.Logic.B1
         {
             B1SDKLog log = new B1SDKLog();
             log.Id = B1SDKLog.GetNextId(_context);
+            log.UserId = userId;
             log.ObjectId = ObjectId;
             log.BusinessObject = type;
             log.Success = true;
