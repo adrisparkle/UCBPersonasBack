@@ -198,9 +198,7 @@ namespace UcbBack.Logic.B1
                 if (company.Connected)
                 {
                     company.StartTransaction();
-                    //var opo = (SAPbobsCOM.Documents)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes
-                    //    .oPurchaseOrders);
-                    //opo.AuthorizationStatus = DocumentAuthorizationStatusEnum.dasPending;
+
                     SAPbobsCOM.EmployeesInfo oEmployeesInfo = (SAPbobsCOM.EmployeesInfo)company.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oEmployeesInfo);
 
                     oEmployeesInfo.GetByKey(person.SAPCodeRRHH.Value);

@@ -8,6 +8,7 @@ using System.Web;
 using UcbBack.Models;
 using UcbBack.Models.Auth;
 using System.Data.Entity;
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.Ajax.Utilities;
 using Newtonsoft.Json;
 
@@ -268,7 +269,7 @@ namespace UcbBack.Logic
             return user;
         }
 
-        public void enableUser(People person)
+        public void enableUser(People person, bool active = true)
         {
             ApplicationDbContext _context = new ApplicationDbContext();
             var user = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == person.Id);
@@ -283,7 +284,7 @@ namespace UcbBack.Logic
                 UserPrincipal userPrincipal = UserPrincipal.FindByIdentity
                     (ouContex, user.UserPrincipalName);
 
-                userPrincipal.Enabled = true;
+                userPrincipal.Enabled = active;
                 userPrincipal.PasswordNeverExpires = true;
 
                 userPrincipal.Save();
