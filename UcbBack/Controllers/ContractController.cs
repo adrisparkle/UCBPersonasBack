@@ -174,7 +174,11 @@ namespace UcbBack.Controllers
                     StartDatestr = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     EndDatestr = x.EndDate == null ? "" : x.EndDate.GetValueOrDefault().ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     StartDate = x.StartDate.ToString("MM/dd/yyyy"),
-                    EndDate = x.EndDate == null ? "" : x.EndDate.Value.ToString("MM/dd/yyyy")
+                    EndDate = x.EndDate == null ? "" : x.EndDate.Value.ToString("MM/dd/yyyy"),
+                    x.NumGestion,
+                    x.Comunicado,
+                    x.Respaldo,
+                    x.Seguimiento
                 });
 
             var user = auth.getUser(Request);
@@ -417,8 +421,10 @@ namespace UcbBack.Controllers
             contractInDB.PositionDescription = contract.PositionDescription == null ? null : contract.PositionDescription.ToUpper();
             contractInDB.Linkage = contract.Linkage;
             contractInDB.AI = contract.AI;
-            contractInDB.NumDesignacion = contract.NumDesignacion;
-            contractInDB.ComentariosDesignacion = contract.ComentariosDesignacion;
+            contractInDB.NumGestion = contract.NumGestion;
+            contractInDB.Seguimiento = contract.Seguimiento;
+            contractInDB.Respaldo = contract.Respaldo;
+            contractInDB.Comunicado = contract.Comunicado;
             contractInDB.UpdatedAt = DateTime.Now;
 
             var person = _context.Person.FirstOrDefault(x => x.CUNI == contractInDB.CUNI);

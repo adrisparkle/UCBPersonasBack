@@ -103,6 +103,7 @@ namespace UcbBack.Controllers
                     contract.PositionsId = 26;
                     contract.StartDate = alta.StartDate;
                     contract.EndDate = alta.EndDate;
+                    contract.Active = true;
                     _context.ContractDetails.Add(contract);
                     alta.State = "INBANKH";
                 }
