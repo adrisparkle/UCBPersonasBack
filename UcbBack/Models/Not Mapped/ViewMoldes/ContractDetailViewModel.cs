@@ -9,7 +9,7 @@ namespace UcbBack.Models.Not_Mapped.ViewMoldes
     {
         public int Id { get; set; }
         public string CUNI { get; set; }
-        public string Document { get; set; }
+        public string Document { get; set; } 
         public string FullName { get; set; }
         public string Dependency { get; set; }
         public string DependencyCod { get; set; }
