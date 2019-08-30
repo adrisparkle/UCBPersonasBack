@@ -41,6 +41,7 @@ namespace UcbBack.Controllers
                     PerformanceArea = pos.PerformanceArea.Name,
                     pos.IsDesignated,
                     pos.DefaultLinkage,
+                    brs.Enabled
                 };
             var user = auth.getUser(Request);
             var filtered = auth.filerByRegional(all.AsQueryable(), user).ToList().OrderBy(x=>x.Id);
