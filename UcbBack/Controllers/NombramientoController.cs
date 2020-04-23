@@ -26,11 +26,30 @@ namespace UcbBack.Controllers
         // GET api/Level
         public IHttpActionResult Get()
         {
-            var query = "select * from " + CustomSchema.Schema + ".lastcontracts lc" +
+           /* var query = "select * from " + CustomSchema.Schema + ".lastcontracts lc" +
                         " inner join " + CustomSchema.Schema + ".\"Position\" p" +
                         " on lc.\"PositionsId\" = p.\"Id\"" +
                         " where (lc.\"EndDate\" is null or lc.\"EndDate\"> current_date)" +
                         " and p.\"IsDesignated\" = true";
+            * */
+           var query = "select lc.\"Id\", pe.\"Document\", pe.\"CUNI\", " +
+                       "fn.\"FullName\",\r\np.\"Name\" as \"Positions\", " +
+                       "de.\"Name\" as \"Dependency\",\r\nde.\"Id\" as \"DependencyCod\"," +
+                       "\r\nbr.\"Abr\" as \"Branches\", lc.\"StartDate\"," +
+                       "\r\nlc.\"EndDateNombramiento\" as \"EndDate\"" +
+                       "\r\nfrom ADMNALRRHH.\"ContractDetail\" lc" +
+                       "\r\ninner join ADMNALRRHH.\"Position\" p" +
+                       "\r\non lc.\"PositionsId\" = p.\"Id\"" +
+                       "\r\ninner join admnalrrhh.\"People\" pe" +
+                       "\r\non pe.\"Id\" = lc.\"PeopleId\"" +
+                       "\r\ninner join admnalrrhh.\"FullName\" fn" +
+                       "\r\non fn.\"PeopleId\" = pe.\"Id\"" +
+                       "\r\ninner join admnalrrhh.\"Dependency\" de" +
+                       "\r\non de.\"Id\" = lc.\"DependencyId\"" +
+                       "\r\ninner join admnalrrhh.\"Branches\" br" +
+                       "\r\non br.\"Id\" = lc.\"BranchesId\"" +
+                       "\r\nwhere p.\"IsDesignated\" = true" +
+                       "\r\norder by lc.\"Active\" desc, lc.\"EndDate\" asc";
             var rawresult = _context.Database.SqlQuery<ContractDetailViewModel>(query).ToList();
 
             var user = auth.getUser(Request);
@@ -94,5 +113,6 @@ namespace UcbBack.Controllers
             _context.SaveChanges();
             return Ok();
         }
+
     }
 }

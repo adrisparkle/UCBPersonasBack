@@ -15,7 +15,7 @@ namespace UcbBack.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { set; get; }
         public string Type { get; set; }
-        public string Value { get; set; }
+        public String Value { get; set; }
 
         public static int GetNextId(ApplicationDbContext _context)
         {

@@ -224,26 +224,36 @@ namespace UcbBack.Controllers
         [System.Web.Http.Route("api/people/Contracts/{id}")]
         public IHttpActionResult GetContracts(int id, [FromUri] string now = "NO")
         {
+            var positions = _context.Position
+                .Include(x => x.Id)
+                .Include(x => x.LevelId)
+                .Include(x => x.Level);
             var contracts = _context.ContractDetails
                 .Include(x => x.Dependency)
                 .Include(x => x.Positions)
+                .Include(x => x.Link)
+                .Include(x => x.Branches)
                 .Where(x => x.PeopleId == id)
                 .ToList()
                 .Where(x=> now == "NO" || (x.EndDate == null || x.EndDate.Value > DateTime.Now))
                 .OrderByDescending(x => x.EndDate == null ? DateTime.MaxValue : DateTime.MinValue)
+                .ThenByDescending(x => x.Active)
+                .ThenBy(x => x.PositionsId)
                 .ThenByDescending(x => x.EndDate)
                 .Select(x => new
                 {
                     x.Id,
                     x.Dependency.Cod,
                     Dependency = x.Dependency.Name,
+                    Link = x.Link.Value,
+                    Branches = x.Branches.Name,
                     Positions = x.Positions.Name,
                     StartDatestr = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     EndDatestr = x.EndDate == null ? null : x.EndDate.Value.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     StartDate = x.StartDate.ToString("MM-dd-yyyy"),
                     EndDate = x.EndDate == null ? null : x.EndDate.Value.ToString("MM-dd-yyyy")
                 });
-                
+            //.OrderByDescending(x => x.EndDate == null ? DateTime.MaxValue : DateTime.MinValue)
             return Ok(contracts);
         }
 
