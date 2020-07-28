@@ -228,6 +228,7 @@
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\B1Controller.cs" />
     <Compile Include="Controllers\BranchesController.cs" />
+    <Compile Include="Controllers\BusquedaGrupalController.cs" />
     <Compile Include="Controllers\CauseOfMovementController.cs" />
     <Compile Include="Controllers\CivilController.cs" />
     <Compile Include="Controllers\ContractController.cs" />
@@ -294,6 +295,11 @@
     <Compile Include="Models\CauseOfMovement.cs" />
     <Compile Include="Models\ChangesLogs.cs" />
     <Compile Include="Models\Civil.cs" />
+    <Compile Include="Models\Not Mapped\Chart.cs" />
+    <Compile Include="Models\Not Mapped\BusquedaIndividual.cs" />
+    <Compile Include="Models\Not Mapped\PeopleData.cs" />
+    <Compile Include="Models\Not Mapped\ContractData.cs" />
+    <Compile Include="Models\Not Mapped\FiltroBG.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_PregradoViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ProyectosViewModel.cs" />
     <Compile Include="Models\Not Mapped\ViewMoldes\Serv_ReemplazoViewModel.cs" />

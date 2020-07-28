@@ -49,7 +49,6 @@ namespace UcbBack.Controllers
                            "inner join " + CustomSchema.Schema + ".\"LASTCONTRACTS\" lc " +
                            "on p.cuni = lc.cuni " +
                            " order by \"FullName\";";
-
             var rawResult = _context.Database.SqlQuery<ContractDetailViewModel>(query).Select(x=>new
             {
                 x.Id,
@@ -248,6 +247,7 @@ namespace UcbBack.Controllers
                     Link = x.Link.Value,
                     Branches = x.Branches.Name,
                     Positions = x.Positions.Name,
+                    x.Dedication,
                     StartDatestr = x.StartDate.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     EndDatestr = x.EndDate == null ? null : x.EndDate.Value.ToString("dd MMM yyyy", new CultureInfo("es-ES")),
                     StartDate = x.StartDate.ToString("MM-dd-yyyy"),
@@ -327,11 +327,12 @@ namespace UcbBack.Controllers
             res.Nationality = personInDB.Nationality;
             res.AFP = personInDB.AFP;
             res.NUA = personInDB.NUA;
-
+            res.Insurance = personInDB.Insurance;
+            res.UcbEmail = personInDB.UcbEmail;
+            res.PersonalEmail = personInDB.PersonalEmail;
+            res.Age = DateTime.Now.Year - personInDB.BirthDate.Year;
             var u = _context.CustomUsers.FirstOrDefault(x => x.PeopleId == personInDB.Id);
-            res.UserName = u == null ? "" : u.UserPrincipalName;
-
-            return Ok(res);
+            res.UserName = u == null ? "" : u.UserPrincipalName; return Ok(res);
         }
 
         [System.Web.Http.HttpGet]
@@ -632,5 +633,6 @@ namespace UcbBack.Controllers
             _context.SaveChanges();
             return Ok(personInDB);
         }
+        
     }
 }
